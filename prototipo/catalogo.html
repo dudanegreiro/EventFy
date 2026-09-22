@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFy — Catálogo</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header><div class="brand">Event<span>Fy</span></div><a href="index.html">Início</a></header>
+  <main class="container">
+    <div class="section-title">
+      <div><p class="eyebrow">CATÁLOGO</p><h1>Serviços para seu evento</h1></div>
+    </div>
+    <div class="filters">
+      <input id="search" placeholder="Buscar serviço..." oninput="filterCards()">
+      <select id="category" onchange="filterCards()">
+        <option value="">Todas as categorias</option>
+        <option>Som e iluminação</option>
+        <option>Espaço</option>
+        <option>Equipe</option>
+      </select>
+    </div>
+    <div class="grid" id="cards">
+      <article class="card" data-name="Som e iluminação profissional" data-category="Som e iluminação">
+        <div class="thumb">🔊</div><div class="card-body"><span class="pill">Som e iluminação</span>
+        <h2>Som e iluminação profissional</h2><p>Estrutura completa para eventos de médio e grande porte.</p>
+        <strong>R$ 1.800 / evento</strong><a class="button small" href="servico.html">Ver detalhes</a></div>
+      </article>
+      <article class="card" data-name="Espaço para eventos" data-category="Espaço">
+        <div class="thumb">🏛️</div><div class="card-body"><span class="pill">Espaço</span>
+        <h2>Espaço para eventos</h2><p>Ambiente para confraternizações, festas e eventos corporativos.</p>
+        <strong>R$ 2.500 / evento</strong><a class="button small" href="servico.html">Ver detalhes</a></div>
+      </article>
+      <article class="card" data-name="Equipe de apoio" data-category="Equipe">
+        <div class="thumb">👥</div><div class="card-body"><span class="pill">Equipe</span>
+        <h2>Equipe de apoio</h2><p>Profissionais para apoio operacional durante o evento.</p>
+        <strong>R$ 900 / evento</strong><a class="button small" href="servico.html">Ver detalhes</a></div>
+      </article>
+    </div>
+  </main>
+  <script src="js/script.js"></script>
+</body>
+</html>
