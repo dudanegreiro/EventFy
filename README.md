@@ -125,6 +125,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 |---|---|---|
 | Requisitos | [`REQUISITOS.md`](./REQUISITOS.md) | Requisitos funcionais, requisitos não funcionais e regras de negócio |
 | Projeto | [`PROJETO.md`](./PROJETO.md) | Informações sobre o projeto, decisões e organização dos artefatos |
+|Documentação| [`PROCESSOS-NEGOCIO.md](.docs/PROCESSOS-NEGOCIO.md)| Este documento descreve os processos do domínio|
 | Modelagem | [`diagrams/`](./diagrams) | Modelo de domínio, modelo de dados, modelo de estados e demais diagramas |
 | Protótipo | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
 | Conferência cruzada | [`CONFERENCIA_CRUZADA.md`](./CONFERENCIA_CRUZADA.md) | Registro da conferência entre os diferentes artefatos do projeto |
@@ -191,6 +192,7 @@ Quando a implementação estiver disponível, esta seção deverá conter:
 |---|---|
 | [`PROJETO.md`](./PROJETO.md) | Organização e informações gerais do projeto |
 | [`REQUISITOS.md`](./REQUISITOS.md) | Especificação dos requisitos e regras de negócio |
+| [`PROCESSOS-NEGOCIO.md](.docs/PROCESSOS-NEGOCIO.md)| Este documento descreve os processos do domínio|
 | [`CONFERENCIA_CRUZADA.md`](./CONFERENCIA_CRUZADA.md) | Conferência entre os artefatos |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Processo de contribuição |
 | [`diagrams/`](./diagrams) | Diagramas e modelos do sistema |
