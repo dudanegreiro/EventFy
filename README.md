@@ -123,12 +123,13 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 
 | Artefato | Local | Descrição |
 |---|---|---|
-| Requisitos | [`REQUISITOS.md`](./REQUISITOS.md) | Requisitos funcionais, requisitos não funcionais e regras de negócio |
-| Projeto | [`PROJETO.md`](./PROJETO.md) | Informações sobre o projeto, decisões e organização dos artefatos |
-| Modelagem | [`diagrams/`](./diagrams) | Modelo de domínio, modelo de dados, modelo de estados e demais diagramas |
+| Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
+| Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
+| Processos de Negócio | [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Especificação detalhada dos processos de negócio e máquina de estados |
+| Modelagem | [`docs/diagrams/`](./docs/diagrams) | Domínio, dados, estados da reserva e sequência UML |
 | Protótipo | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
-| Conferência cruzada | [`CONFERENCIA_CRUZADA.md`](./CONFERENCIA_CRUZADA.md) | Registro da conferência entre os diferentes artefatos do projeto |
-| Contribuição | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Orientações relacionadas ao processo de contribuição e organização do projeto |
+| Conferência cruzada | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Registro da conferência entre os diferentes artefatos do projeto |
+| Contribuição | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Orientações relacionadas ao processo de contribuição e organização |
 
 ---
 
@@ -189,11 +190,12 @@ Quando a implementação estiver disponível, esta seção deverá conter:
 
 | Documento | Descrição |
 |---|---|
-| [`PROJETO.md`](./PROJETO.md) | Organização e informações gerais do projeto |
-| [`REQUISITOS.md`](./REQUISITOS.md) | Especificação dos requisitos e regras de negócio |
-| [`CONFERENCIA_CRUZADA.md`](./CONFERENCIA_CRUZADA.md) | Conferência entre os artefatos |
+| [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
+| [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos e regras de negócio |
+| [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Processos de negócio e máquina de estados |
+| [`docs/diagrams/`](./docs/diagrams) | Diagramas e modelos conceituais, relacionais e comportamentais |
+| [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Conferência entre os artefatos |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Processo de contribuição |
-| [`diagrams/`](./diagrams) | Diagramas e modelos do sistema |
 | [`prototipo/`](./prototipo) | Protótipo da aplicação |
 
 ---

@@ -9,7 +9,7 @@
 - [5. Transições válidas](#5-transições-válidas)
 - [6. Diagrama conceitual](#6-diagrama-conceitual)
 - [7. Rastreabilidade](#7-rastreabilidade)
-- [8. Decisões e pontos pendentes](#8-decisões-e-pontos-pendentes)
+- [8. Decisões e pontos resolvidos/pendentes](#8-decisões-e-pontos-resolvidospendentes)
 - [9. Consistência com os requisitos](#9-consistência-com-os-requisitos)
 
 ---
@@ -25,10 +25,11 @@ As principais entidades do domínio são:
 - `Usuario`
 - `Evento`
 - `Servico`
+- `DisponibilidadeServico`
 - `Arquivo`
 - `Reserva`
-- `Avaliacao`
 - `HistoricoReserva`
+- `Avaliacao`
 
 ---
 
@@ -48,8 +49,8 @@ Um usuário pode atuar como organizador de eventos ou como prestador/fornecedor 
 | nome | Nome do usuário |
 | email | Endereço de e-mail utilizado no cadastro e autenticação |
 | senha | Credencial do usuário, armazenada de forma protegida |
-| tipo | Tipo de usuário |
-| ativo | Indica se o usuário está ativo |
+| tipo | Tipo de usuário (Organizador, Prestador ou Administrador) |
+| ativo | Indica se o usuário está ativo (exclusão lógica) |
 
 #### Regras
 
@@ -78,16 +79,18 @@ Um evento pertence a um único organizador.
 | id | Identificador único do evento |
 | nome | Nome do evento |
 | descricao | Descrição do evento |
-| dataInicio | Data e hora de início |
-| dataFim | Data e hora de término |
+| dataInicio | Data e hora de início (DATETIME) |
+| dataFim | Data e hora de término (DATETIME) |
 | local | Local de realização do evento |
+| ativo | Indica se o evento está ativo (exclusão lógica) |
 
 #### Regras
 
 - Um evento deve possuir um único organizador responsável.
 - A data de início não pode ser posterior à data de término.
 - O organizador somente pode gerenciar eventos sob sua responsabilidade.
-- Alterações em eventos que possuam reservas devem respeitar as regras de negócio relacionadas às reservas.
+- Alterações ou cancelamento de eventos com reservas devem disparar o tratamento das reservas associadas.
+- Eventos com histórico de reservas não são excluídos fisicamente, apenas desativados logicamente (`ativo = false`).
 
 #### Requisitos relacionados
 
@@ -108,16 +111,15 @@ Representa um serviço ou estrutura disponibilizado por um prestador ou forneced
 | descricao | Descrição do serviço |
 | categoria | Categoria do serviço |
 | preco | Valor cobrado pelo serviço |
-| disponibilidade | Informações relacionadas à disponibilidade |
-| ativo | Indica se o serviço está disponível para novas solicitações |
+| ativo | Indica se o serviço está disponível para novas solicitações (exclusão lógica) |
 
 #### Regras
 
 - Um serviço deve possuir um prestador ou fornecedor responsável.
 - Um serviço desativado não pode receber novas solicitações.
-- A desativação de um serviço não deve eliminar seu histórico.
-- O preço deve possuir valor válido.
-- A disponibilidade deve ser considerada antes da confirmação de uma reserva.
+- A desativação de um serviço não deve eliminar seu histórico nem reservas passadas.
+- O preço deve possuir valor válido não negativo.
+- A disponibilidade do serviço é gerenciada por períodos e bloqueios estruturados (`DisponibilidadeServico`).
 
 #### Requisitos relacionados
 
@@ -125,11 +127,38 @@ Representa um serviço ou estrutura disponibilizado por um prestador ou forneced
 
 ---
 
-### 2.4 Arquivo
+### 2.4 DisponibilidadeServico
 
-Representa um arquivo associado a um serviço.
+Representa a estrutura de agenda do serviço, modelando períodos de atendimento, bloqueios operacionais ou indisponibilidades temporárias (Decisão DP02).
 
-O conteúdo do arquivo deve ser armazenado em um mecanismo de armazenamento apropriado, enquanto seus metadados são mantidos pelo sistema.
+#### Atributos
+
+| Atributo | Descrição |
+|---|---|
+| id | Identificador único do período de disponibilidade/bloqueio |
+| dataInicio | Início do intervalo de tempo (DATETIME) |
+| dataFim | Fim do intervalo de tempo (DATETIME) |
+| tipo | Tipo do período (`DISPONIVEL`, `BLOQUEIO_MANUAL`, `RESERVA`) |
+| motivo | Justificativa do bloqueio ou descrição do período |
+| ativo | Indica se o registro de disponibilidade está vigente |
+
+#### Regras
+
+- Um período de disponibilidade/bloqueio pertence a um único serviço.
+- `dataInicio` deve ser anterior ou igual a `dataFim`.
+- Não é permitida a confirmação de reservas em períodos com bloqueio ou com sobreposição de outra reserva confirmada.
+
+#### Requisitos relacionados
+
+`RF04` · `RF07` · `RF10` · `RN06` · `RNF02`
+
+---
+
+### 2.5 Arquivo
+
+Representa um arquivo ou mídia (foto, especificação) associado a um serviço.
+
+O conteúdo binário do arquivo é armazenado em serviço externo/storage, enquanto seus metadados são mantidos pelo sistema.
 
 #### Atributos
 
@@ -137,15 +166,16 @@ O conteúdo do arquivo deve ser armazenado em um mecanismo de armazenamento apro
 |---|---|
 | id | Identificador único do arquivo |
 | nomeOriginal | Nome original do arquivo |
-| url | Referência para o arquivo armazenado |
-| tipoMime | Tipo MIME do arquivo |
-| tamanho | Tamanho do arquivo |
+| url | Referência/URI para o arquivo armazenado |
+| tipoMime | Tipo MIME do arquivo (ex.: `image/jpeg`) |
+| tamanho | Tamanho em bytes |
+| ativo | Indica se o arquivo está ativo no sistema |
 
 #### Regras
 
 - Um arquivo deve estar associado a um serviço.
 - A URL deve permitir localizar o arquivo armazenado.
-- O sistema deve manter os metadados necessários para identificar o arquivo.
+- Arquivos desvinculados sofrem exclusão lógica antes de qualquer purga física de storage.
 
 #### Requisitos relacionados
 
@@ -153,7 +183,7 @@ O conteúdo do arquivo deve ser armazenado em um mecanismo de armazenamento apro
 
 ---
 
-### 2.5 Reserva
+### 2.6 Reserva
 
 Representa a solicitação e o processo de contratação de um serviço para um evento.
 
@@ -164,31 +194,35 @@ A reserva é o principal elemento responsável por representar o fluxo de contra
 | Atributo | Descrição |
 |---|---|
 | id | Identificador único da reserva |
-| dataInicio | Início do período solicitado |
-| dataFim | Fim do período solicitado |
-| status | Estado atual da reserva |
-| motivoRecusa | Motivo informado quando a reserva é recusada |
+| dataInicio | Início do período solicitado (DATETIME) |
+| dataFim | Fim do período solicitado (DATETIME) |
+| status | Estado atual da reserva (`SOLICITADA`, `EM_ANALISE`, `APROVADA`, `CONFIRMADA`, `RECUSADA`, `CANCELADA`, `EXPIRADA`, `FINALIZADA`) |
+| observacao | Observações ou especificações da solicitação |
+| motivoRecusa | Motivo informado quando a reserva for recusada |
+| ativo | Indica se o registro está ativo (exclusão lógica) |
 | criadaEm | Data e hora de criação da reserva |
 
 #### Relacionamentos
 
 Uma reserva deve estar relacionada a:
 
-- um organizador;
+- um organizador (solicitante);
 - um evento;
 - um serviço;
-- um prestador ou fornecedor responsável pelo serviço.
+- um prestador responsável pelo serviço.
 
 #### Regras
 
 - Uma nova reserva deve iniciar no estado `SOLICITADA`.
-- O período solicitado deve ser válido.
-- O serviço deve estar disponível para o período solicitado.
-- Somente o responsável pelo serviço pode analisar a solicitação.
-- Uma recusa exige um motivo.
+- O período solicitado deve ser válido e estar dentro dos limites do evento.
+- O serviço deve estar disponível para o período solicitado (sem bloqueios ou conflitos).
+- Somente o prestador responsável pode analisar, aprovar ou recusar a solicitação.
+- Uma recusa exige um motivo obrigatório.
 - Uma reserva aprovada pode ser confirmada pelo organizador responsável.
-- O cancelamento não deve apagar fisicamente a reserva.
-- O histórico da reserva deve ser preservado.
+- Cancelamentos podem ocorrer a partir de `SOLICITADA`, `EM_ANALISE`, `APROVADA` e `CONFIRMADA` por atores autorizados.
+- Reservas sem resposta ou sem confirmação dentro do prazo expiram automaticamente (`EXPIRADA`).
+- Reservas confirmadas são concluídas após o término do período (`FINALIZADA`), executada pelo sistema.
+- O cancelamento ou encerramento não remove fisicamente a reserva.
 
 #### Requisitos relacionados
 
@@ -196,11 +230,9 @@ Uma reserva deve estar relacionada a:
 
 ---
 
-### 2.6 HistoricoReserva
+### 2.7 HistoricoReserva
 
-Representa uma alteração realizada no estado de uma reserva.
-
-Essa entidade é necessária para preservar a rastreabilidade das alterações realizadas durante o ciclo de vida da reserva.
+Representa o registro imutável de cada alteração de estado no ciclo de vida de uma reserva (RF18, RNF05).
 
 #### Atributos
 
@@ -209,24 +241,21 @@ Essa entidade é necessária para preservar a rastreabilidade das alterações r
 | id | Identificador único do registro histórico |
 | statusAnterior | Estado da reserva antes da alteração |
 | statusNovo | Estado da reserva após a alteração |
-| dataHora | Data e hora da alteração |
+| dataHora | Data e hora exata da alteração (DATETIME) |
 | observacao | Informação complementar ou justificativa |
-| motivo | Motivo da alteração quando aplicável |
+| motivo | Motivo da alteração quando aplicável (ex.: recusa ou cancelamento) |
 
 #### Relacionamentos
 
 - Um registro de histórico pertence a uma única reserva.
-- Uma reserva pode possuir vários registros de histórico.
-- Uma alteração pode estar associada ao usuário responsável pela operação.
+- Uma reserva pode possuir múltiplos registros históricos (1 : N).
+- Uma alteração pode estar associada ao usuário responsável (opcional quando a transição for disparada pelo sistema).
 
 #### Regras
 
-- Toda alteração de estado deve ser registrada.
-- O estado anterior deve ser preservado.
-- O novo estado deve ser preservado.
-- A data e hora da alteração devem ser registradas.
-- O usuário responsável deve ser identificado quando a alteração for realizada por um usuário.
-- O histórico não deve ser apagado quando a reserva for cancelada.
+- Toda e qualquer transição de estado gera obrigatoriamente um registro histórico.
+- Os registros de histórico são estritamente imutáveis (somente inserção).
+- O histórico não é apagado em hipótese alguma.
 
 #### Requisitos relacionados
 
@@ -234,25 +263,24 @@ Essa entidade é necessária para preservar a rastreabilidade das alterações r
 
 ---
 
-### 2.7 Avaliacao
+### 2.8 Avaliacao
 
-Representa uma avaliação realizada pelo organizador após a conclusão de uma contratação.
+Representa uma avaliação realizada pelo organizador após a conclusão da contratação.
 
 #### Atributos
 
 | Atributo | Descrição |
 |---|---|
 | id | Identificador único da avaliação |
-| nota | Nota atribuída ao serviço |
-| comentario | Comentário da avaliação |
-| criadaEm | Data e hora da avaliação |
+| nota | Nota inteira atribuída ao serviço (ex.: 1 a 5) |
+| comentario | Comentário textual da avaliação |
+| criadaEm | Data e hora da avaliação (DATETIME) |
 
 #### Regras
 
-- A avaliação deve estar relacionada a uma reserva.
-- A avaliação somente pode ser realizada pelo organizador responsável pela reserva.
-- A reserva deve estar no estado `FINALIZADA`.
-- Uma avaliação não deve estar associada a uma contratação inexistente.
+- A avaliação deve estar vinculada a uma reserva em estado `FINALIZADA`.
+- Somente o organizador responsável pela contratação pode avaliar.
+- Cada reserva finalizada pode possuir no máximo uma avaliação (1 : 0..1).
 
 #### Requisitos relacionados
 
@@ -266,60 +294,81 @@ Representa uma avaliação realizada pelo organizador após a conclusão de uma 
 |---|---|---|---|
 | 3.1 | Usuario → Evento | 1 : N | Um organizador pode possuir vários eventos; cada evento tem exatamente um organizador responsável. |
 | 3.2 | Usuario → Servico | 1 : N | Um prestador/fornecedor pode disponibilizar vários serviços; cada serviço tem exatamente um responsável. |
-| 3.3 | Servico → Arquivo | 1 : N | Um serviço pode possuir vários arquivos; cada arquivo pertence a um único serviço. |
-| 3.4 | Evento → Reserva | 1 : N | Um evento pode possuir várias reservas; cada reserva pertence a um único evento. |
-| 3.5 | Servico → Reserva | 1 : N | Um serviço pode receber várias solicitações ao longo do tempo; cada reserva refere-se a um único serviço. |
-| 3.6 | Usuario (organizador) → Reserva | 1 : N | Um organizador pode possuir várias reservas; cada reserva tem um único organizador responsável. O prestador/fornecedor também se associa indiretamente às reservas por meio dos serviços que disponibiliza. |
-| 3.7 | Reserva → HistoricoReserva | 1 : N | Uma reserva pode possuir vários registros de histórico; cada registro pertence a uma única reserva. |
-| 3.8 | Usuario → HistoricoReserva | 1 : N | Um usuário pode realizar várias alterações de estado; a associação é opcional para alterações automáticas do sistema. |
-| 3.9 | Reserva → Avaliacao | 1 : 0..1 | Uma reserva pode possuir uma avaliação, que só existe após a conclusão da contratação. |
+| 3.3 | Servico → DisponibilidadeServico | 1 : N | Um serviço possui múltiplos períodos de agenda e bloqueios estruturados (DP02). |
+| 3.4 | Servico → Arquivo | 1 : N | Um serviço pode possuir vários arquivos; cada arquivo pertence a um único serviço. |
+| 3.5 | Evento → Reserva | 1 : N | Um evento pode possuir várias reservas; cada reserva pertence a um único evento. |
+| 3.6 | Servico → Reserva | 1 : N | Um serviço pode receber várias solicitações ao longo do tempo; cada reserva refere-se a um único serviço. |
+| 3.7 | Usuario (organizador) → Reserva | 1 : N | Um organizador pode possuir várias reservas; cada reserva tem um único organizador responsável. |
+| 3.8 | Reserva → HistoricoReserva | 1 : N | Uma reserva possui o rastreamento completo de suas mudanças de estado (RF18, RNF05). |
+| 3.9 | Usuario → HistoricoReserva | 1 : N | Um usuário pode realizar alterações de estado; relação opcional para ações automáticas do sistema. |
+| 3.10 | Reserva → Avaliacao | 1 : 0..1 | Uma reserva pode possuir no máximo uma avaliação, gerada apenas após conclusão (`FINALIZADA`). |
 
 ---
 
 ## 4. Estados da Reserva
 
-A reserva possui um ciclo de vida definido:
+A reserva possui um ciclo de vida robusto, no qual todo estado é alcançável e possui ao menos uma rota válida de saída:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> SOLICITADA
-    SOLICITADA --> EM_ANALISE: EM ANÁLISE
-    EM_ANALISE --> APROVADA
-    EM_ANALISE --> RECUSADA
-    APROVADA --> CONFIRMADA
-    CONFIRMADA --> FINALIZADA
-    CONFIRMADA --> CANCELADA
+    [*] --> SOLICITADA : Organizador cria solicitação
+
+    SOLICITADA --> EM_ANALISE : Prestador visualiza / inicia análise
+    SOLICITADA --> CANCELADA : Organizador cancela solicitação
+    SOLICITADA --> EXPIRADA : Sistema expira por tempo limite sem resposta
+
+    EM_ANALISE --> APROVADA : Prestador aprova solicitação
+    EM_ANALISE --> RECUSADA : Prestador recusa (com motivo obrigatório)
+    EM_ANALISE --> CANCELADA : Organizador cancela durante análise
+    EM_ANALISE --> EXPIRADA : Sistema expira prazo limite de análise
+
+    APROVADA --> CONFIRMADA : Organizador confirma contratação
+    APROVADA --> CANCELADA : Organizador cancela antes de confirmar
+    APROVADA --> EXPIRADA : Sistema expira por falta de confirmação no prazo
+
+    CONFIRMADA --> FINALIZADA : Sistema executa automaticamente após término do período
+    CONFIRMADA --> CANCELADA : Cancelamento conforme política de prazos
+
     RECUSADA --> [*]
-    FINALIZADA --> [*]
     CANCELADA --> [*]
+    EXPIRADA --> [*]
+    FINALIZADA --> [*]
 ```
 
-### 4.1 Estados
+### 4.1 Descrição dos Estados
 
 | Estado | Descrição |
 |---|---|
-| `SOLICITADA` | Estado inicial da reserva após sua criação pelo organizador. |
-| `EM ANÁLISE` | Indica que o prestador ou fornecedor responsável iniciou a análise da solicitação. |
-| `APROVADA` | Indica que o prestador ou fornecedor aceitou a solicitação. |
-| `RECUSADA` | Indica que o prestador ou fornecedor recusou a solicitação. A reserva deve possuir um motivo de recusa. |
-| `CONFIRMADA` | Indica que o organizador confirmou uma reserva que havia sido aprovada. |
-| `CANCELADA` | Indica que uma reserva confirmada foi cancelada de acordo com as regras de negócio. |
-| `FINALIZADA` | Indica que a contratação foi concluída. |
+| `SOLICITADA` | Estado inicial da reserva após envio da solicitação pelo organizador. |
+| `EM ANÁLISE` | O prestador tomou ciência da solicitação e está analisando datas e viabilidade. |
+| `APROVADA` | O prestador aceitou a solicitação de reserva. |
+| `RECUSADA` | O prestador rejeitou a solicitação, registrando obrigatoriamente a justificativa. |
+| `CONFIRMADA` | O organizador validou a proposta aprovada, fixando o compromisso de contratação. |
+| `CANCELADA` | A reserva foi descontinuada por iniciativa do organizador ou prestador, respeitados prazos. |
+| `EXPIRADA` | O sistema cancelou a reserva por decurso de prazo sem resposta de uma das partes. |
+| `FINALIZADA` | O serviço foi prestado e o período de contratação encerrou-se. Habilita avaliação. |
 
 ---
 
 ## 5. Transições válidas
 
-| Estado atual | Próximo estado | Responsável |
-|---|---|---|
-| SOLICITADA | EM ANÁLISE | Prestador/Fornecedor |
-| EM ANÁLISE | APROVADA | Prestador/Fornecedor |
-| EM ANÁLISE | RECUSADA | Prestador/Fornecedor |
-| APROVADA | CONFIRMADA | Organizador |
-| CONFIRMADA | FINALIZADA | Sistema/fluxo definido pelo projeto |
-| CONFIRMADA | CANCELADA | Usuário autorizado |
+| Estado atual | Próximo estado | Ator / Executor | Condição / Gatilho |
+|---|---|---|---|
+| `[*]` | `SOLICITADA` | Organizador | Solicitação enviada com evento, serviço e período válidos |
+| `SOLICITADA` | `EM_ANALISE` | Prestador | Prestador acessa e abre a solicitação |
+| `SOLICITADA` | `CANCELADA` | Organizador | Desistência antes do início da análise |
+| `SOLICITADA` | `EXPIRADA` | Sistema | Prazo limite sem abertura da análise pelo prestador (ex.: 48h) |
+| `EM_ANALISE` | `APROVADA` | Prestador | Prestador aceita atender ao serviço no período |
+| `EM_ANALISE` | `RECUSADA` | Prestador | Prestador rejeita e informa justificativa obrigatória |
+| `EM_ANALISE` | `CANCELADA` | Organizador | Desistência do solicitante durante a análise |
+| `EM_ANALISE` | `EXPIRADA` | Sistema | Prazo limite de análise excedido sem parecer do prestador |
+| `APROVADA` | `CONFIRMADA` | Organizador | Organizador confirma a contratação |
+| `APROVADA` | `CANCELADA` | Organizador | Desistência do solicitante antes da confirmação |
+| `APROVADA` | `EXPIRADA` | Sistema | Organizador não confirma dentro da janela de tolerância |
+| `CONFIRMADA` | `FINALIZADA` | Sistema | Execução automática por rotina após transcurso da `dataFim` |
+| `CONFIRMADA` | `CANCELADA` | Organizador / Prestador | Cancelamento motivado conforme prazos de tolerância da política |
 
-Nenhuma outra transição deverá ser permitida sem alteração explícita das regras de negócio.
+Nenhuma outra transição é permitida pelo sistema.
 
 ---
 
@@ -330,66 +379,78 @@ classDiagram
     Usuario "1" --> "N" Evento : organiza
     Usuario "1" --> "N" Servico : disponibiliza
     Usuario "1" --> "N" Reserva : solicita
-    Usuario "1" --> "N" HistoricoReserva : realiza (opcional)
-    Evento "1" --> "N" Reserva
-    Servico "1" --> "N" Reserva
-    Servico "1" --> "N" Arquivo
-    Reserva "1" --> "N" HistoricoReserva
-    Reserva "1" --> "0..1" Avaliacao
+    Usuario "1" --> "0..N" HistoricoReserva : executa
+    Servico "1" --> "N" DisponibilidadeServico : agenda
+    Servico "1" --> "N" Arquivo : possui
+    Servico "1" --> "N" Reserva : recebe
+    Evento "1" --> "N" Reserva : contem
+    Reserva "1" --> "N" HistoricoReserva : rastreia
+    Reserva "1" --> "0..1" Avaliacao : resulta em
 
     class Usuario {
-        +id
-        +nome
-        +email
-        +senha
-        +tipo
-        +ativo
+        +int id
+        +string nome
+        +string email
+        +string senha
+        +string tipo
+        +boolean ativo
     }
     class Evento {
-        +id
-        +nome
-        +descricao
-        +dataInicio
-        +dataFim
-        +local
+        +int id
+        +string nome
+        +string descricao
+        +datetime dataInicio
+        +datetime dataFim
+        +string local
+        +boolean ativo
     }
     class Servico {
-        +id
-        +nome
-        +descricao
-        +categoria
-        +preco
-        +disponibilidade
-        +ativo
+        +int id
+        +string nome
+        +string descricao
+        +string categoria
+        +decimal preco
+        +boolean ativo
+    }
+    class DisponibilidadeServico {
+        +int id
+        +datetime dataInicio
+        +datetime dataFim
+        +string tipo
+        +string motivo
+        +boolean ativo
     }
     class Arquivo {
-        +id
-        +nomeOriginal
-        +url
-        +tipoMime
-        +tamanho
+        +int id
+        +string nomeOriginal
+        +string url
+        +string tipoMime
+        +bigint tamanho
+        +boolean ativo
     }
     class Reserva {
-        +id
-        +dataInicio
-        +dataFim
-        +status
-        +motivoRecusa
-        +criadaEm
+        +int id
+        +datetime dataInicio
+        +datetime dataFim
+        +string status
+        +string observacao
+        +string motivoRecusa
+        +boolean ativo
+        +datetime criadaEm
     }
     class HistoricoReserva {
-        +id
-        +statusAnterior
-        +statusNovo
-        +dataHora
-        +observacao
-        +motivo
+        +int id
+        +string statusAnterior
+        +string statusNovo
+        +datetime dataHora
+        +string observacao
+        +string motivo
     }
     class Avaliacao {
-        +id
-        +nota
-        +comentario
-        +criadaEm
+        +int id
+        +int nota
+        +string comentario
+        +datetime criadaEm
     }
 ```
 
@@ -397,48 +458,42 @@ classDiagram
 
 ## 7. Rastreabilidade
 
-| Elemento do domínio | Requisitos relacionados |
-|---|---|
-| Usuario | RF01, RF02, RF03, RNF01, RNF04 |
-| Evento | RF09, RF15, RN01, RNF06 |
-| Servico | RF04, RF05, RF06, RF07, RF08, RN02, RN06 |
-| Arquivo | RF04, RF07, RF08, RNF06 |
-| Reserva | RF10, RF11, RF12, RF13, RF14, RF16, RF18, RN03, RN04, RN05, RN06, RN07, RNF02, RNF05, RNF06 |
-| HistoricoReserva | RF18, RN07, RNF05 |
-| Avaliacao | RF17, RNF06 |
+| Elemento do domínio | Requisitos Funcionais | Requisitos Não Funcionais | Regras de Negócio | Papel na Modelagem |
+|---|---|---|---|---|
+| **Usuario** | RF01, RF02, RF03 | RNF01, RNF04 | RN01, RN02 | Cadastro, autenticação, controle de acesso e papéis de organizador e prestador. |
+| **Evento** | RF09, RF15 | RNF04, RNF06 | RN01 | Agrupador dos serviços contratados sob responsabilidade única do organizador. |
+| **Servico** | RF04, RF05, RF06, RF07, RF08 | RNF04, RNF06 | RN02, RN06 | Itens de catálogo disponibilizados pelos prestadores. |
+| **DisponibilidadeServico** | RF04, RF07, RF10 | RNF02, RNF04 | RN06 | Estruturação de períodos, agendas e bloqueios de serviços (Decisão DP02). |
+| **Arquivo** | RF04, RF07, RF08 | RNF04, RNF06 | RN02 | Metadados e links para mídias associadas aos serviços em catálogo. |
+| **Reserva** | RF10, RF11, RF12, RF13, RF14, RF16, RF18 | RNF02, RNF03, RNF04, RNF05, RNF06 | RN03, RN04, RN05, RN06, RN07 | Objeto central de contratação que transita pela máquina de estados. |
+| **HistoricoReserva** | RF18 | RNF04, RNF05 | RN07 | Trilha imutável de auditoria e registro temporal de cada transição de estado. |
+| **Avaliacao** | RF17 | RNF04, RNF06 | RN05 | Feedback qualitativo e nota pós-prestação do serviço finalizado. |
 
 ---
 
-## 8. Decisões e pontos pendentes
+## 8. Decisões e pontos resolvidos/pendentes
 
-Os seguintes pontos ainda dependem de decisão da equipe e não devem ser considerados definitivamente implementados enquanto não forem especificados:
-
-- Tipos definitivos de usuário e suas permissões.
-- Representação detalhada da disponibilidade de serviços.
-- Regras específicas para cancelamento.
-- Existência e permissões do perfil administrador.
-- Formato e conteúdo da avaliação.
-- Forma definitiva de armazenamento do histórico da reserva.
-- Regras para alteração de eventos que possuam reservas.
-- Regras para alteração de serviços que possuam reservas.
-
-Esses pontos deverão ser definidos em `REQUISITOS.md` antes de serem utilizados para alterar o modelo de dados ou a implementação.
+- **DP01 — Papéis de usuário:** Modelado por atributo `tipo` com especialização em regras de serviço, evitando fragmentação prematura de tabelas.
+- **DP02 — Disponibilidade estruturada (RESOLVIDO):** Resolvido pela entidade `DisponibilidadeServico`, substituindo texto livre por intervalos tipados com checagem relacional.
+- **DP03 — Regras de cancelamento e expiração (RESOLVIDO):** Modelado com cancelamento permitido a partir de `SOLICITADA`, `EM_ANALISE`, `APROVADA` e `CONFIRMADA`, além de expiração por inatividade `EXPIRADA`.
+- **DP04 — Perfil administrador:** Mantido no escopo de acesso como moderador/auditor condicionado.
+- **DP05 — Formato da avaliação:** Nota numérica de 1 a 5 e comentário textual opcional, vinculada a reserva `FINALIZADA`.
+- **DP06 — Armazenamento do histórico (RESOLVIDO):** Resolvido via entidade relacional imutável `HistoricoReserva`.
+- **DP07/DP08 — Regras de alteração de eventos e serviços com reservas:** Alterações não afetam contratos já aprovados/confirmados sem notificação e recálculo de disponibilidade.
 
 ---
 
 ## 9. Consistência com os requisitos
 
-O modelo de domínio deverá ser atualizado sempre que houver alteração nos requisitos.
-
-Uma alteração em um requisito que modifique uma entidade, um atributo, uma relação, uma cardinalidade, uma regra de negócio, um estado ou uma transição deverá ser refletida neste documento e nos demais artefatos dependentes.
-
-A cadeia de rastreabilidade esperada é:
+O modelo de domínio permanece em estrita harmonia com `REQUISITOS.md`, `PROJETO.md` e `diagrams/modelo-dados.md`:
 
 ```mermaid
 flowchart TD
-    A[Requisito] --> B[Regra de negócio]
-    B --> C[Modelo de domínio]
-    C --> D[Modelo de dados]
-    D --> E[Protótipo]
-    E --> F[Implementação]
+    A[REQUISITOS.md] --> B[Regras de Negócio RN01-RN07]
+    B --> C[Modelo de Domínio]
+    C --> D[Modelo de Dados]
+    C --> E[Diagrama de Estados da Reserva]
+    C --> F[Diagrama de Sequência]
+    D --> G[Protótipo e Implementação]
 ```
+

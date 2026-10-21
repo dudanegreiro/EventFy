@@ -214,16 +214,15 @@ Quando a confirmação for realizada, a reserva deverá passar para o estado `CO
 
 O sistema deverá permitir o cancelamento de uma reserva de acordo com as regras de negócio definidas para o estado atual da reserva e para o usuário responsável pela operação.
 
-O cancelamento deverá preservar o registro da reserva e seu histórico.
+O cancelamento deverá preservar o registro da reserva e seu histórico imutável.
 
 **Critérios de aceitação**
 
-- **CA14.1:** Dado que uma reserva esteja em um estado que permita cancelamento, quando um usuário autorizado solicitar o cancelamento, então o sistema deverá alterar seu estado para `CANCELADA`.
-- **CA14.2:** O sistema deverá impedir o cancelamento quando o usuário não possuir permissão para realizar a operação.
-- **CA14.3:** O cancelamento não deverá excluir fisicamente a reserva.
-- **CA14.4:** O sistema deverá registrar a alteração de estado no histórico da reserva quando o mecanismo de histórico estiver implementado.
-
-> **⚠️ Ponto a definir:** as condições específicas de cancelamento por organizador e prestador/fornecedor deverão ser fechadas pela equipe antes da implementação.
+- **CA14.1:** Dado que uma reserva esteja em um estado que permita cancelamento (`SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`), quando um usuário autorizado solicitar o cancelamento, então o sistema deverá alterar seu estado para `CANCELADA`.
+- **CA14.2:** O sistema deverá impedir o cancelamento quando o usuário não possuir permissão para realizar a operação ou caso a reserva esteja em estado terminal (`RECUSADA`, `EXPIRADA`, `FINALIZADA` ou `CANCELADA`).
+- **CA14.3:** O cancelamento não deverá excluir fisicamente a reserva, preservando o registro para auditoria e relatórios.
+- **CA14.4:** Toda operação de cancelamento deverá gerar automaticamente um registro em `HISTORICO_RESERVA` indicando o executor, data/hora e justificativa.
+- **CA14.5:** Em caso de cancelamento, qualquer bloqueio temporário ou alocação em `DISPONIBILIDADE_SERVICO` deverá ser liberado imediatamente.
 
 ---
 
@@ -410,23 +409,40 @@ O sistema não deverá permitir que uma reserva seja alterada para `RECUSADA` se
 
 ### RN05 — Estados válidos da reserva
 
-Uma reserva deverá obedecer às transições de estado definidas pelo sistema. As transições atualmente previstas são:
+Uma reserva deverá obedecer estritamente às transições de estado definidas pelo sistema. Todos os estados são alcançáveis e possuem rotas de saída válidas:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> SOLICITADA
-    SOLICITADA --> EM_ANALISE : EM ANÁLISE
-    EM_ANALISE --> APROVADA
-    EM_ANALISE --> RECUSADA
-    APROVADA --> CONFIRMADA
-    CONFIRMADA --> FINALIZADA
-    CONFIRMADA --> CANCELADA
+    [*] --> SOLICITADA : [Organizador] Submete solicitação
+
+    SOLICITADA --> EM_ANALISE : [Prestador] Abre/inicia análise
+    SOLICITADA --> CANCELADA : [Organizador] Cancela antes da análise
+    SOLICITADA --> EXPIRADA : [Sistema] Prazo limite sem abertura da análise
+
+    EM_ANALISE --> APROVADA : [Prestador] Aprova solicitação
+    EM_ANALISE --> RECUSADA : [Prestador] Recusa com motivo obrigatório
+    EM_ANALISE --> CANCELADA : [Organizador] Cancela durante a análise
+    EM_ANALISE --> EXPIRADA : [Sistema] Prazo de análise excedido
+
+    APROVADA --> CONFIRMADA : [Organizador] Confirma contratação
+    APROVADA --> CANCELADA : [Organizador] Cancela antes de confirmar
+    APROVADA --> EXPIRADA : [Sistema] Janela de confirmação esgotada
+
+    CONFIRMADA --> FINALIZADA : [Sistema] Execução automática pós-término (data_fim)
+    CONFIRMADA --> CANCELADA : [Organizador/Prestador] Conforme política de prazos
+
     RECUSADA --> [*]
-    FINALIZADA --> [*]
     CANCELADA --> [*]
+    EXPIRADA --> [*]
+    FINALIZADA --> [*]
 ```
 
-Uma reserva não deverá realizar uma transição que não esteja prevista nas regras do sistema.
+As regras das transições determinam:
+1. Uma solicitação inicia em `SOLICITADA`.
+2. O cancelamento pode ser executado pelo organizador nos estados `SOLICITADA`, `EM_ANALISE`, `APROVADA` e por ambas as partes em `CONFIRMADA` (segundo as políticas de prazo).
+3. A expiração (`EXPIRADA`) é disparada automaticamente pelo sistema por decurso de prazos de tolerância/SLA sem manifestação do responsável.
+4. A transição para `FINALIZADA` é executada automaticamente pelo sistema após a expiração da data e horário de término (`data_fim`) do serviço contratado.
+5. Toda transição de estado gera registro imutável em `HISTORICO_RESERVA` (RF18, RNF05). Nenhuma transição fora das previstas acima é permitida.
 
 ---
 
@@ -488,18 +504,18 @@ O histórico deverá manter, no mínimo:
 
 Os seguintes pontos deverão ser definidos antes da implementação das funcionalidades correspondentes:
 
-| ID | Questão | Artefato afetado |
-|---|---|---|
-| DP01 | Tipos definitivos de usuário e respectivas permissões | Requisitos, domínio e dados |
-| DP02 | Representação detalhada da disponibilidade dos serviços | Requisitos, domínio e dados |
-| DP03 | Condições específicas para cancelamento | Requisitos e estados |
-| DP04 | Necessidade e permissões do perfil administrador | Requisitos e domínio |
-| DP05 | Formato e conteúdo da avaliação | Requisitos, domínio e dados |
-| DP06 | Forma definitiva de armazenamento do histórico da reserva | Requisitos, domínio e dados |
-| DP07 | Regras para alteração de eventos que possuam reservas | Requisitos e domínio |
-| DP08 | Regras para alteração de serviços que possuam reservas | Requisitos e domínio |
+| ID | Questão | Artefato afetado | Status |
+|---|---|---|---|
+| DP01 | Tipos definitivos de usuário e respectivas permissões | Requisitos, domínio e dados | Definido (Organizador, Prestador, Administrador via atributo `tipo`) |
+| DP02 | Representação detalhada da disponibilidade dos serviços | Requisitos, domínio e dados | **Resolvido** (Entidade `DisponibilidadeServico` com períodos e bloqueios) |
+| DP03 | Condições específicas para cancelamento e expiração | Requisitos e estados | **Resolvido** (Cancelamento em `SOLICITADA`, `EM_ANALISE`, `APROVADA`, `CONFIRMADA` e expiração) |
+| DP04 | Necessidade e permissões do perfil administrador | Requisitos e domínio | Definido (Administrador com papel de suporte/auditoria) |
+| DP05 | Formato e conteúdo da avaliação | Requisitos, domínio e dados | Definido (Nota 1-5 e comentário, 1:0..1 após `FINALIZADA`) |
+| DP06 | Forma definitiva de armazenamento do histórico da reserva | Requisitos, domínio e dados | **Resolvido** (Tabela relacional imutável `HISTORICO_RESERVA`) |
+| DP07 | Regras para alteração de eventos que possuam reservas | Requisitos e domínio | Em acompanhamento |
+| DP08 | Regras para alteração de serviços que possuam reservas | Requisitos e domínio | Em acompanhamento |
 
-Essas decisões deverão ser registradas antes de serem incorporadas aos demais artefatos.
+Essas decisões foram alinhadas aos artefatos de domínio, dados e máquina de estados.
 
 ---
 
