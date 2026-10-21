@@ -1,4 +1,4 @@
-# 🔄 Processos — EventFy
+# 🔄 Processos de Negócios — EventFy
 
 > Descrição dos processos de negócio da plataforma EventFy, do cadastro do usuário à avaliação do serviço contratado.
 

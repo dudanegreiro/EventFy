@@ -4,6 +4,7 @@ Este pacote contém os artefatos preparados para a etapa descrita no enunciado:
 
 - `PROJETO.md` — consolidação da modelagem, decisões, responsabilidades e conferência;
 - `REQUISITOS.md` — requisitos e regras de negócio consolidados;
+- `PROCESSOS-NEGOCIO.md`- documentação dos processos de negócio do EventFy;
 - `diagrams/modelo-dominio.md` — modelo de domínio;
 - `diagrams/modelo-dados.md` — modelo de dados derivado;
 - `diagrams/estados-reserva.md` — diagrama de estados da Reserva;
