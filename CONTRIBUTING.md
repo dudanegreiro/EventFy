@@ -1,233 +1,145 @@
 # 🤝 Guia de Contribuição — EventFy
 
-Este documento apresenta as convenções e boas práticas que devem ser seguidas pelos integrantes da equipe durante o desenvolvimento do projeto **EventFy**.
-
-O objetivo é manter o código organizado, facilitar a colaboração entre os membros da equipe e garantir que as alterações sejam revisadas antes de serem integradas à versão principal do projeto.
+Este documento estabelece as convenções, padrões de versionamento, fluxo de trabalho e práticas de qualidade adotadas pela equipe no desenvolvimento do **EventFy**, em estrita conformidade com os fundamentos de Gerência de Configuração e Qualidade de Processo e Produto.
 
 ---
 
-## 🌿 Convenção para Branches
+## 🌿 1. Ramos e Integração (Branches)
 
-Nenhuma alteração deve ser realizada diretamente na branch `main`.
+O ramo principal `main` representa a linha de base estável do software em funcionamento. **Nenhuma alteração é enviada diretamente ao `main`.**
 
-Cada nova funcionalidade, correção ou alteração deve ser desenvolvida em uma branch específica.
+Todo trabalho deriva de um item de backlog, é desenvolvido em um ramo curto e integrado exclusivamente via **Pull Request (PR)** revisado.
 
-O padrão para nomear as branches será:
+### 1.1 Nomenclatura de Ramos
+
+Os ramos devem ser nomeados com o prefixo correspondente ao tipo de trabalho, seguido de descrição curta em minúsculas separada por hífens:
+
+- `feat/<descricao-curta>` — Nova funcionalidade ou história de usuário
+- `fix/<descricao-curta>` — Correção de defeito/bug
+- `docs/<descricao-curta>` — Criação ou alteração de documentação e requisitos
+- `test/<descricao-curta>` — Criação ou alteração de testes automatizados
+- `refactor/<descricao-curta>` — Refatoração de código sem alteração de comportamento externo
+- `chore/<descricao-curta>` — Tarefas de configuração, dependências e infraestrutura
+
+*Exemplos no EventFy:*
+- `feat/solicitar-reserva`
+- `feat/analise-solicitacao-prestador`
+- `fix/bloqueio-conflito-agenda`
+- `docs/especificacao-requisitos`
+- `test/validacao-disponibilidade`
+
+### 1.2 Regras de Trabalho com Ramos
+
+1. **Vida Curta:** O ramo deve viver poucos dias (máximo de 1 a 3 dias), evitando divergências longas em relação ao `main`.
+2. **Atualização Contínua:** Antes de iniciar o trabalho e antes de abrir o PR, sincronize seu ramo com o `main` atualizado:
+   ```bash
+   git switch main
+   git pull origin main
+   git switch -c feat/nome-da-tarefa
+   ```
+3. **Exclusão pós-merge:** Após a aprovação e integração do PR no GitHub, o ramo correspondente deve ser excluído do repositório remoto e local.
+
+---
+
+## 💬 2. Convenção de Commits (Conventional Commits)
+
+Cada commit representa uma **unidade de mudança atômica, coerente e completa**. Commits gigantes ("commit-depósito") ou commits fragmentados com código quebrado são proibidos.
+
+Adota-se a especificação **Conventional Commits 1.0.0**:
 
 ```text
-tipo/descricao-da-alteracao
+tipo(escopo): resumo no imperativo
+
+Corpo detalhando o porquê da alteração e o contexto da decisão técnica (quando não óbvio).
+
+Closes #<número-da-issue>
 ```
 
-### Regras
+### 2.1 Tipos Permitidos
 
-* Utilizar apenas letras minúsculas;
-* Separar palavras utilizando hífen (`-`);
-* Utilizar nomes curtos e descritivos;
-* Cada branch deve possuir um objetivo específico;
-* Não realizar commits diretamente na branch `main`;
-* Após concluir uma alteração, ela deve ser enviada por meio de um **Pull Request**.
+- `feat`: nova funcionalidade do sistema
+- `fix`: correção de defeito
+- `docs`: alterações em documentação e requisitos
+- `test`: adição ou ajuste de testes
+- `refactor`: reestruturação de código preservando o comportamento
+- `chore`: configurações, build ou ajustes de dependências
 
-### Tipos de Branches
-
-| Tipo        | Quando utilizar                                   | Exemplo                        |
-| ----------- | ------------------------------------------------- | ------------------------------ |
-| `feature/`  | Desenvolvimento de novas funcionalidades          | `feature/cadastro-usuario`     |
-| `fix/`      | Correção de bugs                                  | `fix/erro-login`               |
-| `docs/`     | Alterações na documentação                        | `docs/atualizar-readme`        |
-| `test/`     | Criação ou alteração de testes                    | `test/testes-cadastro`         |
-| `chore/`    | Configurações e tarefas de manutenção             | `chore/atualizar-dependencias` |
-| `refactor/` | Refatoração de código sem alterar funcionalidades | `refactor/organizar-servicos`  |
-| `ui/`       | Alterações relacionadas à interface               | `ui/tela-login`                |
-| `database/` | Alterações no banco de dados                      | `database/tabela-ferramentas`  |
-
-### Exemplos para o EventFy
+### 2.2 Exemplos Contextualizados ao EventFy
 
 ```text
-feature/cadastro-usuario
-feature/login-usuario
-feature/cadastro-ferramenta
-feature/editar-ferramenta
-feature/listar-ferramentas
-feature/buscar-ferramentas
-feature/filtro-localizacao
-feature/solicitar-aluguel
-feature/negociar-aluguel
-feature/avaliacao-usuarios
-feature/chat-usuarios
-feature/painel-usuario
+feat(reserva): permitir que o prestador recuse solicitacao com motivo
 
-fix/erro-login
-fix/validacao-cadastro
-fix/erro-reserva
+A regra de negocio RN04 exige que nenhuma reserva seja recusada sem motivo
+explicito. A tela de recusa passa a validar o preenchimento de justificativa
+antes de enviar a requisicao ao servidor.
 
-docs/readme
-docs/contributing
-
-test/testes-login
-test/testes-cadastro-ferramenta
-test/testes-aluguel
-
-chore/configuracao-inicial
-chore/atualizar-dependencias
-
-refactor/organizar-api
-
-ui/tela-login
-ui/tela-cadastro
-ui/tela-ferramentas
-ui/tela-detalhes-ferramenta
-
-database/criar-tabela-usuarios
-database/criar-tabela-ferramentas
-database/criar-tabela-alugueis
+Closes #18
 ```
-
----
-
-## 💬 Convenção para Commits
-
-As mensagens de commit devem ser claras e objetivas, descrevendo a alteração realizada.
-
-O padrão recomendado será:
 
 ```text
-tipo: descrição da alteração
-```
+fix(agenda): impedir aprovacao de reservas com datas sobrepostas
 
-### Tipos de commits
+Corrige validacao de conflito em DisponibilidadeServico para bloquear a
+confirmacao quando ja existir outra reserva no mesmo intervalo de horas.
 
-| Tipo       | Descrição                      | Exemplo                                   |
-| ---------- | ------------------------------ | ----------------------------------------- |
-| `feat`     | Nova funcionalidade            | `feat: adiciona cadastro de ferramentas`  |
-| `fix`      | Correção de erro               | `fix: corrige validação do login`         |
-| `docs`     | Alteração na documentação      | `docs: atualiza README`                   |
-| `test`     | Criação ou alteração de testes | `test: adiciona testes de cadastro`       |
-| `refactor` | Refatoração do código          | `refactor: reorganiza serviço de aluguel` |
-| `chore`    | Configuração ou manutenção     | `chore: atualiza dependências`            |
-
-### Exemplos
-
-```text
-feat: adiciona cadastro de ferramentas
-feat: implementa solicitação de aluguel
-fix: corrige erro no login
-docs: atualiza contributing
-test: adiciona testes de autenticação
-refactor: reorganiza estrutura da api
-chore: configura variáveis de ambiente
+Closes #23
 ```
 
 ---
 
-## 🔀 Pull Requests
+## 🔀 3. Fluxo de Pull Requests (PR)
 
-Após finalizar uma alteração em sua branch, o integrante deverá abrir um **Pull Request** para solicitar a integração das alterações à branch principal.
+A integração de qualquer alteração no `main` segue três princípios:
 
-Antes de abrir um Pull Request, verifique se:
-
-* [ ] A alteração foi desenvolvida na branch correta;
-* [ ] O código está funcionando corretamente;
-* [ ] Não existem arquivos desnecessários incluídos;
-* [ ] As alterações estão relacionadas ao objetivo da branch;
-* [ ] A branch está atualizada com as alterações necessárias do projeto.
-
-### Título do Pull Request
-
-O título deve ser claro e descrever resumidamente a alteração realizada.
-
-**Exemplo:**
-
-```text
-Implementa cadastro de ferramentas
-```
-
-### Descrição do Pull Request
-
-A descrição deve explicar as principais alterações realizadas.
-
-**Exemplo:**
-
-```md
-## Descrição
-
-Implementação da funcionalidade de cadastro de ferramentas disponíveis para aluguel.
-
-## Alterações realizadas
-
-- Criação do formulário de cadastro;
-- Adição dos campos de nome, descrição e valor por dia;
-- Implementação da validação dos campos obrigatórios;
-- Integração inicial com a API.
-```
+1. **Pull Request Pequeno:** Um item de backlog por PR. Alterações devem ser compreensíveis e revisáveis em 15 a 20 minutos.
+2. **Descrição Completa:** Todo PR deve preencher o template em `.github/pull_request_template.md` com o que muda, como testar e a issue vinculada (`Closes #12`).
+3. **Revisão Obrigatória:** Nada entra no `main` sem a aprovação de ao menos um integrante diferente do autor do código.
+4. **SLA de Revisão:** O tempo máximo para revisão e resposta de um PR aberto é de **até 24 horas**.
 
 ---
 
-## 👀 Revisão de Código
+## ⚖️ 4. Resolução de Divergência Técnica
 
-Todo Pull Request deverá ser revisado por pelo menos outro integrante da equipe antes de ser integrado à branch `main`.
+Discordâncias técnicas durante a revisão de código e de documentação são naturais no processo de engenharia. Para evitar atrasos no fluxo da equipe:
 
-O responsável pela revisão deverá:
-
-* Verificar se o código está funcionando corretamente;
-* Analisar se a alteração atende ao objetivo proposto;
-* Identificar possíveis erros ou melhorias;
-* Adicionar comentários quando necessário.
-
-Caso sejam solicitadas alterações, o responsável pela branch deverá realizá-las antes da aprovação.
+1. A discussão técnica é realizada e registrada publicamente no próprio Pull Request.
+2. Caso não haja consenso em até **dois turnos de comentários**, o responsável técnico pelo módulo ou papel de arquitetura (`Pessoa 4 / Igor`) toma a decisão final.
+3. A decisão e a justificativa adotada são registradas no próprio PR antes da conclusão do merge.
 
 ---
 
-## 🚫 Branch `main`
+## 📋 5. Definição de Pronto (Definition of Done - DoD)
 
-A branch `main` representa a versão principal e estável do projeto.
+Um item do backlog só é considerado **concluído (Pronto)** e computado na velocidade da iteração quando cumprir integralmente o seguinte checklist:
 
-Portanto:
-
-* Não é permitido realizar commits diretamente na `main`;
-* Todas as funcionalidades devem ser desenvolvidas em branches específicas;
-* As alterações devem ser integradas por meio de Pull Requests;
-* Todo Pull Request deve passar pela revisão de outro integrante da equipe antes da aprovação.
+- [ ] **Critérios de Aceitação:** Todos os critérios de aceitação foram verificados e atendidos.
+- [ ] **Independência de Verificação:** A conferência foi realizada por alguém que **não escreveu** o código do item.
+- [ ] **Revisão de Código:** O código foi integrado ao `main` por Pull Request revisado e aprovado.
+- [ ] **Acesso e Demonstração:** A funcionalidade está acessível no ambiente local/demonstração da equipe.
+- [ ] **Requisitos Não Funcionais:** Os requisitos não funcionais aplicáveis ao item foram validados.
+- [ ] **Rastreabilidade Preservada:** A issue correspondente referencia a história de usuário, os commits citam a issue (`Closes #numero`) e o PR vincula a issue.
 
 ---
 
-## 📌 Fluxo de Trabalho
+## 🔍 6. Diretrizes para Revisão de Código (Code Review)
 
-O fluxo de desenvolvimento adotado pela equipe será:
+A revisão moderna tem como objetivo principal a **difusão de conhecimento e a melhoria da qualidade do código**, e não a avaliação de pessoas.
 
-1. Atualizar o repositório local:
+### 6.1 Classificação dos Comentários de Revisão
 
-```bash
-git pull origin main
-```
+Para dar clareza à intenção, todo comentário de revisão deve receber uma das quatro etiquetas:
 
-2. Criar uma nova branch:
+| Tipo | Quando usar | Ação esperada |
+|---|---|---|
+| **`[Bloqueia]`** | O PR fere requisitos, regras de negócio, contrato ou quebra o sistema. | O autor deve corrigir antes do merge. |
+| **`[Sugere]`** | Proposta de melhoria de legibilidade, simplificação ou estilo. | O autor decide se acata agora ou em dívida técnica. |
+| **`[Pergunta]`** | Dúvida sobre contexto, premissa ou regra de negócio. | O autor esclarece antes da decisão. |
+| **`[Elogia]`** | Solução elegante, boa clareza ou cobertura de teste relevante. | Reconhece boas práticas no código. |
 
-```bash
-git checkout -b feature/nome-da-funcionalidade
-```
+### 6.2 As Três Lentes de Avaliação
 
-3. Realizar as alterações necessárias.
+Todo revisor deve ler a contribuição através de três perspectivas:
 
-4. Adicionar os arquivos modificados:
-
-```bash
-git add .
-```
-
-5. Criar um commit seguindo o padrão definido:
-
-```bash
-git commit -m "feat: adiciona nome da funcionalidade"
-```
-
-6. Enviar a branch para o GitHub:
-
-```bash
-git push origin feature/nome-da-funcionalidade
-```
-
-7. Abrir um **Pull Request**.
-
-8. Solicitar a revisão de outro integrante da equipe.
-
-9. Após a aprovação, realizar a integração da alteração à branch `main`.
+1. **Legibilidade:** Os nomes utilizam o vocabulário do glossário do domínio (`Reserva`, `Servico`, `Disponibilidade`)? Uma pessoa que não escreveu a função compreende o fluxo na primeira leitura?
+2. **Manutenibilidade:** A regra de negócio está no backend e isolada conforme as decisões de projeto (critério de Parnas)? A alteração duplica código? Trata os casos de multiplicidade (zero, um e muitos)?
+3. **Rastreabilidade:** O PR e os commits referenciam a issue e os requisitos que motivaram a mudança?

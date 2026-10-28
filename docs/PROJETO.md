@@ -523,7 +523,7 @@ Recusar → Motivo da recusa obrigatório → Solicitação recusada → Voltar 
 Aceitar → Reserva aprovada → Confirmar → Reserva confirmada
 ```
 
-O protótipo está disponível em [`prototipo/`](./prototipo).
+O protótipo está disponível em [`prototipo/`](../prototipo).
 
 ---
 

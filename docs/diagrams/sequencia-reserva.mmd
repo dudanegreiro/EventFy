@@ -1,0 +1,98 @@
+sequenceDiagram
+    autonumber
+    actor O as Organizador
+    participant UI as Interface Web
+    participant CTRL as ControladorReserva
+    participant DISP as ServicoDisponibilidade
+    participant BD as Repositório / BD
+    actor P as Prestador
+    participant SYS as Agendador / Sistema
+
+    %% ========================================================
+    %% ETAPA 1: SOLICITAÇÃO DE RESERVA
+    %% ========================================================
+    rect rgb(240, 248, 255)
+        note over O, BD: Etapa 1: Solicitação de Reserva (RF10, RN03, RN06)
+        O->>UI: Preenche dados da reserva (evento, serviço, período: dataInicio/dataFim)
+        UI->>CTRL: submeterSolicitacaoReserva(dadosReserva)
+        CTRL->>DISP: verificarDisponibilidade(idServico, dataInicio, dataFim)
+        DISP->>BD: consultarBloqueiosEConflitos(idServico, dataInicio, dataFim)
+        BD-->>DISP: statusDisponibilidade
+
+        alt Período Indisponível / Conflito Detectado
+            DISP-->>CTRL: indisponivel(motivoConflito)
+            CTRL-->>UI: erro("Serviço indisponível no período solicitado")
+            UI-->>O: Exibe alerta de conflito e sugere novas datas
+        else Período Disponível (Fluxo Principal)
+            DISP-->>CTRL: disponivel
+            CTRL->>BD: criarReserva(dados, status="SOLICITADA")
+            BD-->>CTRL: idReserva
+            CTRL->>BD: registrarHistorico(idReserva, anterior=null, novo="SOLICITADA", ator=idOrganizador)
+            CTRL-->>UI: reservaCriadaSucesso(idReserva)
+            UI-->>O: Exibe confirmação de solicitação enviada
+            CTRL-)P: notificarNovaSolicitacao(idReserva)
+        end
+    end
+
+    %% ========================================================
+    %% ETAPA 2: ANÁLISE E DECISÃO DO PRESTADOR
+    %% ========================================================
+    rect rgb(255, 250, 240)
+        note over P, BD: Etapa 2: Análise da Solicitação (RF11, RF12, RN04, RN05)
+        P->>UI: Acessa fila de solicitações e seleciona a reserva
+        UI->>CTRL: iniciarAnalise(idReserva)
+        CTRL->>BD: atualizarStatus(idReserva, "EM_ANALISE")
+        CTRL->>BD: registrarHistorico(idReserva, anterior="SOLICITADA", novo="EM_ANALISE", ator=idPrestador)
+
+        alt Prestador Recusa a Reserva (Fluxo Alternativo com Motivo Obrigatório)
+            P->>UI: Clica em "Recusar" e informa justificativa obrigatória
+            UI->>CTRL: recusarReserva(idReserva, motivoRecusa)
+            CTRL->>BD: atualizarStatus(idReserva, "RECUSADA", motivoRecusa)
+            CTRL->>BD: registrarHistorico(idReserva, anterior="EM_ANALISE", novo="RECUSADA", ator=idPrestador, motivo=motivoRecusa)
+            CTRL-)O: notificarRecusaComMotivo(idReserva, motivoRecusa)
+            CTRL-->>UI: recusaConfirmada
+            UI-->>P: Atualiza status para Recusada e remove da fila ativa
+        else Prestador Aprova a Reserva (Fluxo Principal)
+            P->>UI: Clica em "Aprovar"
+            UI->>CTRL: aprovarReserva(idReserva)
+            CTRL->>DISP: preBloquearAgenda(idServico, dataInicio, dataFim)
+            DISP->>BD: salvarBloqueioTemporario(idServico, idReserva)
+            CTRL->>BD: atualizarStatus(idReserva, "APROVADA")
+            CTRL->>BD: registrarHistorico(idReserva, anterior="EM_ANALISE", novo="APROVADA", ator=idPrestador)
+            CTRL-)O: notificarReservaAprovada(idReserva)
+            CTRL-->>UI: aprovacaoSucesso
+            UI-->>P: Exibe confirmação de aprovação
+        end
+    end
+
+    %% ========================================================
+    %% ETAPA 3: CONFIRMAÇÃO DO ORGANIZADOR
+    %% ========================================================
+    rect rgb(240, 255, 240)
+        note over O, BD: Etapa 3: Confirmação e Bloqueio Definitivo (RF13, RN05, RN06)
+        O->>UI: Visualiza reserva aprovada e clica em "Confirmar Contratação"
+        UI->>CTRL: confirmarReserva(idReserva)
+        CTRL->>DISP: efetivarBloqueioDefinitivo(idServico, dataInicio, dataFim)
+        DISP->>BD: atualizarDisponibilidadeParaOcupado(idServico, idReserva)
+        CTRL->>BD: atualizarStatus(idReserva, "CONFIRMADA")
+        CTRL->>BD: registrarHistorico(idReserva, anterior="APROVADA", novo="CONFIRMADA", ator=idOrganizador)
+        CTRL-)P: notificarContratacaoConfirmada(idReserva)
+        CTRL-->>UI: confirmacaoSucesso
+        UI-->>O: Apresenta voucher/comprovante com status CONFIRMADA
+    end
+
+    %% ========================================================
+    %% ETAPA 4: ENCERRAMENTO AUTOMÁTICO
+    %% ========================================================
+    rect rgb(248, 248, 255)
+        note over SYS, BD: Etapa 4: Finalização Automática Pós-Evento (RF16, RN05)
+        SYS->>SYS: Executa rotina periódica (cron job)
+        SYS->>BD: buscarReservasConfirmadasExpiradas(dataAtual > dataFim)
+        BD-->>SYS: listaReservasFinalizaveis
+
+        loop Para cada reserva elegível
+            SYS->>BD: atualizarStatus(idReserva, "FINALIZADA")
+            SYS->>BD: registrarHistorico(idReserva, anterior="CONFIRMADA", novo="FINALIZADA", ator=null, motivo="Encerramento automático pós-evento")
+            SYS-)O: habilitarAvaliacaoServico(idReserva)
+        end
+    end

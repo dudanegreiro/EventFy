@@ -126,11 +126,14 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
 | Tema | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e alinhamento com a disciplina |
+| Descoberta | [`DESCOBERTA.md`](./DESCOBERTA.md) | Problema, partes interessadas, personas, necessidades N1..N5 e riscos |
+| Processo de Desenvolvimento | [`PROCESSO.md`](./PROCESSO.md) | Fatores de Boehm & Turner, iterações de 2 semanas, papéis e Definição de Pronto |
 | Processos de Negócio | [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Especificação detalhada dos processos de negócio e máquina de estados |
 | Modelagem | [`docs/diagrams/`](./docs/diagrams) | Domínio, dados, estados da reserva e sequência UML |
 | Protótipo | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
 | Conferência cruzada | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Registro da conferência entre os diferentes artefatos do projeto |
-| Contribuição | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Orientações relacionadas ao processo de contribuição e organização |
+| Contribuição | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Orientações de contribuição, revisão e critérios de qualidade |
+| Registro de Mudanças | [`CHANGELOG.md`](./CHANGELOG.md) | Histórico de versões e notas de lançamento (SemVer) |
 
 ---
 
@@ -192,13 +195,16 @@ Quando a implementação estiver disponível, esta seção deverá conter:
 | Documento | Descrição |
 |---|---|
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
-| [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos e regras de negócio |
+| [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos, backlog ordenado e critérios |
 | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e verificação |
+| [`DESCOBERTA.md`](./DESCOBERTA.md) | Descoberta do problema, stakeholders, personas e riscos |
+| [`PROCESSO.md`](./PROCESSO.md) | Processo de desenvolvimento, fatores de Boehm & Turner e DoD |
 | [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Processos de negócio e máquina de estados |
-| [`docs/diagrams/`](./docs/diagrams) | Diagramas e modelos conceituais, relacionais e comportamentais |
-| [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Conferência entre os artefatos |
-| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Processo de contribuição |
-| [`prototipo/`](./prototipo) | Protótipo da aplicação |
+| [`docs/diagrams/`](./docs/diagrams) | Diagramas conceituais, relacionais e comportamentais (.mmd) |
+| [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Conferência cruzada formal entre artefatos |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Processo de contribuição e diretrizes de revisão |
+| [`CHANGELOG.md`](./CHANGELOG.md) | Registro de mudanças e versionamento semântico |
+| [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
 
 ---
 

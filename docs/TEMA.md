@@ -121,27 +121,26 @@ Limites deste tema, para evitar crescimento de escopo (ver também [`PROJETO.md`
 
 ## 3. Verificação contra a Tabela 1.5
 
-> ⚠️ **Pendente.** Os critérios da Tabela 1.5 (Aula 1) fazem parte do material da disciplina e não estão no repositório. Copie cada critério para a coluna da esquerda, **exatamente como está escrito na tabela**, e preencha as demais colunas com honestidade. Se um critério não for atendido, marque ❌ e registre na seção 3.2, em vez de forçar um "sim".
+Abaixo apresenta-se a verificação explícita do tema **EventFy** contra os seis critérios para escolha do tema definidos na **Tabela 1.5** do livro-texto da disciplina (p. 29–30).
 
 ### 3.1 Verificação
 
 Legenda: ✅ atende · 🟡 atende em parte · ❌ não atende
 
-| # | Critério (Tabela 1.5) | Atende? | Evidência no repositório | Observação |
+| # | Critério (Tabela 1.5 do livro) | Atende? | Evidência no repositório | Observação |
 |---|---|:---:|---|---|
-| 1 | *(colar critério)* | | | |
-| 2 | *(colar critério)* | | | |
-| 3 | *(colar critério)* | | | |
-| 4 | *(colar critério)* | | | |
-| 5 | *(colar critério)* | | | |
+| 1 | **Usuário real e acessível**<br>*(Elicitação e validação exigem alguém para conversar; usuário imaginário produz requisito imaginário)* | ✅ | Seção 1 deste documento, [`REQUISITOS.md`](./REQUISITOS.md) e [`DESCOBERTA.md`](../DESCOBERTA.md) | Organizadores de eventos locais autônomos e pequenos fornecedores de Palmas–TO (espaço, som, buffet) acessíveis para entrevistas e testes do protótipo. |
+| 2 | **Regra de negócio, e não apenas cadastro**<br>*(Sem regra, não há o que modelar, decidir nem testar de forma interessante)* | ✅ | [`REQUISITOS.md`](./REQUISITOS.md) (RN01 a RN07), [`PROJETO.md`](./PROJETO.md) (Seção 13) e [`diagrams/estados-reserva.md`](./diagrams/estados-reserva.md) | O sistema possui regras críticas de domínio: bloqueio de colisão de datas (RN06/RNF02), máquina de estados estrita com 8 estados (RN05), obrigatoriedade de motivo em recusa (RN04) e auditoria imutável (RN07). |
+| 3 | **Dado que justifique persistência**<br>*(Consulta, alteração e histórico são o que exercita modelagem e camada de dados)* | ✅ | [`diagrams/modelo-dados.md`](./diagrams/modelo-dados.md) e [`PROJETO.md`](./PROJETO.md) (Seção 8 e 10) | Persistência com integridade relacional, histórico de auditoria imutável (`HISTORICO_RESERVA`), controle de agenda (`DISPONIBILIDADE_SERVICO`) e exclusão lógica (`ativo`). |
+| 4 | **Escopo cabível em um semestre**<br>*(O objetivo é atravessar o ciclo inteiro, não construir o sistema mais ambicioso)* | ✅ | Seção 2.4 deste documento e [`PROJETO.md`](./PROJETO.md) (Seção 5) | Escopo estritamente delimitado no fluxo de ponta a ponta (solicitar, analisar, aprovar/recusar, confirmar). Pagamentos e gestão de convidados foram declarados fora de escopo. |
+| 5 | **Sem dependência de acesso incerto**<br>*(Integração que depende de credencial ou autorização externa costuma inviabilizar o projeto no meio do caminho)* | ✅ | [`PROJETO.md`](./PROJETO.md) (Seção 16.1, D-05) e [`DESCOBERTA.md`](../DESCOBERTA.md) | O sistema funciona de forma autônoma sem depender de homologações burocráticas de APIs bancárias ou órgãos externos. |
+| 6 | **Sem dado pessoal sensível**<br>*(Coletar menos evita risco que a equipe ainda não tem repertório para tratar)* | ✅ | [`REQUISITOS.md`](./REQUISITOS.md) (RF01) e [`diagrams/modelo-dados.md`](./diagrams/modelo-dados.md) | O EventFy coleta apenas dados cadastrais estritamente necessários para contato e operação (nome, e-mail comercial, telefone). Nenhum dado sensível (LGPD art. 5º, II) é coletado. |
 
-*(Acrescentar linhas conforme o número de critérios da tabela.)*
+### 3.2 Lacunas e Ações
 
-### 3.2 Lacunas encontradas
-
-| Critério | Lacuna | Ação | Responsável | Prazo |
+| Critério | Situação | Ação mitigadora | Responsável | Prazo |
 |---|---|---|---|---|
-| | | | | |
+| Validação de campo com usuário real | Hipótese estruturada | Realizar sessão presencial/WhatsApp com roteiro da Seção 1.3 para confirmar premissas de tempo e atrito de agenda | Equipe | Iteração 2 |
 
 ### 3.3 Evidências disponíveis para citar
 
