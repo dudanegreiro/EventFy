@@ -80,7 +80,7 @@ A proposta contempla, entre outras atividades:
 - Acompanhamento do estado das reservas
 - Gerenciamento dos serviços associados a um evento
 
-> O funcionamento detalhado dessas funcionalidades está especificado no documento de requisitos do projeto: [`REQUISITOS.md`](./REQUISITOS.md).
+> O funcionamento detalhado dessas funcionalidades está especificado no documento de requisitos do projeto: [`REQUISITOS.md`](./docs/REQUISITOS.md).
 
 ---
 
@@ -113,7 +113,7 @@ As principais funcionalidades previstas para o EventFy incluem:
 - [ ] **Cancelamento** — cancelamento de reservas de acordo com as regras de negócio definidas
 - [ ] **Avaliação** — avaliação de serviços após a conclusão de uma contratação *(caso permaneça no escopo da versão atual)*
 
-> Os detalhes e critérios de cada funcionalidade estão documentados em [`REQUISITOS.md`](./REQUISITOS.md).
+> Os detalhes e critérios de cada funcionalidade estão documentados em [`REQUISITOS.md`](./docs/REQUISITOS.md).
 
 ---
 
@@ -125,6 +125,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 |---|---|---|
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
+| Tema | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e alinhamento com a disciplina |
 | Processos de Negócio | [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Especificação detalhada dos processos de negócio e máquina de estados |
 | Modelagem | [`docs/diagrams/`](./docs/diagrams) | Domínio, dados, estados da reserva e sequência UML |
 | Protótipo | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
@@ -192,6 +193,7 @@ Quando a implementação estiver disponível, esta seção deverá conter:
 |---|---|
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
 | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos e regras de negócio |
+| [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e verificação |
 | [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Processos de negócio e máquina de estados |
 | [`docs/diagrams/`](./docs/diagrams) | Diagramas e modelos conceituais, relacionais e comportamentais |
 | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Conferência entre os artefatos |

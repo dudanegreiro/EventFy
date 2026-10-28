@@ -5,6 +5,7 @@ Este pacote contém os artefatos preparados para a etapa descrita no enunciado:
 - `PROJETO.md` — consolidação da modelagem, decisões, responsabilidades e conferência;
 - `REQUISITOS.md` — requisitos e regras de negócio consolidados;
 - `PROCESSOS-NEGOCIO.md` — mapeamento detalhado dos processos reconciliado com requisitos e estados;
+- `TEMA.md` — contextualização do tema, problemas, usuários e verificação;
 - `diagrams/modelo-dominio.md` — modelo de domínio conceitual e estruturação de disponibilidade;
 - `diagrams/modelo-dados.md` — modelo de dados relacional derivado com histórico e integridade;
 - `diagrams/estados-reserva.md` — diagrama de estados da Reserva (máquina de estados completa);
