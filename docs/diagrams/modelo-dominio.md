@@ -59,10 +59,12 @@ Um usuário pode atuar como organizador de eventos ou como prestador/fornecedor 
 - O usuário deve possuir um tipo definido.
 - Usuários desativados não devem realizar operações que exijam uma conta ativa.
 - A senha não deve ser armazenada em texto puro.
+- O cadastro público permite os papéis Organizador ou Prestador; o papel Administrador é provisionado pela equipe.
+- Somente o Administrador pode desativar/reativar contas e moderar publicações; não pode operar reservas em nome das partes.
 
 #### Requisitos relacionados
 
-`RF01` · `RF02` · `RF03` · `RNF01` · `RNF04`
+`RF01` · `RF02` · `RF03` · `RF20` · `RNF01` · `RNF04` · `RNF07`
 
 ---
 
@@ -89,12 +91,12 @@ Um evento pertence a um único organizador.
 - Um evento deve possuir um único organizador responsável.
 - A data de início não pode ser posterior à data de término.
 - O organizador somente pode gerenciar eventos sob sua responsabilidade.
-- Alterações ou cancelamento de eventos com reservas devem disparar o tratamento das reservas associadas.
+- Com reservas ativas, o organizador pode alterar dados descritivos, mas não o período ou local; não pode excluir/desativar o evento.
 - Eventos com histórico de reservas não são excluídos fisicamente, apenas desativados logicamente (`ativo = false`).
 
 #### Requisitos relacionados
 
-`RF09` · `RF15` · `RN01` · `RNF06`
+`RF09` · `RF15` · `RN01` · `RN10` · `RNF06` · `RNF07`
 
 ---
 
@@ -120,10 +122,12 @@ Representa um serviço ou estrutura disponibilizado por um prestador ou forneced
 - A desativação de um serviço não deve eliminar seu histórico nem reservas passadas.
 - O preço deve possuir valor válido não negativo.
 - A disponibilidade do serviço é gerenciada por períodos e bloqueios estruturados (`DisponibilidadeServico`).
+- Com reservas ativas, alterações de preço, disponibilidade e condições de atendimento, bem como a desativação, são bloqueadas; alterações descritivas são permitidas.
+- A moderação administrativa pode ocultar a publicação para novas buscas, sem cancelar ou alterar reservas existentes.
 
 #### Requisitos relacionados
 
-`RF04` · `RF05` · `RF06` · `RF07` · `RF08` · `RN02` · `RN06`
+`RF04` · `RF05` · `RF06` · `RF07` · `RF08` · `RF19` · `RF20` · `RN02` · `RN06` · `RN11` · `RN13` · `RNF07`
 
 ---
 
@@ -175,11 +179,12 @@ O conteúdo binário do arquivo é armazenado em serviço externo/storage, enqua
 
 - Um arquivo deve estar associado a um serviço.
 - A URL deve permitir localizar o arquivo armazenado.
+- Somente JPEG, PNG, WebP, PDF e DOCX são aceitos, com tamanho máximo de 10 MB (10.000.000 bytes); tipo MIME e tamanho são validados no envio.
 - Arquivos desvinculados sofrem exclusão lógica antes de qualquer purga física de storage.
 
 #### Requisitos relacionados
 
-`RF04` · `RF07` · `RF08` · `RNF06`
+`RF04` · `RF07` · `RF08` · `RF19` · `RF20` · `RNF06` · `RNF07`
 
 ---
 
@@ -219,14 +224,14 @@ Uma reserva deve estar relacionada a:
 - Somente o prestador responsável pode analisar, aprovar ou recusar a solicitação.
 - Uma recusa exige um motivo obrigatório.
 - Uma reserva aprovada pode ser confirmada pelo organizador responsável.
-- Cancelamentos podem ocorrer a partir de `SOLICITADA`, `EM_ANALISE`, `APROVADA` e `CONFIRMADA` por atores autorizados.
+- O organizador pode cancelar em `SOLICITADA`, `EM_ANALISE`, `APROVADA` e `CONFIRMADA`; o prestador pode cancelar em `CONFIRMADA`, sempre antes do início do evento e com justificativa registrada no histórico.
 - Reservas sem resposta ou sem confirmação dentro do prazo expiram automaticamente (`EXPIRADA`).
 - Reservas confirmadas são concluídas após o término do período (`FINALIZADA`), executada pelo sistema.
 - O cancelamento ou encerramento não remove fisicamente a reserva.
 
 #### Requisitos relacionados
 
-`RF10` · `RF11` · `RF12` · `RF13` · `RF14` · `RF16` · `RF18` · `RN03` · `RN04` · `RN05` · `RN06` · `RN07` · `RNF02` · `RNF05` · `RNF06`
+`RF10` · `RF11` · `RF12` · `RF13` · `RF14` · `RF16` · `RF18` · `RN03` · `RN04` · `RN05` · `RN06` · `RN07` · `RN09` · `RNF02` · `RNF05` · `RNF06` · `RNF07`
 
 ---
 
@@ -273,7 +278,6 @@ Representa uma avaliação realizada pelo organizador após a conclusão da cont
 |---|---|
 | id | Identificador único da avaliação |
 | nota | Nota inteira atribuída ao serviço (ex.: 1 a 5) |
-| comentario | Comentário textual da avaliação |
 | criadaEm | Data e hora da avaliação (DATETIME) |
 
 #### Regras
@@ -281,6 +285,7 @@ Representa uma avaliação realizada pelo organizador após a conclusão da cont
 - A avaliação deve estar vinculada a uma reserva em estado `FINALIZADA`.
 - Somente o organizador responsável pela contratação pode avaliar.
 - Cada reserva finalizada pode possuir no máximo uma avaliação (1 : 0..1).
+- A nota deve ser um valor inteiro entre 1 e 5; não há campo de comentário.
 
 #### Requisitos relacionados
 
@@ -344,7 +349,7 @@ stateDiagram-v2
 | `APROVADA` | O prestador aceitou a solicitação de reserva. |
 | `RECUSADA` | O prestador rejeitou a solicitação, registrando obrigatoriamente a justificativa. |
 | `CONFIRMADA` | O organizador validou a proposta aprovada, fixando o compromisso de contratação. |
-| `CANCELADA` | A reserva foi descontinuada por iniciativa do organizador ou prestador, respeitados prazos. |
+| `CANCELADA` | A reserva foi cancelada com justificativa pelo organizador ou prestador autorizado antes do início do evento. |
 | `EXPIRADA` | O sistema cancelou a reserva por decurso de prazo sem resposta de uma das partes. |
 | `FINALIZADA` | O serviço foi prestado e o período de contratação encerrou-se. Habilita avaliação. |
 
@@ -356,17 +361,17 @@ stateDiagram-v2
 |---|---|---|---|
 | `[*]` | `SOLICITADA` | Organizador | Solicitação enviada com evento, serviço e período válidos |
 | `SOLICITADA` | `EM_ANALISE` | Prestador | Prestador acessa e abre a solicitação |
-| `SOLICITADA` | `CANCELADA` | Organizador | Desistência antes do início da análise |
-| `SOLICITADA` | `EXPIRADA` | Sistema | Prazo limite sem abertura da análise pelo prestador (ex.: 48h) |
+| `SOLICITADA` | `CANCELADA` | Organizador | Antes do início do evento e com justificativa registrada |
+| `SOLICITADA` | `EXPIRADA` | Sistema | 48 horas sem início da análise |
 | `EM_ANALISE` | `APROVADA` | Prestador | Prestador aceita atender ao serviço no período |
 | `EM_ANALISE` | `RECUSADA` | Prestador | Prestador rejeita e informa justificativa obrigatória |
-| `EM_ANALISE` | `CANCELADA` | Organizador | Desistência do solicitante durante a análise |
-| `EM_ANALISE` | `EXPIRADA` | Sistema | Prazo limite de análise excedido sem parecer do prestador |
+| `EM_ANALISE` | `CANCELADA` | Organizador | Antes do início do evento e com justificativa registrada |
+| `EM_ANALISE` | `EXPIRADA` | Sistema | 48 horas sem decisão do prestador |
 | `APROVADA` | `CONFIRMADA` | Organizador | Organizador confirma a contratação |
-| `APROVADA` | `CANCELADA` | Organizador | Desistência do solicitante antes da confirmação |
-| `APROVADA` | `EXPIRADA` | Sistema | Organizador não confirma dentro da janela de tolerância |
+| `APROVADA` | `CANCELADA` | Organizador | Antes da confirmação e do início do evento, com justificativa registrada |
+| `APROVADA` | `EXPIRADA` | Sistema | 48 horas sem confirmação do organizador |
 | `CONFIRMADA` | `FINALIZADA` | Sistema | Execução automática por rotina após transcurso da `dataFim` |
-| `CONFIRMADA` | `CANCELADA` | Organizador / Prestador | Cancelamento motivado conforme prazos de tolerância da política |
+| `CONFIRMADA` | `CANCELADA` | Organizador / Prestador | Antes do início do evento e com justificativa registrada no histórico |
 
 Nenhuma outra transição é permitida pelo sistema.
 
@@ -449,7 +454,6 @@ classDiagram
     class Avaliacao {
         +int id
         +int nota
-        +string comentario
         +datetime criadaEm
     }
 ```
@@ -467,19 +471,20 @@ classDiagram
 | **Arquivo** | RF04, RF07, RF08 | RNF04, RNF06 | RN02 | Metadados e links para mídias associadas aos serviços em catálogo. |
 | **Reserva** | RF10, RF11, RF12, RF13, RF14, RF16, RF18 | RNF02, RNF03, RNF04, RNF05, RNF06 | RN03, RN04, RN05, RN06, RN07 | Objeto central de contratação que transita pela máquina de estados. |
 | **HistoricoReserva** | RF18 | RNF04, RNF05 | RN07 | Trilha imutável de auditoria e registro temporal de cada transição de estado. |
-| **Avaliacao** | RF17 | RNF04, RNF06 | RN05 | Feedback qualitativo e nota pós-prestação do serviço finalizado. |
+| **Avaliacao** | RF17 | RNF04, RNF06, RNF07 | RN05, RN12 | Nota de 1 a 5 após a prestação do serviço finalizado, sem comentário. |
 
 ---
 
 ## 8. Decisões e pontos resolvidos/pendentes
 
-- **DP01 — Papéis de usuário:** Modelado por atributo `tipo` com especialização em regras de serviço, evitando fragmentação prematura de tabelas.
+- **DP01 — Papéis de usuário (RESOLVIDO):** Organizador e Prestador podem se cadastrar; o Administrador é provisionado pela equipe e possui permissões próprias.
 - **DP02 — Disponibilidade estruturada (RESOLVIDO):** Resolvido pela entidade `DisponibilidadeServico`, substituindo texto livre por intervalos tipados com checagem relacional.
-- **DP03 — Regras de cancelamento e expiração (RESOLVIDO):** Modelado com cancelamento permitido a partir de `SOLICITADA`, `EM_ANALISE`, `APROVADA` e `CONFIRMADA`, além de expiração por inatividade `EXPIRADA`.
-- **DP04 — Perfil administrador:** Mantido no escopo de acesso como moderador/auditor condicionado.
-- **DP05 — Formato da avaliação:** Nota numérica de 1 a 5 e comentário textual opcional, vinculada a reserva `FINALIZADA`.
+- **DP03 — Regras de cancelamento e expiração (RESOLVIDO):** Organizador cancela nos estados permitidos antes do início do evento; prestador cancela reservas `CONFIRMADA`. A justificativa é obrigatória e registrada.
+- **DP04 — Perfil administrador (RESOLVIDO):** Pode gerenciar contas e moderar serviços/conteúdos publicados, sem operar reservas das partes.
+- **DP05 — Formato da avaliação (RESOLVIDO):** Nota numérica inteira de 1 a 5, sem comentário, vinculada a reserva `FINALIZADA`.
 - **DP06 — Armazenamento do histórico (RESOLVIDO):** Resolvido via entidade relacional imutável `HistoricoReserva`.
-- **DP07/DP08 — Regras de alteração de eventos e serviços com reservas:** Alterações não afetam contratos já aprovados/confirmados sem notificação e recálculo de disponibilidade.
+- **DP07 — Alteração de eventos (RESOLVIDO):** Com reserva ativa, período/local não podem mudar e o evento não pode ser desativado; dados descritivos podem mudar.
+- **DP08 — Alteração de serviços (RESOLVIDO):** Com reserva ativa, preço/disponibilidade/condições não podem mudar e o serviço não pode ser desativado; dados descritivos podem mudar.
 
 ---
 
@@ -496,4 +501,3 @@ flowchart TD
     C --> F[Diagrama de Sequência]
     D --> G[Protótipo e Implementação]
 ```
-

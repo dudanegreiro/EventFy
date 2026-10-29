@@ -111,7 +111,7 @@ Usuário responsável por disponibilizar serviços ou estruturas na plataforma:
 
 ### 4.3 Administrador
 
-Perfil responsável pela moderação de catálogo, mediação de disputas operacionais e auditoria de histórico.
+Perfil provisionado pela equipe responsável, com permissão para desativar/reativar contas e ocultar/restaurar publicações no catálogo. A moderação não altera reservas existentes, e o administrador não pode executar ações de reserva em nome de organizadores ou prestadores.
 
 ---
 
@@ -123,6 +123,8 @@ Perfil responsável pela moderação de catálogo, mediação de disputas operac
 - Autenticação e controle de sessão por perfil
 - Gerenciamento completo de eventos
 - Cadastro, edição e desativação lógica de serviços
+- Anexos de imagens JPEG/PNG/WebP e documentos PDF/DOCX de até 10 MB por serviço
+- Gerenciamento de contas e moderação de publicações pelo administrador
 - Gestão estruturada de disponibilidade e bloqueios de agenda
 - Consulta, busca e filtragem avançada de serviços
 - Solicitação de reservas
@@ -133,7 +135,7 @@ Perfil responsável pela moderação de catálogo, mediação de disputas operac
 - Expiração automática de solicitações sem resposta por SLA
 - Conclusão automática de serviços pelo sistema
 - Auditoria e histórico imutável de transições de reserva
-- Avaliação qualitativa e nota após a finalização do serviço
+- Avaliação com nota inteira de 1 a 5 após a finalização do serviço, sem comentário
 
 ### 5.2 Fora do escopo definido
 
@@ -156,7 +158,7 @@ As entidades que compõem o núcleo conceitual do EventFy são:
 | **Arquivo** | Metadados e URIs de imagens e documentos anexados aos serviços em catálogo. |
 | **Reserva** | Objeto central do domínio, representando o contrato e ciclo de vida da prestação do serviço. |
 | **HistoricoReserva** | Registro imutável de auditoria de cada transição de estado da reserva (RF18, RNF05). |
-| **Avaliacao** | Registro de nota e comentário realizado pelo organizador pós-finalização da reserva. |
+| **Avaliacao** | Registro de nota inteira de 1 a 5 realizado pelo organizador após a finalização da reserva, sem comentário. |
 
 > O modelo de domínio completo está detalhado em [`diagrams/modelo-dominio.md`](./diagrams/modelo-dominio.md).
 
@@ -178,12 +180,12 @@ Em conformidade com a técnica de análise léxica (Abbott / OO Analysis — Aul
 | **Arquivo / Foto / Mídia** | **Classe de Domínio** | `Arquivo` armazena metadados de anexos armazenados em storage externo. |
 | **Reserva** | **Classe de Domínio** | Objeto central do fluxo de negócio que transita pelos estados da máquina de estados. |
 | **Histórico / Log de Transição** | **Classe de Domínio** | `HistoricoReserva` garante auditoria temporal e imutabilidade dos estados percorridos. |
-| **Avaliação** | **Classe de Domínio** | Registra nota e comentário gerados após a finalização de uma reserva. |
+| **Avaliação** | **Classe de Domínio** | Registra uma nota de 1 a 5 após a finalização de uma reserva. |
 | **Nome, Email, Senha** | Atributos de Classe | Atributos da classe `Usuario`. |
 | **Preço, Categoria, Descrição** | Atributos de Classe | Atributos da classe `Servico`. |
 | **Data de Início, Data de Fim** | Atributos de Classe | Atributos temporais de `Evento`, `Reserva` e `DisponibilidadeServico`. |
 | **Status / Motivo de Recusa** | Atributos de Classe | Atributos da classe `Reserva` e replicados em `HistoricoReserva`. |
-| **Nota, Comentário** | Atributos de Classe | Atributos da classe `Avaliacao`. |
+| **Nota** | Atributo de Classe | Atributo da classe `Avaliacao`. |
 | **Pagamento / Gateway** | Fora do Escopo | Não modelado como classe nesta iteração. |
 
 ---
@@ -197,7 +199,8 @@ Em conformidade com a técnica de análise léxica (Abbott / OO Analysis — Aul
 
 #### 6.3.2 Decisão sobre a Entidade Avaliação
 - **Decisão:** A entidade `Avaliacao` é vinculada com cardinalidade estrita `1 : 0..1` à classe `Reserva`, e não diretamente a `Servico` de forma descolada.
-- **Justificativa da Decisão:** Uma avaliação somente pode ser submetida quando a respectiva reserva alcançar o estado `FINALIZADA` e pelo organizador titular do contrato. Essa restrição elimina avaliações fraudulentas, avaliações duplicadas ou comentários de usuários que não experimentaram a prestação real do serviço.
+- **Formato:** Nota inteira de 1 a 5, sem comentário textual.
+- **Justificativa da Decisão:** Uma avaliação somente pode ser submetida quando a respectiva reserva alcançar o estado `FINALIZADA` e pelo organizador titular do contrato. A cardinalidade impede avaliações duplicadas ou de usuários que não experimentaram a prestação real do serviço.
 
 ---
 
@@ -207,14 +210,14 @@ Esta tabela consolida e unifica a matriz de rastreabilidade do projeto (`PROJETO
 
 | Classe / Elemento do Domínio | Requisitos Funcionais | Requisitos Não Funcionais | Regras de Negócio | Diagramas e Modelos Derivados |
 |---|---|---|---|---|
-| **Usuario** | RF01, RF02, RF03 | RNF01, RNF04 | RN01, RN02 | `modelo-dados.md` (`USUARIO`), Protótipo (login/cadastro), CRC 15.1 |
-| **Evento** | RF09, RF15 | RNF04, RNF06 | RN01 | `modelo-dados.md` (`EVENTO`), Protótipo, CRC 15.1 |
-| **Servico** | RF04, RF05, RF06, RF07, RF08 | RNF04, RNF06 | RN02, RN06 | `modelo-dados.md` (`SERVICO`), Protótipo (catálogo/detalhe), CRC 15.1 |
+| **Usuario** | RF01, RF02, RF03, RF20 | RNF01, RNF04, RNF07 | RN01, RN02, RN13 | `modelo-dados.md` (`USUARIO`), Protótipo (login/cadastro), CRC 15.1 |
+| **Evento** | RF09, RF15 | RNF04, RNF06, RNF07 | RN01, RN10 | `modelo-dados.md` (`EVENTO`), Protótipo, CRC 15.1 |
+| **Servico** | RF04, RF05, RF06, RF07, RF08, RF19, RF20 | RNF04, RNF06, RNF07 | RN02, RN06, RN11, RN13 | `modelo-dados.md` (`SERVICO`), Protótipo (catálogo/detalhe), CRC 15.1 |
 | **DisponibilidadeServico** | RF04, RF07, RF10 | RNF02, RNF04 | RN06 | `modelo-dados.md` (`DISPONIBILIDADE_SERVICO`), `sequencia-reserva.md`, Decisão DP02, CRC 15.1 |
-| **Arquivo** | RF04, RF07, RF08 | RNF04, RNF06 | RN02 | `modelo-dados.md` (`ARQUIVO`), Decisão D07, CRC 15.1 |
-| **Reserva** | RF10, RF11, RF12, RF13, RF14, RF16, RF18 | RNF02, RNF03, RNF04, RNF05, RNF06 | RN03, RN04, RN05, RN06, RN07 | `modelo-dados.md` (`RESERVA`), `estados-reserva.md`, `sequencia-reserva.md`, Protótipo, CRC 15.1 |
+| **Arquivo** | RF04, RF07, RF08, RF19 | RNF04, RNF06, RNF07 | RN02 | `modelo-dados.md` (`ARQUIVO`), Decisão D07, CRC 15.1 |
+| **Reserva** | RF10, RF11, RF12, RF13, RF14, RF16, RF18 | RNF02, RNF03, RNF04, RNF05, RNF06, RNF07 | RN03, RN04, RN05, RN06, RN07, RN09 | `modelo-dados.md` (`RESERVA`), `estados-reserva.md`, `sequencia-reserva.md`, Protótipo, CRC 15.1 |
 | **HistoricoReserva** | RF18 | RNF04, RNF05 | RN07 | `modelo-dados.md` (`HISTORICO_RESERVA`), `estados-reserva.md`, `sequencia-reserva.md`, CRC 15.1 |
-| **Avaliacao** | RF17 | RNF04, RNF06 | RN05 | `modelo-dados.md` (`AVALIACAO`), `sequencia-reserva.md`, CRC 15.1 |
+| **Avaliacao** | RF17 | RNF04, RNF06, RNF07 | RN05, RN12 | `modelo-dados.md` (`AVALIACAO`), `sequencia-reserva.md`, CRC 15.1 |
 
 A cadeia de rastreabilidade adotada pela equipe garante que:
 ```
@@ -236,7 +239,7 @@ As tabelas do modelo de dados são:
 - `ARQUIVO` — Metadados técnicos e links externos de mídias anexadas
 - `RESERVA` — Registro das contratações, status atual e flag ativo
 - `HISTORICO_RESERVA` — Tabela relacional de auditoria imutável (RF18, RNF05)
-- `AVALIACAO` — Registro de notas e comentários vinculados a reservas concluídas
+- `AVALIACAO` — Registro de notas inteiras de 1 a 5 vinculadas a reservas concluídas
 
 > O modelo físico/relacional completo com diagramas entidade-relacionamento está documentado em [`diagrams/modelo-dados.md`](./diagrams/modelo-dados.md).
 
@@ -265,13 +268,13 @@ Para garantir a integridade referencial e o cumprimento dos requisitos de audito
 Usuários com histórico de contratações, serviços ofertados ou eventos cadastrados têm a coluna `ativo` ajustada para `false`. Isso impede novos acessos e operações sem corromper contratos passados.
 
 ### 10.2 Serviços
-Serviços desativados pelo prestador têm `ativo = false`. O serviço é removido do catálogo e bloqueado para novas reservas, preservando o histórico das contratações já firmadas.
+Serviços desativados pelo prestador têm `ativo = false`. Enquanto houver reserva ativa, o prestador não pode desativar o serviço nem alterar preço, disponibilidade ou condições de atendimento; alterações descritivas são permitidas. O administrador pode ocultar a publicação para novas buscas sem cancelar ou alterar reservas existentes.
 
 ### 10.3 Reservas
 Reservas canceladas, recusadas ou finalizadas permanecem intactas no banco (`ativo = false` ou status terminal). O rastreamento de suas transições é preservado para sempre em `HISTORICO_RESERVA`.
 
 ### 10.4 Eventos
-Eventos cancelados ou arquivados recebem `ativo = false`. As reservas vinculadas são tratadas automaticamente pelas regras da máquina de estados.
+Eventos sem reservas ativas podem ser desativados logicamente (`ativo = false`). Enquanto houver reserva em `SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`, o evento não pode ser desativado nem ter período ou local alterados.
 
 ### 10.5 Disponibilidade e Bloqueios
 Períodos de disponibilidade removidos ou invalidados recebem `ativo = false`, garantindo rastreabilidade histórica sobre a agenda pregressa do prestador.
@@ -296,7 +299,8 @@ Todos os registros temporais utilizam tipos tipados no SGBD, eliminando represen
 
 Conforme decisão **D07**, o sistema desacopla o armazenamento binário de arquivos da base de dados relacional:
 
-- **Storage Externo:** Objetos binários (imagens de serviços, PDFs) são gravados em storage de objetos ou sistema de arquivos com URL estática gerada.
+- **Tipos e limite:** Imagens JPEG/PNG/WebP e documentos PDF/DOCX são aceitos até 10 MB (10.000.000 bytes) por arquivo; o tipo MIME e o tamanho são validados no envio.
+- **Storage Externo:** Objetos binários são gravados em storage de objetos ou sistema de arquivos com URL gerada.
 - **Metadados Relacionais:** A tabela `ARQUIVO` mantém apenas os metadados (`nome_original`, `url`, `tipo_mime`, `tamanho`, `ativo`, `criado_em`), evitando inchaço e degradação de performance no banco de dados.
 
 ---
@@ -311,19 +315,19 @@ stateDiagram-v2
 
     SOLICITADA --> EM_ANALISE : [Prestador] Inicia análise
     SOLICITADA --> CANCELADA : [Organizador] Cancela solicitação
-    SOLICITADA --> EXPIRADA : [Sistema] Prazo limite sem abertura da análise
+    SOLICITADA --> EXPIRADA : [Sistema] 48h sem início da análise
 
     EM_ANALISE --> APROVADA : [Prestador] Aprova solicitação
     EM_ANALISE --> RECUSADA : [Prestador] Recusa com motivo obrigatório
     EM_ANALISE --> CANCELADA : [Organizador] Cancela durante a análise
-    EM_ANALISE --> EXPIRADA : [Sistema] Prazo limite de análise excedido
+    EM_ANALISE --> EXPIRADA : [Sistema] 48h sem decisão
 
     APROVADA --> CONFIRMADA : [Organizador] Confirma contratação
     APROVADA --> CANCELADA : [Organizador] Cancela antes da confirmação
-    APROVADA --> EXPIRADA : [Sistema] Prazo de confirmação expirado
+    APROVADA --> EXPIRADA : [Sistema] 48h sem confirmação
 
     CONFIRMADA --> FINALIZADA : [Sistema] Conclusão automática após data_fim
-    CONFIRMADA --> CANCELADA : [Organizador/Prestador] Conforme política de prazos
+    CONFIRMADA --> CANCELADA : [Organizador/Prestador] Com justificativa antes do início do evento
 
     RECUSADA --> [*]
     CANCELADA --> [*]
@@ -336,8 +340,8 @@ stateDiagram-v2
 2. **Análise:** O Prestador abre a solicitação (`EM_ANALISE`).
 3. **Aprovação / Recusa:** O Prestador pode aprovar (`APROVADA`) ou recusar informando motivo (`RECUSADA`).
 4. **Confirmação:** O Organizador confirma a proposta aprovada (`CONFIRMADA`).
-5. **Cancelamento:** O Organizador pode cancelar em `SOLICITADA`, `EM_ANALISE` ou `APROVADA`. Ambas as partes podem cancelar em `CONFIRMADA` respeitando as políticas de prazo.
-6. **Expiração:** O **Sistema** altera compulsoriamente para `EXPIRADA` quando prazos limites de atendimento ou confirmação forem ultrapassados.
+5. **Cancelamento:** O organizador pode cancelar em `SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`; o prestador pode cancelar em `CONFIRMADA`. A ação exige justificativa e ocorre antes do início do evento.
+6. **Expiração:** O **Sistema** altera para `EXPIRADA` após 48 horas sem ação desde a entrada em `SOLICITADA`, `EM_ANALISE` ou `APROVADA`.
 7. **Finalização:** O **Sistema** altera automaticamente para `FINALIZADA` assim que a `data_fim` do contrato for atingida, liberando a avaliação.
 
 > O detalhamento completo com matriz de transições e garantias está documentado em [`diagrams/estados-reserva.md`](./diagrams/estados-reserva.md).
@@ -348,9 +352,12 @@ stateDiagram-v2
 
 Durante as atividades de modelagem e consistência da Aula 6, foram solucionadas as lacunas identificadas nas iterações anteriores:
 
-- **Disponibilidade Estruturada (DP02 — RESOLVIDO):** O antigo atributo `varchar disponibilidade` foi substituído pela entidade relacional `DisponibilidadeServico`, permitindo registrar múltiplos intervalos de atendimento e bloqueios com suporte a consultas de sobreposição.
+- **Papéis e permissões (DP01/DP04 — RESOLVIDOS):** Organizador e prestador são papéis de usuário; o administrador é provisionado pela equipe e pode gerenciar contas e ocultar/restaurar publicações para novas buscas, sem alterar reservas existentes ou operar reservas das partes.
+- **Disponibilidade Estruturada (DP02 — RESOLVIDO):** O antigo atributo `varchar disponibilidade` foi substituído pela entidade relacional `DisponibilidadeServico`, permitindo registrar múltiplos intervalos de atendimento, bloqueios e pré-bloqueios com suporte a consultas de sobreposição.
 - **Histórico e Auditoria da Reserva (DP06 — RESOLVIDO):** Implementada a tabela relacional imutável `HISTORICO_RESERVA`, garantindo conformidade com RF18 e RNF05.
-- **Cancelamento Ampliado e Expiração (DP03 — RESOLVIDO):** Alinhadas as regras permitindo cancelamento do organizador antes da análise e durante a aprovação, além da criação do estado `EXPIRADA` para timeouts automáticos.
+- **Cancelamento e Expiração (DP03 — RESOLVIDO):** O organizador pode cancelar nos estados anteriores à prestação; o prestador pode cancelar uma reserva confirmada. Ambos registram justificativa, e o cancelamento ocorre antes do início do evento. Expirações liberam a agenda.
+- **Avaliação (DP05 — RESOLVIDO):** Uma reserva finalizada pode receber uma nota inteira de 1 a 5, sem comentário, somente pelo organizador titular.
+- **Alteração de eventos e serviços (DP07/DP08 — RESOLVIDOS):** Com reservas ativas, datas/local de eventos e preço/disponibilidade/condições de serviço não podem mudar; alterações descritivas são permitidas e exclusão/desativação fica bloqueada.
 - **Executor da Finalização (RESOLVIDO):** Definido que a transição de `CONFIRMADA` para `FINALIZADA` é de responsabilidade de rotina agendada do **Sistema** ao detectar a passagem da `data_fim`.
 
 ---
@@ -369,12 +376,12 @@ Em conformidade com a técnica de **Cartões CRC (Class-Responsibility-Collabora
 #### Ficha CRC 2: `Evento`
 | Responsabilidade: O que a classe sabe ("Quem Sabe") | Responsabilidade: O que a classe faz ("Quem Faz") | Colaboradores |
 |---|---|---|
-| • Sabe seu identificador único, nome e descrição.<br>• Sabe as datas e horários de início e término (`dataInicio`, `dataFim`).<br>• Sabe seu local de realização.<br>• Sabe quem é seu organizador responsável.<br>• Sabe seu status de ativação. | • Valida coerência do intervalo de datas (`dataInicio <= dataFim`).<br>• Permite associar novas reservas de serviços.<br>• Notifica reservas vinculadas em caso de cancelamento do evento. | `Usuario`, `Reserva` |
+| • Sabe seu identificador único, nome e descrição.<br>• Sabe as datas e horários de início e término (`dataInicio`, `dataFim`).<br>• Sabe seu local de realização.<br>• Sabe quem é seu organizador responsável.<br>• Sabe seu status de ativação. | • Valida coerência do intervalo de datas (`dataInicio <= dataFim`).<br>• Permite associar novas reservas de serviços.<br>• Impede alteração de período/local e desativação enquanto houver reserva ativa; permite edição descritiva. | `Usuario`, `Reserva` |
 
 #### Ficha CRC 3: `Servico`
 | Responsabilidade: O que a classe sabe ("Quem Sabe") | Responsabilidade: O que a classe faz ("Quem Faz") | Colaboradores |
 |---|---|---|
-| • Sabe seus dados descritivos (id, nome, categoria, descrição).<br>• Sabe seu preço base cobrado.<br>• Sabe quem é o prestador titular responsável.<br>• Sabe seus arquivos de mídia anexados.<br>• Sabe seu estado no catálogo (`ativo`). | • Atualiza dados comerciais.<br>• Desativa oferta no catálogo preservando histórico.<br>• Delega consulta de agenda para `DisponibilidadeServico`. | `Usuario`, `DisponibilidadeServico`, `Arquivo`, `Reserva` |
+| • Sabe seus dados descritivos (id, nome, categoria, descrição).<br>• Sabe seu preço base cobrado.<br>• Sabe quem é o prestador titular responsável.<br>• Sabe seus arquivos de mídia anexados.<br>• Sabe seu estado no catálogo (`ativo`). | • Atualiza dados comerciais.<br>• Impede alterações de preço, disponibilidade, atendimento e desativação enquanto houver reserva ativa; permite edição descritiva.<br>• Delega consulta de agenda para `DisponibilidadeServico`. | `Usuario`, `DisponibilidadeServico`, `Arquivo`, `Reserva` |
 
 #### Ficha CRC 4: `DisponibilidadeServico`
 | Responsabilidade: O que a classe sabe ("Quem Sabe") | Responsabilidade: O que a classe faz ("Quem Faz") | Colaboradores |
@@ -384,7 +391,7 @@ Em conformidade com a técnica de **Cartões CRC (Class-Responsibility-Collabora
 #### Ficha CRC 5: `Reserva`
 | Responsabilidade: O que a classe sabe ("Quem Sabe") | Responsabilidade: O que a classe faz ("Quem Faz") | Colaboradores |
 |---|---|---|
-| • Sabe seu identificador único e código de contrato.<br>• Sabe o período solicitado (`dataInicio`, `dataFim`).<br>• Sabe o evento, serviço e usuários envolvidos.<br>• Sabe seu estado atual na máquina de estados.<br>• Sabe justificativa de recusa ou cancelamento. | • Valida consistência do período em relação ao evento.<br>• Coordena transições de estado conforme regras de RN05.<br>• Exige motivo obrigatório para recusas.<br>• Dispara registro de auditoria em `HistoricoReserva`. | `Evento`, `Servico`, `Usuario`, `HistoricoReserva`, `DisponibilidadeServico`, `Avaliacao` |
+| • Sabe seu identificador único e código de contrato.<br>• Sabe o período solicitado (`dataInicio`, `dataFim`).<br>• Sabe o evento, serviço e usuários envolvidos.<br>• Sabe seu estado atual na máquina de estados.<br>• Sabe justificativa de recusa ou cancelamento. | • Valida consistência do período em relação ao evento.<br>• Coordena transições de estado conforme regras de RN05.<br>• Exige motivo obrigatório para recusas e cancelamentos.<br>• Dispara registro de auditoria em `HistoricoReserva`. | `Evento`, `Servico`, `Usuario`, `HistoricoReserva`, `DisponibilidadeServico`, `Avaliacao` |
 
 #### Ficha CRC 6: `HistoricoReserva`
 | Responsabilidade: O que a classe sabe ("Quem Sabe") | Responsabilidade: O que a classe faz ("Quem Faz") | Colaboradores |
@@ -394,7 +401,7 @@ Em conformidade com a técnica de **Cartões CRC (Class-Responsibility-Collabora
 #### Ficha CRC 7: `Avaliacao`
 | Responsabilidade: O que a classe sabe ("Quem Sabe") | Responsabilidade: O que a classe faz ("Quem Faz") | Colaboradores |
 |---|---|---|
-| • Sabe a qual reserva finalizada está vinculada.<br>• Sabe a nota numérica (1 a 5) atribuída.<br>• Sabe o comentário textual e a data de criação.<br>• Sabe quem foi o organizador avaliador. | • Valida faixa de nota válida (1 a 5).<br>• Garante unicidade de avaliação por reserva.<br>• Disponibiliza dados para cômputo da reputação do serviço. | `Reserva`, `Servico`, `Usuario` |
+| • Sabe a qual reserva finalizada está vinculada.<br>• Sabe a nota numérica (1 a 5) atribuída e a data de criação.<br>• Sabe quem foi o organizador avaliador. | • Valida faixa de nota válida (1 a 5).<br>• Garante unicidade de avaliação por reserva.<br>• Disponibiliza dados para cômputo da reputação do serviço. | `Reserva`, `Servico`, `Usuario` |
 
 #### Ficha CRC 8: `Arquivo`
 | Responsabilidade: O que a classe sabe ("Quem Sabe") | Responsabilidade: O que a classe faz ("Quem Faz") | Colaboradores |
@@ -429,13 +436,16 @@ A divisão de responsabilidades operacionais da equipe de desenvolvimento do Eve
 | **D02** | E-mail único para usuários (`UK`) | Evitar duplicação de credenciais | Integridade de login garantida |
 | **D03** | Exclusão lógica via atributo `ativo` | Preservar rastreabilidade histórica e conformidade legal | Registros não são purgados fisicamente |
 | **D04** | Ciclo de vida gerido por máquina de estados | Rigor no fluxo de contratação | Transições ilegais são bloqueadas pelo sistema |
-| **D05** | Motivo obrigatório em recusas e cancelamentos | Transparência e justificativa na relação comercial | `motivo_recusa` é campo mandatório |
+| **D05** | Motivo obrigatório em recusas e cancelamentos | Transparência e justificativa na relação comercial | Recusas guardam `motivo_recusa`; cancelamentos registram justificativa no histórico |
 | **D06** | Tipos temporais estruturados (`DATETIME`) | Evitar inconsistências de texto livre e viabilizar consultas temporais | Granularidade horária para eventos e reservas |
-| **D07** | Armazenamento externo de arquivos com metadados em BD | Evitar inchaço no SGBD e otimizar tempo de backup | Banco armazena URL e metadados técnicos |
+| **D07** | Armazenamento externo de arquivos com metadados em BD | Evitar inchaço no SGBD e otimizar tempo de backup | Banco armazena URL e metadados técnicos; tipo permitido e tamanho máximo são validados |
 | **D08** | Preservação de histórico imutável (`HISTORICO_RESERVA`) | Auditoria completa de todas as alterações (RF18, RNF05) | Cada mudança de estado gera nova linha no histórico |
 | **D09** | Estruturação de disponibilidade em tabela própria (DP02) | Superar a limitação de varchar e suportar múltiplos intervalos e bloqueios | Entidade `DISPONIBILIDADE_SERVICO` criada |
 | **D10** | Unificação de usuário com papéis em vez de herança | Permitir que o mesmo usuário seja organizador e prestador | Simplificação do modelo relacional e autenticação única |
 | **D11** | Conclusão automática de serviços por rotina do sistema | Evitar que reservas fiquem pendentes indefinidamente após o evento | Transição para `FINALIZADA` executada automaticamente |
+| **D12** | Avaliação com nota de 1 a 5, sem comentário | Evitar conteúdo textual não necessário e permitir comparação objetiva | `AVALIACAO` guarda uma nota por reserva finalizada |
+| **D13** | Limites de alteração com reserva ativa (DP07/DP08) | Preservar condições contratadas e integridade de agenda | Alterações descritivas são permitidas; mudanças críticas e desativação pelo proprietário são bloqueadas |
+| **D14** | Administração limitada a contas e moderação de publicações | Separar operações de plataforma das ações das partes | Administrador não altera reservas de organizadores ou prestadores |
 
 ---
 
@@ -473,7 +483,7 @@ flowchart TD
 - **Benefício de Ocultamento:** A entidade `Servico` e a camada de apresentação (`UI`) desconhecem os algoritmos de checagem temporal. Se a regra de sobreposição for alterada de "intervalo fechado" para "janela com buffer de 2 horas para limpeza/deslocamento", somente o `ServicoDisponibilidade` é modificado, mantendo o restante do software intacto.
 
 #### 2. Políticas de Cancelamento, Multas e Janelas de Expiração (SLA)
-- **Probabilidade de Mudança:** **ALTA**. Prazos para cancelamento gratuito (ex.: até 7 dias antes vs. até 24 horas antes) e tolerâncias de expiração sem resposta (24h, 48h ou 72h) dependem de ajustes comerciais e regulatórios.
+- **Probabilidade de Mudança:** **ALTA**. A política atual expira cada etapa sem resposta após 48 horas; esse prazo e eventuais regras comerciais de cancelamento podem ser alterados conforme necessidade.
 - **Onde Fica Isolado:** Encapsulado no módulo `PoliticaCancelamento` e no `GerenciadorCicloVidaReserva`.
 - **Benefício de Ocultamento:** A entidade `Reserva` apenas invoca `PoliticaCancelamento.permitirCancelamento(reserva, ator, dataAtual)`. A introdução de cobrança de taxas de cancelamento ou prazos diferenciados por categoria de serviço não altera a estrutura de dados nem as APIs existentes.
 
@@ -577,4 +587,3 @@ Todos os artefatos contam a mesma história:
     └── js/
         └── script.js
 ```
-

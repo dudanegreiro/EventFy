@@ -10,7 +10,7 @@
 |---|---|
 | 🧑‍💼 **Organizador** | Cria e gerencia eventos, pesquisa catálogo, solicita, confirma e cancela reservas, avalia serviços finalizados. |
 | 🏢 **Prestador** | Cadastra e mantém serviços, estrutura disponibilidades e bloqueios, analisa solicitações, aprova ou recusa com justificativa. |
-| 🛡️ **Administrador** | Atividades administrativas, moderação e auditoria de conformidade. |
+| 🛡️ **Administrador** | Desativa/reativa contas e modera publicações de serviços e conteúdos; não opera reservas em nome das partes. |
 | 🖥️ **Sistema** | Executa validações automatizadas de disponibilidade, transições por timeout (expiração) e finalização de contratos pós-evento. |
 
 ---
@@ -38,15 +38,15 @@ flowchart LR
 
 | ID | Processo | Ator principal | Requisitos Funcionais | Regras de Negócio | Requisitos Não Funcionais |
 |---|---|---|---|---|---|
-| **P01** | Cadastro de usuário | Visitante | RF01 | RN01 | RNF01, RNF04 |
-| **P02** | Autenticação e perfil | Usuário | RF02, RF03 | RN01, RN02 | RNF01 |
-| **P03** | Gerenciamento de eventos | Organizador | RF09, RF15 | RN01 | RNF04, RNF06 |
-| **P04** | Cadastro e manutenção de serviços | Prestador | RF04, RF08 | RN02, RN06 | RNF04, RNF06 |
+| **P01** | Cadastro de usuário | Visitante | RF01 | RN01 | RNF01, RNF04, RNF07 |
+| **P02** | Autenticação e perfil | Usuário | RF02, RF03 | RN01, RN02 | RNF01, RNF07 |
+| **P03** | Gerenciamento de eventos | Organizador | RF09, RF15 | RN01, RN10 | RNF04, RNF06, RNF07 |
+| **P04** | Cadastro e manutenção de serviços | Prestador / Administrador | RF04, RF08, RF19, RF20 | RN02, RN06, RN11, RN13 | RNF04, RNF06, RNF07 |
 | **P05** | Busca e filtragem de serviços | Organizador | RF05, RF06, RF07 | RN02, RN06 | RNF03 |
-| **P06** | Solicitação de reserva | Organizador | RF10 | RN01, RN03, RN06 | RNF02, RNF04 |
-| **P07** | Análise e deliberação da solicitação | Prestador | RF11, RF12 | RN02, RN04, RN05 | RNF04, RNF05 |
-| **P08** | Cancelamento de reserva | Organizador / Prestador | RF14 | RN05, RN07 | RNF05 |
-| **P09** | Acompanhamento e finalização | Organizador / Prestador / Sistema | RF13, RF16, RF18 | RN05, RN07 | RNF05, RNF06 |
+| **P06** | Solicitação de reserva | Organizador | RF10 | RN01, RN03, RN06 | RNF02, RNF04, RNF07 |
+| **P07** | Análise e deliberação da solicitação | Prestador | RF11, RF12 | RN02, RN04, RN05 | RNF04, RNF05, RNF07 |
+| **P08** | Cancelamento de reserva | Organizador / Prestador | RF14 | RN05, RN07, RN09 | RNF05, RNF07 |
+| **P09** | Acompanhamento e finalização | Organizador / Prestador / Sistema | RF13, RF16, RF18 | RN05, RN07 | RNF05, RNF06, RNF07 |
 | **P10** | Avaliação do serviço | Organizador | RF17 | RN05 | RNF06 |
 
 ---
@@ -65,7 +65,7 @@ flowchart LR
 | **Requisitos** | RF01 · RN01 · RNF01 · RNF04 |
 
 **Fluxo principal**
-1. O visitante informa nome, e-mail, senha e tipo de usuário desejado (organizador ou prestador).
+1. O visitante informa nome, e-mail, senha e escolhe Organizador ou Prestador; contas Administrador são provisionadas pela equipe (RF01, DP01).
 2. O sistema valida os campos obrigatórios, o formato do e-mail e a inexistência de conta com o mesmo e-mail (RF01).
 3. O sistema gera o hash seguro da senha (RNF01) e persiste o usuário com status ativo (D02, D03).
 4. O sistema direciona o usuário para a tela de autenticação com mensagem de sucesso.
@@ -117,8 +117,8 @@ flowchart LR
 4. O evento é salvo com `ativo = true` e passa a constar na lista de eventos do organizador.
 
 **Fluxos alternativos**
-- **Editar evento:** O organizador altera dados permitidos; se houver reservas ativas, o sistema valida restrições.
-- **Desativar/Cancelar evento:** O organizador desativa o evento (`ativo = false`); o sistema cancela as reservas ativas associadas disparando transições da máquina de estados (RF14, RN05).
+- **Editar evento:** Com reservas ativas (`SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`), o organizador pode alterar somente dados descritivos; período e local ficam bloqueados (RF15, RN10).
+- **Desativar/Cancelar evento:** O sistema impede a desativação ou exclusão lógica enquanto houver reserva ativa (RN10).
 
 ---
 
@@ -131,18 +131,20 @@ flowchart LR
 | **Gatilho** | O prestador deseja disponibilizar ou atualizar um serviço |
 | **Pré-condição** | Estar autenticado como prestador |
 | **Pós-condição** | Serviço publicado no catálogo com estrutura de disponibilidade configurada |
-| **Requisitos** | RF04 · RF08 · RN02 · RN06 · RNF04 · RNF06 |
+| **Requisitos** | RF04 · RF08 · RF19 · RF20 · RN02 · RN06 · RN11 · RN13 · RNF04 · RNF06 · RNF07 |
 
 **Fluxo principal — cadastrar serviço**
 1. O prestador seleciona "Novo Serviço".
 2. Informa nome, categoria, descrição e preço (RF04).
 3. Configura a estrutura de agenda e períodos de atendimento em `DISPONIBILIDADE_SERVICO` (Decisão DP02).
-4. Opcionalmente, anexa fotos ou mídias que são salvas externamente com metadados em `ARQUIVO` (D07).
+4. Opcionalmente, anexa imagens JPEG/PNG/WebP ou documentos PDF/DOCX de até 10 MB por arquivo; o sistema valida tipo MIME e tamanho e armazena o binário externamente com metadados em `ARQUIVO` (RF19, D07).
 5. O sistema publica o serviço com `ativo = true`.
 
 **Fluxos alternativos**
 - **Bloqueio de agenda:** O prestador adiciona intervalos de indisponibilidade (`BLOQUEIO_MANUAL`) em `DISPONIBILIDADE_SERVICO`.
-- **Desativação lógica:** O prestador desativa a oferta (`ativo = false`), removendo-o de novas buscas mas preservando reservas passadas (RF08, RN02).
+- **Edição com reservas ativas:** O prestador pode alterar dados descritivos, mas não preço, disponibilidade ou condições de atendimento (RF08, RN11).
+- **Desativação lógica:** O sistema permite desativar a oferta (`ativo = false`) somente quando não houver reservas ativas; o serviço sai de novas buscas e preserva reservas passadas (RF08, RN11).
+- **Moderação:** O Administrador pode ocultar ou restaurar publicações no catálogo para novas buscas, sem excluir dados nem cancelar ou alterar reservas existentes (RF20, RN13).
 
 ---
 
@@ -222,15 +224,15 @@ flowchart LR
 | **Objetivo** | Encerrar uma reserva antes da prestação do serviço |
 | **Ator** | Organizador ou Prestador |
 | **Gatilho** | Necessidade operacional ou desistência justificada de uma das partes |
-| **Pré-condição** | Reserva em estado `SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA` |
+| **Pré-condição** | Organizador cancela em `SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`; Prestador cancela em `CONFIRMADA`; o evento ainda não começou |
 | **Pós-condição** | Reserva em estado `CANCELADA` com histórico registrado e agenda liberada |
 | **Requisitos** | RF14 · RN05 · RN07 · RNF05 |
 
 **Fluxo principal**
 1. O usuário autorizado acessa a reserva e aciona a opção "Cancelar Reserva".
-2. O sistema verifica se a reserva está em um dos estados canceláveis (`SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`) (CA14.1, RN05).
-3. O usuário confirma o cancelamento e informa a justificativa.
-4. O sistema atualiza o status para `CANCELADA`, libera qualquer pré-reserva ou bloqueio em `DISPONIBILIDADE_SERVICO` e grava a transição em `HISTORICO_RESERVA` (RF18, RNF05).
+2. O sistema verifica se o papel do usuário pode cancelar naquele estado e se o evento ainda não começou (RF14, RN09).
+3. O usuário confirma o cancelamento e informa a justificativa obrigatória.
+4. O sistema atualiza o status para `CANCELADA`, libera qualquer pré-reserva ou bloqueio em `DISPONIBILIDADE_SERVICO` e grava ator e justificativa em `HISTORICO_RESERVA` (RF18, RNF05).
 5. O registro é mantido no banco de dados (exclusão lógica, Seção 10 do PROJETO.md).
 
 ---
@@ -259,7 +261,7 @@ flowchart LR
 
 | Campo | Descrição |
 |---|---|
-| **Objetivo** | Registrar a avaliação qualitativa e nota do organizador sobre o serviço executado |
+| **Objetivo** | Registrar uma nota do organizador sobre o serviço executado |
 | **Ator** | Organizador |
 | **Gatilho** | Conclusão do contrato (reserva no estado `FINALIZADA`) |
 | **Pré-condição** | A reserva estar no estado `FINALIZADA` e ainda não ter sido avaliada (cardinalidade 1:0..1) |
@@ -268,9 +270,9 @@ flowchart LR
 
 **Fluxo principal**
 1. O organizador acessa a reserva finalizada e clica em "Avaliar Serviço".
-2. Atribui uma nota inteira (1 a 5) e redige um comentário textual de feedback (RF17).
-3. O sistema valida os campos, persiste o registro em `AVALIACAO` e associa à reserva e ao serviço.
-4. A nota e o comentário passam a compor o histórico público de avaliações do catálogo.
+2. Atribui uma nota inteira de 1 a 5, sem comentário textual (RF17, RN12).
+3. O sistema valida a nota, persiste o registro em `AVALIACAO` e associa à reserva e ao serviço.
+4. A nota passa a compor a avaliação pública do serviço no catálogo.
 
 ---
 
@@ -284,16 +286,16 @@ stateDiagram-v2
 
     SOLICITADA --> EM_ANALISE : [Prestador] Abre análise (P07)
     SOLICITADA --> CANCELADA : [Organizador] Cancela (P08)
-    SOLICITADA --> EXPIRADA : [Sistema] Timeout de triagem
+    SOLICITADA --> EXPIRADA : [Sistema] 48h sem início da análise
 
     EM_ANALISE --> APROVADA : [Prestador] Aprova (P07)
     EM_ANALISE --> RECUSADA : [Prestador] Recusa com motivo (P07)
     EM_ANALISE --> CANCELADA : [Organizador] Cancela (P08)
-    EM_ANALISE --> EXPIRADA : [Sistema] Timeout de análise
+    EM_ANALISE --> EXPIRADA : [Sistema] 48h sem decisão
 
     APROVADA --> CONFIRMADA : [Organizador] Confirma (P09)
     APROVADA --> CANCELADA : [Organizador] Cancela (P08)
-    APROVADA --> EXPIRADA : [Sistema] Timeout de confirmação
+    APROVADA --> EXPIRADA : [Sistema] 48h sem confirmação
 
     CONFIRMADA --> FINALIZADA : [Sistema] Execução automática pós-data_fim (P09)
     CONFIRMADA --> CANCELADA : [Organizador/Prestador] Cancela (P08)
@@ -314,7 +316,7 @@ stateDiagram-v2
 | `CONFIRMADA` | Organizador | Contrato formalizado; bloqueio definitivo em `DISPONIBILIDADE_SERVICO`. |
 | `RECUSADA` | Prestador | Exige `motivo_recusa` obrigatório; libera agenda; estado terminal. |
 | `CANCELADA` | Organizador ou Prestador | Exige justificativa; cancelamento auditado em histórico; libera agenda. |
-| `EXPIRADA` | **Sistema** | Transição automática por estouro de SLA; libera agenda; estado terminal. |
+| `EXPIRADA` | **Sistema** | Transição automática após 48 horas sem ação na etapa; libera agenda; estado terminal. |
 | `FINALIZADA` | **Sistema** | Execução automática após transcurso de `data_fim`; habilita avaliação. |
 
 ---
@@ -330,8 +332,8 @@ stateDiagram-v2
 | **P05 Busca e Filtragem** | ❓ | ✅ | ✅ | ✅ | — |
 | **P06 Solicitar Reserva** | — | ✅ | — | — | — |
 | **P07 Analisar Solicitação** | — | — | ✅ | — | — |
-| **P08 Cancelar Reserva** | — | ✅ | ✅ | ✅ | — |
-| **P09 Acompanhar e Concluir** | — | ✅ | ✅ | ✅ | ✅ *(executor)* |
+| **P08 Cancelar Reserva** | — | ✅ | ✅ | — | — |
+| **P09 Acompanhar e Concluir** | — | ✅ | ✅ | — | ✅ *(executor)* |
 | **P10 Avaliar Serviço** | — | ✅ | — | — | — |
 
 *Legenda:*

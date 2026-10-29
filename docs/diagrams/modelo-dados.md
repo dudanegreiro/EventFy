@@ -103,7 +103,6 @@ erDiagram
         int id_reserva FK
         int id_avaliador FK
         int nota
-        text comentario
         datetime criado_em
     }
 ```
@@ -117,5 +116,6 @@ erDiagram
 - **Exclusão lógica e consistência histórica (Seção 10 do PROJETO.md):** As tabelas `USUARIO`, `EVENTO`, `SERVICO`, `RESERVA`, `DISPONIBILIDADE_SERVICO` e `ARQUIVO` contam com a coluna `ativo` (`boolean`), garantindo que registros vinculados a contratações e históricos não sejam fisicamente excluídos, preservando a integridade referencial.
 - **Tipagem temporal do Evento e Reserva (Seção 11 do PROJETO.md):** As colunas `data_inicio` e `data_fim` de `EVENTO` utilizam `datetime` (alinhando-se com `RESERVA` e permitindo granularidade de data e horário para reservas precisas de serviços).
 - **Ciclo de vida e estados da reserva:** A coluna `RESERVA.status` reflete a máquina de estados oficial (`SOLICITADA`, `EM_ANALISE`, `APROVADA`, `CONFIRMADA`, `FINALIZADA`, `RECUSADA`, `CANCELADA`, `EXPIRADA`).
-- **Motivo de recusa e cancelamento:** `RESERVA.motivo_recusa` é obrigatório quando o estado for `RECUSADA` (RN04) e é replicado no registro correspondente em `HISTORICO_RESERVA`.
-- **Armazenamento de mídia (D07):** A tabela `ARQUIVO` armazena apenas metadados técnicos e a `url` do arquivo armazenado em storage externo seguro.
+- **Motivo de recusa e cancelamento:** `RESERVA.motivo_recusa` é obrigatório quando o estado for `RECUSADA` (RN04); a justificativa de cancelamento é gravada no campo `motivo` de `HISTORICO_RESERVA`.
+- **Armazenamento de mídia (D07):** A tabela `ARQUIVO` armazena apenas metadados técnicos e a URL do conteúdo em storage externo seguro. Os tipos MIME permitidos e o limite de 10 MB por arquivo são definidos em RF19/RE-04.
+- **Avaliação:** `AVALIACAO.nota` guarda uma nota inteira de 1 a 5 por reserva finalizada; não há campo de comentário (RF17, RN12).
