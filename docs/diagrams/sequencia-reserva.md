@@ -65,10 +65,10 @@ sequenceDiagram
     rect rgb(255, 250, 240)
         note over P, SYS: Etapa 2: Triagem e Análise da Solicitação (RF11, RF12)
         opt Expiração sem resposta inicial (Fluxo Alternativo 4)
-            SYS->>BD: verificarSolicitacoesSemResposta(prazoLimite=48h)
+            SYS->>BD: verificarEtapasSemAcao(prazoLimite=48h)
             BD-->>SYS: listaExpiradas [idReserva]
             SYS->>BD: atualizarStatus(idReserva, status="EXPIRADA")
-            SYS->>BD: registrarHistorico(idReserva, anterior="SOLICITADA", novo="EXPIRADA", ator="SISTEMA", motivo="Timeout de triagem")
+            SYS->>BD: registrarHistorico(idReserva, anterior="SOLICITADA", novo="EXPIRADA", ator="SISTEMA", motivo="48h sem início da análise")
             SYS-)O: notificarExpiracao(idReserva)
         end
 
@@ -104,14 +104,14 @@ sequenceDiagram
     %% ETAPA 3: CONFIRMAÇÃO DO ORGANIZADOR OU CANCELAMENTO
     %% ========================================================
     rect rgb(240, 255, 240)
-        note over O, BD: Etapa 3: Confirmação da Contratação (RF13, RN05)
-        alt Desistência / Cancelamento pelo Organizador (Fluxo Alternativo 3 - RF14)
+        note over O, BD: Etapa 3: Confirmação da Contratação (RF13, RF14, RN05, RN09)
+        alt Desistência / Cancelamento justificado antes do evento (RF14)
             O->>UI: Clica em "Cancelar Reserva"
-            UI->>CTRL: cancelarReserva(idReserva, motivo)
+            UI->>CTRL: cancelarReserva(idReserva, motivoObrigatorio)
             CTRL->>DISP: liberarAgenda(idServico, dataInicio, dataFim)
             DISP->>BD: removerBloqueioProvisorio(idServico, dataInicio, dataFim)
             CTRL->>BD: atualizarStatus(idReserva, status="CANCELADA")
-            CTRL->>BD: registrarHistorico(idReserva, anterior="APROVADA", novo="CANCELADA", ator=idOrganizador, motivo=motivo)
+            CTRL->>BD: registrarHistorico(idReserva, anterior="APROVADA", novo="CANCELADA", ator=idOrganizador, motivo=motivoObrigatorio)
             CTRL-->>UI: cancelamentoConcluido
             UI-->>O: Informa cancelamento com sucesso
             CTRL-)P: notificarCancelamento(idReserva)
@@ -142,8 +142,8 @@ sequenceDiagram
 
         opt Organizador Avalia o Serviço Concluído (RF17)
             O->>UI: Acessa formulário de avaliação da reserva
-            UI->>CTRL: submeterAvaliacao(idReserva, nota=5, comentario="Serviço pontual e excelente!")
-            CTRL->>BD: criarAvaliacao(idReserva, idOrganizador, nota, comentario)
+            UI->>CTRL: submeterAvaliacao(idReserva, nota=5)
+            CTRL->>BD: criarAvaliacao(idReserva, idOrganizador, nota)
             CTRL-->>UI: avaliacaoRegistrada
             UI-->>O: Agradece pela avaliação pública
         end
@@ -178,5 +178,5 @@ sequenceDiagram
 - O sistema comuta o estado para `CANCELADA`, armazena o histórico e remove qualquer reserva de vaga na agenda do serviço.
 
 ### 3.5 Fluxo Alternativo 4: Expiração Automática por Inatividade / SLA (RN05)
-- Caso o prestador não visualize ou não delibere sobre a solicitação dentro da janela máxima de tolerância (ex.: 48 horas), a rotina do `Sistema` executa a transição para `EXPIRADA`.
+- Se não houver ação por 48 horas desde a entrada em `SOLICITADA`, `EM_ANALISE` ou `APROVADA`, a rotina do `Sistema` executa a transição para `EXPIRADA`.
 - O organizador é notificado sobre a expiração para que possa procurar outro parceiro sem ficar bloqueado.

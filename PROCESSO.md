@@ -76,6 +76,7 @@ Um item é considerado pronto quando:
 3. A funcionalidade está acessível e testável no ambiente de demonstração local da equipe.
 4. Os requisitos não funcionais aplicáveis ao item foram conferidos contra os valores aceitáveis.
 5. A issue correspondente referencia a história de usuário, com a rastreabilidade da necessidade preservada.
+6. Os requisitos, regras de negócio e modelos afetados refletem o comportamento entregue e permanecem consistentes entre si.
 
 ---
 
@@ -93,3 +94,4 @@ Com base no histórico e na necessidade de qualidade contínua:
 
 - **2026-08-20:** Versão inicial do processo de desenvolvimento (Capítulo 3).
 - **2026-10-21:** Ajuste na Definição de Pronto e inclusão das práticas de revisão e rastreabilidade (Capítulo 5 e 10).
+- **2026-10-28:** Inclusão da consistência dos requisitos e modelos como critério de pronto.
