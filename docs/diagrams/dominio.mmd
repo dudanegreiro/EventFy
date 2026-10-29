@@ -1,0 +1,79 @@
+classDiagram
+    direction LR
+
+    Usuario "1" --> "N" Evento : organiza
+    Usuario "1" --> "N" Servico : disponibiliza
+    Usuario "1" --> "N" Reserva : solicita
+    Usuario "1" --> "0..N" HistoricoReserva : executa
+    Servico "1" --> "N" DisponibilidadeServico : agenda
+    Servico "1" --> "N" Arquivo : possui
+    Servico "1" --> "N" Reserva : recebe
+    Evento "1" --> "N" Reserva : contem
+    Reserva "1" --> "N" HistoricoReserva : rastreia
+    Reserva "1" --> "0..1" Avaliacao : resulta em
+
+    class Usuario {
+        +int id
+        +string nome
+        +string email
+        +string senha
+        +string tipo
+        +boolean ativo
+    }
+    class Evento {
+        +int id
+        +string nome
+        +string descricao
+        +datetime dataInicio
+        +datetime dataFim
+        +string local
+        +boolean ativo
+    }
+    class Servico {
+        +int id
+        +string nome
+        +string descricao
+        +string categoria
+        +decimal preco
+        +boolean ativo
+    }
+    class DisponibilidadeServico {
+        +int id
+        +datetime dataInicio
+        +datetime dataFim
+        +string tipo
+        +string motivo
+        +boolean ativo
+    }
+    class Arquivo {
+        +int id
+        +string nomeOriginal
+        +string url
+        +string tipoMime
+        +bigint tamanho
+        +boolean ativo
+    }
+    class Reserva {
+        +int id
+        +datetime dataInicio
+        +datetime dataFim
+        +string status
+        +string observacao
+        +string motivoRecusa
+        +boolean ativo
+        +datetime criadaEm
+    }
+    class HistoricoReserva {
+        +int id
+        +string statusAnterior
+        +string statusNovo
+        +datetime dataHora
+        +string observacao
+        +string motivo
+    }
+    class Avaliacao {
+        +int id
+        +int nota
+        +string comentario
+        +datetime criadaEm
+    }

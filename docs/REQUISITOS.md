@@ -1,521 +1,344 @@
-# REQUISITOS — EventFy
+# 📋 REQUISITOS — EventFy
 
-> Documento de especificação de requisitos funcionais, não funcionais, regras de negócio e rastreabilidade do sistema **EventFy**.
-
-## Sumário
-
-- [1. Requisitos Funcionais](#1-requisitos-funcionais)
-- [2. Requisitos Não Funcionais](#2-requisitos-não-funcionais)
-- [3. Regras de Negócio](#3-regras-de-negócio)
-- [4. Matriz de rastreabilidade](#4-matriz-de-rastreabilidade)
-- [5. Dependências e decisões pendentes](#5-dependências-e-decisões-pendentes)
-- [6. Convenções de especificação](#6-convenções-de-especificação)
+> Documento de especificação de requisitos, glossário do domínio, backlog priorizado, histórias de usuário, casos de uso, requisitos não funcionais mensuráveis e rastreabilidade do sistema **EventFy**, consolidado para o **Marco 1** da disciplina de Engenharia de Software.
 
 ---
 
-## 1. Requisitos Funcionais
+## 📑 Sumário
 
-### RF01 — Cadastro de usuário
-
-O sistema deverá permitir o cadastro de usuários informando, no mínimo, nome, e-mail, senha e tipo de usuário.
-
-O e-mail informado deverá ser único no sistema.
-
-O cadastro deverá ser recusado quando já existir um usuário com o e-mail informado.
-
-**Critérios de aceitação**
-
-- **CA01.1:** Dado que o usuário informe todos os campos obrigatórios com valores válidos, quando confirmar o cadastro, então o sistema deverá criar a conta.
-- **CA01.2:** Dado que o e-mail informado já esteja cadastrado, quando o usuário tentar concluir o cadastro, então o sistema deverá impedir a criação da conta.
-- **CA01.3:** Dado que exista algum campo obrigatório inválido ou ausente, quando o usuário tentar concluir o cadastro, então o sistema deverá informar o campo que precisa ser corrigido.
-- **CA01.4:** O sistema deverá armazenar o usuário com um identificador único.
+- [1. Glossário do Domínio](#1-glossário-do-domínio)
+- [2. Backlog Ordenado do Projeto](#2-backlog-ordenado-do-projeto)
+- [3. Histórias de Usuário e Critérios da Fatia Vertical (MVP)](#3-histórias-de-usuário-e-critérios-da-fatia-vertical-mvp)
+- [4. Caso de Uso Estruturado (UC-01)](#4-caso-de-uso-estruturado-uc-01)
+- [5. Requisitos Funcionais Gerais](#5-requisitos-funcionais-gerais)
+- [6. Requisitos Não Funcionais Verificáveis (ISO/IEC 25010)](#6-requisitos-não-funcionais-verificáveis-isoiec-25010)
+- [7. Regras de Negócio e Restrições](#7-regras-de-negócio-e-restrições)
+- [8. Matriz de Rastreabilidade Unificada](#8-matriz-de-rastreabilidade-unificada)
+- [9. Validações Realizadas](#9-validações-realizadas)
+- [10. Lista de Verificação da Revisão (Checklist de Fagan)](#10-lista-de-verificação-da-revisão-checklist-de-fagan)
+- [11. Histórico de Revisão e Linha de Base do Marco 1](#11-histórico-de-revisão-e-linha-de-base-do-marco-1)
 
 ---
 
-### RF02 — Autenticação
+## 1. Glossário do Domínio
 
-O sistema deverá permitir que usuários cadastrados realizem autenticação utilizando suas credenciais.
+A tabela abaixo unifica o vocabulário utilizado em todos os artefatos do projeto, eliminando ambiguidades conceituais conforme a Seção 5.4 do livro didático.
 
-O sistema deverá permitir que o usuário encerre sua sessão por meio da funcionalidade de logout.
-
-**Critérios de aceitação**
-
-- **CA02.1:** Dado que o usuário informe credenciais válidas, quando realizar a autenticação, então o sistema deverá permitir o acesso à área correspondente ao seu tipo de usuário.
-- **CA02.2:** Dado que as credenciais informadas sejam inválidas, quando o usuário tentar realizar a autenticação, então o sistema deverá impedir o acesso e informar que as credenciais não são válidas.
-- **CA02.3:** Dado que o usuário esteja autenticado, quando realizar logout, então o sistema deverá encerrar sua sessão.
-- **CA02.4:** Após o logout, o usuário não deverá acessar funcionalidades que exijam autenticação sem realizar uma nova autenticação.
-
----
-
-### RF03 — Gerenciamento de perfil
-
-O sistema deverá permitir que um usuário autenticado consulte e atualize as informações de seu perfil que forem disponibilizadas para edição.
-
-O tipo de usuário não deverá ser alterado pelo próprio usuário caso essa alteração permita modificar suas permissões no sistema.
-
-**Critérios de aceitação**
-
-- **CA03.1:** Dado que o usuário esteja autenticado, quando acessar seu perfil, então o sistema deverá apresentar suas informações cadastradas.
-- **CA03.2:** Dado que o usuário altere informações permitidas, quando salvar as alterações, então o sistema deverá atualizar seus dados.
-- **CA03.3:** O sistema deverá impedir a alteração de informações que não estejam disponíveis para edição pelo usuário.
+| Termo | Definição no Domínio | Fonte |
+|---|---|:---:|
+| **Organizador** | Usuário cadastrado que planeja e realiza eventos, buscando e contratando serviços de fornecedores. | `E1, D1` |
+| **Prestador / Fornecedor** | Usuário cadastrado que disponibiliza serviços, estruturas ou equipamentos para eventos e gerencia sua agenda. | `E2, D1` |
+| **Evento** | Ocasião planejada pelo organizador com nome, local e período (`dataInicio` e `dataFim`) determinado. | `D1, E1` |
+| **Serviço** | Atividade ou infraestrutura ofertada por um prestador (ex.: sonorização, espaço, buffet) com valor e categoria. | `D1, E2` |
+| **Disponibilidade** | Estrutura de intervalos temporais e bloqueios de agenda de um serviço, definindo quando ele pode ser reservado. | `D1, E2` |
+| **Reserva** | Solicitação e contratação formal de um serviço para determinado evento e período, regida por máquina de estados. | `D1, E1` |
+| **Motivo de Recusa** | Justificativa textual obrigatória registrada pelo prestador ao declinar uma solicitação de reserva. | `E1, RN04` |
+| **Histórico da Reserva** | Trilha de auditoria imutável que registra cada mudança de estado da reserva com data, hora e responsável. | `RN07, RNF05` |
+| **SLA / Expiração** | Transição automática (`EXPIRADA`) disparada pelo sistema quando uma solicitação fica sem resposta por mais de 48h. | `DESCOBERTA.md` |
 
 ---
 
-### RF04 — Cadastro de serviço
+## 2. Backlog Ordenado do Projeto
 
-O sistema deverá permitir que um prestador ou fornecedor autenticado cadastre um serviço.
+O backlog está priorizado segundo a combinação dos métodos **MoSCoW**, **Risco Técnico** e **Dependência** (Seção 5.9 do livro).
 
-O serviço deverá possuir as informações definidas pelo domínio do EventFy, incluindo, no mínimo, nome, descrição, categoria, preço e informações de disponibilidade.
+Os itens classificados como **Obrigatório** somam **21 pontos** de um total de **40 pontos estimados** (**52,5% do esforço**), respeitando rigorosamente o limite máximo de 60% recomendado pelo DSDM / Agile Business Consortium (2026) para preservar margem contra imprevistos.
 
-**Critérios de aceitação**
-
-- **CA04.1:** Dado que o usuário esteja autenticado como prestador ou fornecedor, quando informar os dados obrigatórios de um serviço e confirmar o cadastro, então o sistema deverá criar o serviço.
-- **CA04.2:** Dado que o usuário não possua permissão para cadastrar serviços, quando tentar realizar o cadastro, então o sistema deverá impedir a operação.
-- **CA04.3:** Dado que algum campo obrigatório esteja ausente ou inválido, quando o usuário tentar cadastrar o serviço, então o sistema deverá informar o erro.
-- **CA04.4:** O serviço deverá ser associado ao usuário responsável por sua disponibilização.
-
----
-
-### RF05 — Consulta de serviços
-
-O sistema deverá permitir que usuários consultem os serviços disponíveis no catálogo.
-
-A consulta deverá apresentar as informações necessárias para que o usuário identifique o serviço e decida se deseja visualizar seus detalhes.
-
-**Critérios de aceitação**
-
-- **CA05.1:** Quando o usuário acessar o catálogo, então o sistema deverá apresentar os serviços disponíveis.
-- **CA05.2:** Cada serviço apresentado deverá possuir informações suficientes para sua identificação.
-- **CA05.3:** Serviços desativados não deverão ser apresentados como disponíveis para novas solicitações.
+| Ordem | Item | Descrição Resumida | Origem | MoSCoW | Risco Técnico | Depende de | Estimativa (Pontos) |
+|:---:|---|---|:---:|:---:|:---:|:---:|:---:|
+| **1** | **HU-01** | Solicitação de reserva pelo organizador com verificação de agenda | N2, RF10 | **Obrigatório** | Alto *(concorrência de datas)* | — | 5 |
+| **2** | **HU-02** | Análise pelo prestador com aprovação ou recusa justificada | N3, RF11, RF12 | **Obrigatório** | Médio *(motivo obrigatório)* | HU-01 | 3 |
+| **3** | **HU-03** | Confirmação da contratação e bloqueio definitivo da agenda | N4, RF13, RN06 | **Obrigatório** | Alto *(transação atômica)* | HU-02 | 5 |
+| **4** | **HU-04** | Acompanhamento do estado e histórico imutável da reserva | N5, RF16, RF18 | **Obrigatório** | Baixo *(auditoria)* | HU-01 | 3 |
+| **5** | **HU-05** | Catálogo com busca e filtragem por categoria e data | N1, RF05, RF06 | **Obrigatório** | Baixo *(consultas)* | — | 5 |
+| **6** | **HU-06** | Cadastro e gerenciamento de serviços pelo prestador | RF04, RF08 | **Importante** | Baixo | — | 5 |
+| **7** | **HU-07** | Gerenciamento e cadastro de eventos do organizador | RF09, RF15 | **Importante** | Baixo | — | 3 |
+| **8** | **HU-08** | Cancelamento justificado de reservas pelo organizador/prestador | RF14, RN05 | **Importante** | Médio *(política de prazos)* | HU-03 | 3 |
+| **9** | **HU-09** | Expiração automática de solicitações por estouro de SLA (48h) | R1, RN05 | **Importante** | Médio *(rotina agendada)* | HU-01 | 3 |
+| **10** | **HU-10** | Avaliação do serviço após finalização da reserva | RF17, RN05 | **Desejável** | Baixo | HU-03 | 3 |
+| **11** | **HU-11** | Pagamento online e split financeiro na plataforma | N6 | **Fora de escopo** | Alto *(dependência terceira)* | — | — |
 
 ---
 
-### RF06 — Busca e filtragem de serviços
+## 3. Histórias de Usuário e Critérios da Fatia Vertical (MVP)
 
-O sistema deverá permitir a busca e a filtragem dos serviços utilizando os critérios definidos para o catálogo.
+As histórias a seguir compõem o fluxo prioritário do sistema (arquitetura executável), escritas no formato **INVEST** com critérios no padrão **Dado-Quando-Então** cobrindo caminho principal, recusas/limites e efeito persistente.
 
-**Critérios de aceitação**
+### HU-01 — Solicitação de Reserva de Serviço
+> **Como** organizador de eventos,  
+> **quero** solicitar a reserva de um serviço informando o evento e o período desejado,  
+> **para** reservar a data com o fornecedor sem risco de agendamentos duplicados.  
+> `[Origem: N2, confirmada em E1 e O1]`
 
-- **CA06.1:** Quando o usuário informar um termo de busca válido, então o sistema deverá apresentar os serviços compatíveis com o termo.
-- **CA06.2:** Quando o usuário aplicar um filtro, então o sistema deverá apresentar somente os serviços compatíveis com o filtro.
-- **CA06.3:** Quando nenhum serviço atender aos critérios informados, então o sistema deverá informar que não foram encontrados serviços correspondentes.
-
----
-
-### RF07 — Visualização de detalhes do serviço
-
-O sistema deverá permitir que o usuário visualize os detalhes de um serviço selecionado no catálogo.
-
-Os detalhes deverão incluir as informações necessárias para que o organizador avalie a possibilidade de solicitar o serviço.
-
-**Critérios de aceitação**
-
-- **CA07.1:** Quando o usuário selecionar um serviço existente, então o sistema deverá apresentar seus detalhes.
-- **CA07.2:** As informações apresentadas deverão corresponder ao serviço selecionado.
-- **CA07.3:** O sistema deverá disponibilizar a opção de solicitar o serviço quando o usuário possuir permissão e o serviço estiver disponível para novas solicitações.
-
----
-
-### RF08 — Gerenciamento de serviço
-
-O sistema deverá permitir que o prestador ou fornecedor responsável consulte e atualize as informações dos serviços que cadastrou.
-
-O sistema deverá permitir a desativação de um serviço sem eliminar o histórico relacionado a reservas já realizadas.
-
-**Critérios de aceitação**
-
-- **CA08.1:** Dado que o usuário seja responsável pelo serviço, quando acessar seu gerenciamento, então o sistema deverá permitir a consulta de suas informações.
-- **CA08.2:** Dado que o usuário seja responsável pelo serviço, quando alterar informações permitidas e salvar, então o sistema deverá atualizar o serviço.
-- **CA08.3:** Dado que o serviço possua histórico de reservas, quando o responsável solicitar sua desativação, então o sistema deverá preservar as informações históricas.
-- **CA08.4:** Um serviço desativado não deverá receber novas solicitações de reserva.
+- **CA-01.1 (Caminho principal — Solicitação aceita):**  
+  **Dado** que o organizador está autenticado, possui um evento ativo e o serviço está livre no período,  
+  **Quando** ele submete a solicitação de reserva,  
+  **Então** o sistema cria a reserva no estado `SOLICITADA`, grava o registro inicial em `HISTORICO_RESERVA` e notifica o prestador.
+- **CA-01.2 (Recusa e limite — Conflito de agenda):**  
+  **Dado** que o serviço já possui reserva confirmada ou bloqueio no mesmo intervalo de datas/horários,  
+  **Quando** o organizador tenta solicitar a reserva,  
+  **Então** o sistema recusa a criação, informa que o serviço está indisponível para o período e não grava registro de reserva.
+- **CA-01.3 (Recusa e limite — Período fora dos limites do evento):**  
+  **Dado** que o horário da reserva solicitado extrapola o intervalo de `dataInicio` e `dataFim` do evento,  
+  **Quando** o organizador tenta confirmar a solicitação,  
+  **Então** o sistema recusa a submissão e exige ajuste dos horários.
+- **CA-01.4 (Efeito persistente — Auditoria e persistência):**  
+  **Dado** que uma solicitação foi criada com sucesso,  
+  **Quando** o organizador consulta a lista de suas reservas,  
+  **Então** a solicitação é exibida com status `SOLICITADA` e os dados permanecem recuperáveis mesmo após reinicialização da sessão.
 
 ---
 
-### RF09 — Criação de evento
+### HU-02 — Análise e Decisão da Solicitação pelo Prestador
+> **Como** prestador de serviços,  
+> **quero** analisar as solicitações recebidas podendo aprová-las ou recusá-las com justificativa,  
+> **para** gerenciar meus compromissos de forma transparente e documentada.  
+> `[Origem: N3, confirmada em E2]`
 
-O sistema deverá permitir que um organizador autenticado cadastre um evento para o qual pretende solicitar serviços.
-
-O evento deverá possuir, no mínimo, nome, descrição, data de início, data de término e local.
-
-**Critérios de aceitação**
-
-- **CA09.1:** Dado que o usuário esteja autenticado como organizador, quando informar os dados obrigatórios e confirmar o cadastro, então o sistema deverá criar o evento.
-- **CA09.2:** O evento deverá ser associado ao organizador responsável.
-- **CA09.3:** O sistema deverá impedir o cadastro quando os dados obrigatórios forem inválidos ou estiverem ausentes.
-- **CA09.4:** A data de início não poderá ser posterior à data de término.
-
----
-
-### RF10 — Solicitação de reserva
-
-O sistema deverá permitir que um organizador solicite a reserva de um serviço para um evento.
-
-A solicitação deverá registrar o evento, o serviço, o período solicitado e as demais informações necessárias para o processamento da reserva.
-
-Uma nova solicitação deverá iniciar no estado `SOLICITADA`.
-
-**Critérios de aceitação**
-
-- **CA10.1:** Dado que o usuário seja um organizador autenticado e possua um evento, quando solicitar um serviço para esse evento e informar um período válido, então o sistema deverá registrar a solicitação.
-- **CA10.2:** Uma nova solicitação deverá possuir o estado `SOLICITADA`.
-- **CA10.3:** A solicitação deverá identificar o organizador, o evento e o serviço envolvidos.
-- **CA10.4:** O sistema deverá impedir a criação de uma solicitação quando os dados obrigatórios forem inválidos.
-- **CA10.5:** O sistema deverá verificar as regras de disponibilidade aplicáveis ao serviço antes de permitir o processamento da solicitação.
+- **CA-02.1 (Caminho principal — Aprovação da solicitação):**  
+  **Dado** que o prestador visualiza uma solicitação no estado `SOLICITADA` e possui capacidade técnica,  
+  **Quando** ele aciona a opção "Aprovar",  
+  **Então** o sistema altera o estado da reserva para `APROVADA`, pré-bloqueia a data na agenda, grava em `HISTORICO_RESERVA` e notifica o organizador.
+- **CA-02.2 (Recusa justificada — Motivo obrigatório):**  
+  **Dado** que o prestador decide não atender à solicitação,  
+  **Quando** ele aciona a opção "Recusar" e informa um motivo válido com no mínimo 10 caracteres,  
+  **Então** o sistema muda a reserva para o estado terminal `RECUSADA`, persiste o `motivo_recusa`, registra o histórico imutável e notifica o organizador com a justificativa.
+- **CA-02.3 (Recusa e limite — Tentativa de recusa sem motivo):**  
+  **Dado** que o prestador tenta recusar uma solicitação sem preencher a justificativa,  
+  **Quando** ele confirma o formulário de recusa,  
+  **Então** o sistema bloqueia a operação, mantém a reserva no estado anterior e informa que o motivo de recusa é obrigatório (RN04).
+- **CA-02.4 (Efeito persistente — Preservação da justificativa):**  
+  **Dado** que uma reserva foi recusada com motivo,  
+  **Quando** o organizador consulta o detalhe da reserva recusada a qualquer momento posterior,  
+  **Então** o sistema apresenta a justificativa original fornecida pelo prestador.
 
 ---
 
-### RF11 — Análise de solicitação
+### HU-03 — Confirmação Definitiva da Reserva
+> **Como** organizador de eventos,  
+> **quero** confirmar a contratação de uma reserva previamente aprovada,  
+> **para** fechar o compromisso e garantir o bloqueio definitivo do fornecedor.  
+> `[Origem: N4, confirmada em E1 e E2]`
 
-O sistema deverá permitir que o prestador ou fornecedor responsável analise uma solicitação de reserva relacionada a um de seus serviços.
-
-A solicitação deverá passar para o estado `EM ANÁLISE` quando o prestador iniciar sua análise.
-
-**Critérios de aceitação**
-
-- **CA11.1:** Dado que exista uma reserva no estado `SOLICITADA`, quando o prestador responsável iniciar a análise, então o sistema deverá alterar seu estado para `EM ANÁLISE`.
-- **CA11.2:** Somente o responsável pelo serviço poderá realizar a análise da solicitação.
-- **CA11.3:** Uma solicitação que não esteja em estado `SOLICITADA` não deverá ser iniciada novamente como uma nova análise.
-
----
-
-### RF12 — Aprovação ou recusa de solicitação
-
-O sistema deverá permitir que o prestador ou fornecedor responsável aprove ou recuse uma solicitação que esteja em análise.
-
-Quando a solicitação for aprovada, seu estado deverá ser alterado para `APROVADA`.
-
-Quando a solicitação for recusada, seu estado deverá ser alterado para `RECUSADA` e deverá ser registrado um motivo para a recusa.
-
-**Critérios de aceitação**
-
-- **CA12.1:** Dado que uma reserva esteja no estado `EM ANÁLISE`, quando o responsável aprová-la, então o sistema deverá alterar seu estado para `APROVADA`.
-- **CA12.2:** Dado que uma reserva esteja no estado `EM ANÁLISE`, quando o responsável solicitar sua recusa, então o sistema deverá exigir um motivo.
-- **CA12.3:** O sistema não deverá permitir a recusa sem motivo.
-- **CA12.4:** Após a recusa, o sistema deverá registrar o motivo informado.
-- **CA12.5:** Uma reserva recusada deverá possuir o estado `RECUSADA`.
+- **CA-03.1 (Caminho principal — Confirmação e bloqueio):**  
+  **Dado** que a reserva está no estado `APROVADA` dentro do prazo de tolerância,  
+  **Quando** o organizador clica em "Confirmar Contratação",  
+  **Então** o sistema atualiza o estado para `CONFIRMADA`, efetiva o bloqueio definitivo em `DISPONIBILIDADE_SERVICO` em transação atômica e grava a mudança em `HISTORICO_RESERVA`.
+- **CA-03.2 (Recusa e limite — Janela de confirmação esgotada):**  
+  **Dado** que o prazo de tolerância para confirmação de proposta aprovada expirou (SLA excedido),  
+  **Quando** o organizador tenta confirmar,  
+  **Então** o sistema recusa a confirmação, informa que o prazo expirou e a reserva transita para `EXPIRADA`, liberando o pré-bloqueio da agenda.
+- **CA-03.3 (Efeito persistente — Bloqueio atômico):**  
+  **Dado** que uma reserva foi confirmada,  
+  **Quando** qualquer outro organizador tentar solicitar o mesmo serviço no mesmo período,  
+  **Então** a agenda reporta ocupação e o sistema bloqueia qualquer nova sobreposição.
 
 ---
 
-### RF13 — Confirmação de reserva
+### HU-04 — Acompanhamento e Trilha de Auditoria
+> **Como** organizador ou prestador,  
+> **quero** consultar o histórico completo de transições de uma reserva,  
+> **para** comprovar as etapas acordadas e auditar responsabilidades em caso de divergência.  
+> `[Origem: N5, confirmada em E1 e E2]`
 
-O sistema deverá permitir que o organizador confirme uma reserva aprovada.
-
-Quando a confirmação for realizada, a reserva deverá passar para o estado `CONFIRMADA`.
-
-**Critérios de aceitação**
-
-- **CA13.1:** Dado que uma reserva esteja no estado `APROVADA`, quando o organizador responsável confirmá-la, então o sistema deverá alterar seu estado para `CONFIRMADA`.
-- **CA13.2:** Somente o organizador responsável pela reserva poderá realizar a confirmação.
-- **CA13.3:** Uma reserva que não esteja no estado `APROVADA` não deverá ser confirmada por essa operação.
-
----
-
-### RF14 — Cancelamento de reserva
-
-O sistema deverá permitir o cancelamento de uma reserva de acordo com as regras de negócio definidas para o estado atual da reserva e para o usuário responsável pela operação.
-
-O cancelamento deverá preservar o registro da reserva e seu histórico.
-
-**Critérios de aceitação**
-
-- **CA14.1:** Dado que uma reserva esteja em um estado que permita cancelamento, quando um usuário autorizado solicitar o cancelamento, então o sistema deverá alterar seu estado para `CANCELADA`.
-- **CA14.2:** O sistema deverá impedir o cancelamento quando o usuário não possuir permissão para realizar a operação.
-- **CA14.3:** O cancelamento não deverá excluir fisicamente a reserva.
-- **CA14.4:** O sistema deverá registrar a alteração de estado no histórico da reserva quando o mecanismo de histórico estiver implementado.
-
-> **⚠️ Ponto a definir:** as condições específicas de cancelamento por organizador e prestador/fornecedor deverão ser fechadas pela equipe antes da implementação.
+- **CA-04.1 (Caminho principal — Consulta da trilha de auditoria):**  
+  **Dado** que uma reserva possui uma ou mais transições realizadas,  
+  **Quando** o usuário autorizado acessa os detalhes da reserva,  
+  **Então** o sistema exibe cronologicamente cada transição com status anterior, novo status, data/hora e o autor da mudança.
+- **CA-04.2 (Recusa e limite — Acesso indevido a reservas alheias):**  
+  **Dado** que um usuário autenticado tenta acessar a trilha de uma reserva que não pertence a ele nem aos seus serviços,  
+  **Quando** ele requisita a visualização,  
+  **Então** o sistema recusa a visualização com código de acesso negado (403 Forbidden).
+- **CA-04.3 (Efeito persistente — Imutabilidade):**  
+  **Dado** que registros existem em `HISTORICO_RESERVA`,  
+  **Quando** qualquer rotina da aplicação é executada,  
+  **Então** nenhuma operação de UPDATE ou DELETE é permitida sobre esses registros.
 
 ---
 
-### RF15 — Gerenciamento de eventos
+## 4. Caso de Uso Estruturado (UC-01)
 
-O sistema deverá permitir que o organizador consulte e gerencie os eventos de sua responsabilidade.
+### UC-01 — Solicitar e Tratar Reserva de Serviço
+- **Ator principal:** Organizador de Eventos
+- **Atores secundários:** Prestador de Serviços, Sistema (background)
+- **Pré-condição:** Organizador autenticado, possuindo ao menos um evento cadastrado e serviço ativo no catálogo.
+- **Garantia de sucesso (Pós-condição):** Reserva criada, analisada pelo prestador, confirmada com agenda bloqueada e todo o ciclo auditado em histórico imutável.
 
-**Critérios de aceitação**
+#### Fluxo Principal
+1. O organizador localiza o serviço desejado no catálogo e aciona "Solicitar Reserva".
+2. Seleciona o evento e informa o período (`dataInicio` e `dataFim`).
+3. O sistema valida se o período está contido no evento e se o serviço está disponível na agenda.
+4. O sistema cria a reserva no estado `SOLICITADA` e registra o evento em `HISTORICO_RESERVA`.
+5. O prestador acessa a solicitação em sua fila de trabalho e inicia a análise (transição para `EM_ANALISE`).
+6. O prestador decide aprovar a solicitação; o sistema atualiza o estado para `APROVADA`, grava histórico e pré-bloqueia a agenda.
+7. O organizador toma ciência da aprovação e aciona "Confirmar Contratação".
+8. O sistema valida que a confirmação está dentro do prazo de SLA, atualiza o estado para `CONFIRMADA`, consolida o bloqueio definitivo da agenda e emite o comprovante/voucher com dados da contratação.
+9. Após a realização do evento e decurso da `dataFim`, o Sistema executa rotina automática alterando a reserva para `FINALIZADA` e habilitando a avaliação.
 
-- **CA15.1:** Dado que o usuário esteja autenticado como organizador, quando acessar seus eventos, então o sistema deverá apresentar somente os eventos sob sua responsabilidade.
-- **CA15.2:** O organizador deverá poder consultar os dados de um evento.
-- **CA15.3:** O sistema deverá preservar a associação entre o evento e seu organizador.
-- **CA15.4:** As alterações realizadas no evento deverão respeitar as regras de negócio relacionadas às reservas existentes.
-
----
-
-### RF16 — Acompanhamento de reservas
-
-O sistema deverá permitir que os usuários envolvidos em uma reserva acompanhem seu estado atual e as informações relacionadas à solicitação.
-
-**Critérios de aceitação**
-
-- **CA16.1:** O organizador deverá conseguir consultar as reservas relacionadas aos seus eventos.
-- **CA16.2:** O prestador ou fornecedor deverá conseguir consultar as reservas relacionadas aos seus serviços.
-- **CA16.3:** O sistema deverá apresentar o estado atual da reserva.
-- **CA16.4:** O sistema deverá apresentar as informações necessárias para identificar a reserva, o evento e o serviço relacionado.
-- **CA16.5:** Quando o histórico de estados estiver implementado, o sistema deverá permitir sua consulta aos usuários autorizados.
-
----
-
-### RF17 — Avaliação de serviço
-
-O sistema deverá permitir que o organizador avalie um serviço após a conclusão da contratação, caso a funcionalidade de avaliação permaneça no escopo da versão.
-
-A avaliação deverá estar vinculada à contratação correspondente.
-
-**Critérios de aceitação**
-
-- **CA17.1:** Dado que uma reserva esteja no estado `FINALIZADA`, quando o organizador responsável acessar a funcionalidade de avaliação, então o sistema deverá permitir o registro da avaliação.
-- **CA17.2:** O sistema deverá associar a avaliação à reserva e ao serviço correspondente.
-- **CA17.3:** O sistema não deverá permitir que uma reserva não finalizada seja avaliada.
-- **CA17.4:** O usuário não deverá avaliar uma contratação que não seja de sua responsabilidade.
+#### Fluxos Alternativos
+- **3a. Serviço indisponível no período solicitado:** O sistema informa o conflito de agenda, não cria a reserva e sugere outros períodos ou serviços similares.
+- **3b. Período incompatível com o evento:** O sistema informa que o horário do serviço excede os limites de início/término do evento e solicita correção.
+- **5a. Cancelamento precoce pelo organizador:** O organizador desiste da solicitação antes da decisão do prestador; o sistema muda o estado para `CANCELADA`, audita o cancelamento e desocupa a fila.
+- **6a. Prestador recusa a solicitação:** O prestador clica em "Recusar" e digita o motivo obrigatório. O sistema valida o preenchimento da justificativa (RN04), altera o estado para `RECUSADA`, grava o motivo no histórico e notifica o organizador. O fluxo encerra sem bloqueio de agenda.
+- **6b. Prestador não responde no prazo limite (SLA 48h):** A rotina do Sistema identifica estouro de SLA; altera o estado compulsoriamente para `EXPIRADA`, notifica as partes e encerra o pedido.
+- **7a. Organizador desiste da reserva aprovada:** O organizador cancela a reserva antes da confirmação; o sistema transita para `CANCELADA` e libera o pré-bloqueio da agenda.
+- **7b. Organizador não confirma dentro da janela limite:** O Sistema altera a reserva de `APROVADA` para `EXPIRADA`, liberando a agenda para outros clientes.
 
 ---
 
-### RF18 — Visualização do histórico de reserva
+## 5. Requisitos Funcionais Gerais
 
-O sistema deverá permitir a manutenção das informações necessárias para identificar as alterações de estado de uma reserva.
+Os 18 requisitos funcionais consolidados do EventFy são apresentados a seguir:
 
-Cada alteração de estado deverá registrar, quando o mecanismo de histórico estiver implementado:
-
-- reserva relacionada;
-- estado anterior;
-- novo estado;
-- data e hora da alteração;
-- usuário responsável pela alteração;
-- observação ou motivo, quando aplicável.
-
-**Critérios de aceitação**
-
-- **CA18.1:** Quando uma reserva tiver seu estado alterado, o sistema deverá registrar a alteração.
-- **CA18.2:** O registro deverá identificar o estado anterior e o novo estado.
-- **CA18.3:** O registro deverá possuir data e hora da alteração.
-- **CA18.4:** O registro deverá identificar o usuário responsável pela alteração quando a operação for realizada por um usuário.
-- **CA18.5:** O histórico deverá preservar as alterações realizadas na reserva.
-
----
-
-## 2. Requisitos Não Funcionais
-
-### RNF01 — Segurança de credenciais
-
-As credenciais dos usuários deverão ser armazenadas de forma segura, utilizando mecanismo de proteção adequado para senhas.
-
-O sistema não deverá armazenar senhas em texto puro.
-
-**Critério de aceitação**
-
-- **CA-RNF01.1:** Ao consultar os dados persistidos de um usuário, a senha não deverá estar armazenada em texto puro.
+- **RF01 — Cadastro de usuário:** O sistema deve permitir o cadastro de usuários com nome, e-mail único, senha protegida por hash e tipo (`Organizador`, `Prestador` ou `Administrador`).
+- **RF02 — Autenticação:** O sistema deve autenticar usuários por credenciais válidas e oferecer encerramento seguro de sessão (logout).
+- **RF03 — Gerenciamento de perfil:** O sistema deve permitir consulta e edição de dados cadastrais, impedindo a alteração indevida de privilégios.
+- **RF04 — Cadastro de serviço:** O sistema deve permitir que prestadores cadastrem serviços com nome, descrição, categoria, preço e regras de disponibilidade.
+- **RF05 — Consulta de serviços:** O sistema deve disponibilizar catálogo público/pesquisável de serviços ativos.
+- **RF06 — Busca e filtragem:** O sistema deve filtrar serviços por categoria, faixa de preço, localização e disponibilidade na data.
+- **RF07 — Detalhes do serviço:** O sistema deve exibir dados completos, fotos e condições de atendimento do fornecedor.
+- **RF08 — Gerenciamento de serviços:** O sistema deve permitir ao prestador atualizar dados ou desativar serviços (exclusão lógica).
+- **RF09 — Cadastro de evento:** O sistema deve permitir que organizadores cadastrem eventos com nome, datas de início/fim e local.
+- **RF10 — Solicitação de reserva:** O sistema deve permitir a solicitação de reserva vinculada a um evento e período, iniciando em `SOLICITADA`.
+- **RF11 — Visualização de solicitações:** O sistema deve apresentar ao prestador a fila de solicitações recebidas.
+- **RF12 — Análise da solicitação:** O sistema deve permitir ao prestador aprovar (`APROVADA`) ou recusar (`RECUSADA` com justificativa obrigatória) solicitações.
+- **RF13 — Confirmação de reserva:** O sistema deve permitir ao organizador confirmar reservas aprovadas, transitando para `CONFIRMADA` e bloqueando a agenda.
+- **RF14 — Cancelamento de reserva:** O sistema deve permitir cancelamento motivado segundo as regras da máquina de estados.
+- **RF15 — Gerenciamento de eventos:** O sistema deve listar eventos do organizador com os serviços contratados associados.
+- **RF16 — Acompanhamento de reservas:** O sistema deve exibir o estado em tempo real de cada solicitação.
+- **RF17 — Avaliação de serviços:** O sistema deve permitir ao organizador avaliar serviços contratados após a conclusão (`FINALIZADA`).
+- **RF18 — Histórico e auditoria da reserva:** O sistema deve gravar registro imutável em `HISTORICO_RESERVA` em toda transição de estado.
 
 ---
 
-### RNF02 — Integridade das reservas
+## 6. Requisitos Não Funcionais Verificáveis (ISO/IEC 25010)
 
-O sistema deverá impedir que uma reserva seja confirmada quando houver conflito com uma reserva incompatível para o mesmo serviço e período, de acordo com as regras de disponibilidade definidas.
+Os requisitos não funcionais foram quantificados no formato **Planguage** (Gilb, 2005) e cobrem as características de qualidade da norma **ISO/IEC 25010:2023** conforme o Capítulo 5 (Tabela 5.7).
 
-**Critério de aceitação**
+### RNF-01 — Segurança no Armazenamento de Credenciais
+- **Característica ISO/IEC 25010:** Segurança (Confidencialidade)
+- **Grandeza:** Algoritmo e derivação de chave das senhas no banco de dados.
+- **Condição:** Em todas as operações de cadastro, alteração e persistência de usuários.
+- **Aceitável:** Senhas protegidas com salt e algoritmo de derivação lento (bcrypt fator de custo >= 10 ou Argon2id); nenhuma senha em texto puro.
+- **Pretendido:** Hash via Argon2id com tempo de computação controlado de ~200ms.
+- **Como verificar:** Inspecionar os registros da tabela `USUARIO` no banco de dados de teste e verificar a ausência de texto puro e o padrão do hash gerado.
 
-- **CA-RNF02.1:** Dado que exista uma reserva incompatível para determinado serviço e período, quando uma nova reserva for submetida à confirmação, então o sistema deverá impedir a confirmação e informar o conflito.
+### RNF-02 — Integridade Concorrente da Agenda (Conflito de Datas)
+- **Característica ISO/IEC 25010:** Confiabilidade / Integridade
+- **Grandeza:** Taxa de reservas confirmadas simultâneas sobre o mesmo período em um mesmo serviço.
+- **Condição:** Requisições concorrentes disparadas para o mesmo serviço no mesmo intervalo de datas.
+- **Aceitável:** **Zero** reservas com conflito de agenda confirmadas; o sistema deve rejeitar ou pré-bloquear transacionalmente.
+- **Pretendido:** Bloqueio atômico em menos de 100 ms via transação relacional com lock de linha.
+- **Como verificar:** Teste de integração automatizado executando duas chamadas simultâneas para o mesmo serviço e intervalo, confirmando que a segunda recebe código HTTP 409 (Conflict).
 
----
+### RNF-03 — Eficiência de Desempenho na Consulta ao Catálogo
+- **Característica ISO/IEC 25010:** Eficiência de Desempenho (Comportamento temporal)
+- **Grandeza:** Tempo decorrido entre a requisição de busca/filtro e a renderização completa dos resultados.
+- **Condição:** Base com até 200 serviços cadastrados, consultada em conexão de rede local padrão.
+- **Aceitável:** até 3,0 segundos.
+- **Pretendido:** até 1,0 segundo.
+- **Como verificar:** Medição no navegador (painel Network do DevTools), três execuções consecutivas com a base de teste de 200 registros, adotando o maior valor medido.
 
-### RNF03 — Usabilidade
+### RNF-04 — Capacidade de Interação e Responsividade Móvel
+- **Característica ISO/IEC 25010:** Capacidade de Interação (Usabilidade e Acessibilidade)
+- **Grandeza:** Realização dos fluxos sem necessidade de rolagem horizontal em telas móveis.
+- **Condição:** Visualização em viewport de 360 pixels de largura (smartphone comum).
+- **Aceitável:** 100% dos fluxos de solicitação, aprovação e recusa concluíveis em tela de 360px de largura sem rolagem horizontal.
+- **Pretendido:** Interface adaptativa fluida com feedback imediato para toques e formulários.
+- **Como verificar:** Teste de usabilidade nas ferramentas de desenvolvedor em emulação de tela móvel de 360px × 640px.
 
-As funcionalidades principais deverão apresentar navegação consistente e informações suficientes para que o usuário compreenda a ação disponível em cada etapa.
+### RNF-05 — Rastreabilidade e Auditoria Imutável de Estados
+- **Característica ISO/IEC 25010:** Confiabilidade / Não repúdio
+- **Grandeza:** Taxa de transições de estado que geram registro correspondente em auditoria.
+- **Condição:** Em todas as mudanças de status da reserva (`SOLICITADA` a `FINALIZADA`).
+- **Aceitável:** 100% das transições registradas com status anterior, novo status, timestamp ISO 8601 e identificador do executor.
+- **Pretendido:** Inserção em transação atômica única no banco de dados.
+- **Como verificar:** Inspecionar a tabela `HISTORICO_RESERVA` após a execução de cada operação do ciclo de vida, conferindo integridade cronológica.
 
-As mensagens de erro deverão identificar o problema e orientar o usuário sobre a ação necessária.
+### RNF-06 — Manutenibilidade e Isolamento de Políticas de Prazo
+- **Característica ISO/IEC 25010:** Manutenibilidade (Modificabilidade / Critério de Parnas)
+- **Grandeza:** Número de arquivos afetados por alteração nas regras de tolerância de SLA e cancelamento.
+- **Condição:** Alteração do prazo de tolerância de análise (ex.: de 48h para 24h).
+- **Aceitável:** No máximo 1 módulo do backend alterado (`PoliticaCancelamento` / `ServicoDisponibilidade`).
+- **Pretendido:** 1 único arquivo alterado sem impacto em telas, controladores ou esquema relacional.
+- **Como verificar:** Teste do critério de Parnas: contagem de arquivos modificados em pull request que simula a alteração do prazo.
 
-**Critérios de aceitação**
-
-- **CA-RNF03.1:** As telas principais deverão possuir mecanismo de navegação consistente.
-- **CA-RNF03.2:** Mensagens de erro deverão identificar o campo ou operação que precisa ser corrigido quando essa informação estiver disponível.
-- **CA-RNF03.3:** As ações relacionadas ao fluxo de reserva deverão apresentar claramente o estado atual da reserva.
-
----
-
-### RNF04 — Identificação única
-
-Cada entidade persistida deverá possuir um identificador único.
-
-O identificador não deverá ser reutilizado para representar outro registro após a remoção lógica ou exclusão do registro.
-
-**Critério de aceitação**
-
-- **CA-RNF04.1:** Não deverá existir mais de um registro persistido com o mesmo identificador dentro da mesma entidade.
-
----
-
-### RNF05 — Rastreabilidade de reservas
-
-O sistema deverá preservar informações suficientes para rastrear as alterações realizadas nas reservas.
-
-O histórico deverá permitir identificar, quando aplicável, o estado anterior, o novo estado, a data e hora da alteração e o usuário responsável.
-
-**Critérios de aceitação**
-
-- **CA-RNF05.1:** Uma alteração de estado deverá gerar um registro no histórico.
-- **CA-RNF05.2:** O histórico deverá permitir reconstruir a sequência de estados pela qual a reserva passou.
-
----
-
-### RNF06 — Consistência dos dados
-
-O sistema deverá manter a consistência das informações relacionadas entre usuários, eventos, serviços, reservas e avaliações.
-
-As restrições de integridade definidas no modelo de dados deverão ser respeitadas.
-
-**Critérios de aceitação**
-
-- **CA-RNF06.1:** Uma reserva deverá referenciar um usuário, um evento e um serviço existentes.
-- **CA-RNF06.2:** O sistema não deverá permitir referências para registros inexistentes.
-- **CA-RNF06.3:** Uma avaliação deverá estar vinculada a uma contratação válida quando essa funcionalidade estiver habilitada.
+> **Nota de Conformidade ISO/IEC 25010 (Seção 5.7.1 do livro):**  
+> - *Compatibilidade:* Garantida pelo envio de dados no padrão universal JSON/REST.  
+> - *Flexibilidade:* Garantida pelo desacoplamento entre frontend web e backend API.  
+> - *Segurança de Operação Física (Safety):* **Sem exigência neste projeto** (o sistema não controla dispositivos mecânicos ou riscos de integridade física).
 
 ---
 
-## 3. Regras de Negócio
+## 7. Restrições e Regras de Negócio
 
-### RN01 — Responsabilidade sobre eventos
+### 7.1 Restrições do Sistema (RE)
+- **RE-01 (Arquitetura Web):** A aplicação deve operar sob o modelo cliente-servidor web, com frontend desacoplado consumindo backend por API REST JSON. `[Origem: D1]`
+- **RE-02 (Persistência Relacional):** O armazenamento deve utilizar banco de dados relacional com suporte a chaves estrangeiras e transações atômicas (ACID). `[Origem: D1]`
+- **RE-03 (Privacidade e LGPD):** O sistema deve coletar exclusivamente dados operacionais estritamente necessários para contato e agendamento (Princípio da Necessidade, art. 6º, III, Lei 13.709/2018). `[Origem: D1]`
 
-Um evento deverá possuir um único organizador responsável.
-
-O organizador somente poderá gerenciar os eventos sob sua responsabilidade.
-
----
-
-### RN02 — Responsabilidade sobre serviços
-
-Um serviço deverá possuir um prestador ou fornecedor responsável.
-
-Somente o responsável pelo serviço poderá gerenciar suas informações e analisar solicitações relacionadas ao serviço.
-
----
-
-### RN03 — Responsabilidade sobre reservas
-
-Uma reserva deverá relacionar:
-
-- um organizador;
-- um evento;
-- um serviço;
-- o prestador ou fornecedor responsável pelo serviço;
-- um período de solicitação;
-- um estado.
+### 7.2 Regras de Negócio (RN)
+- **RN01 — Responsabilidade sobre eventos:** Um evento pertence a um único organizador responsável, que é o único autorizado a gerenciá-lo. `[Origem: D1]`
+- **RN02 — Responsabilidade sobre serviços:** Um serviço pertence ao prestador que o cadastrou; apenas ele pode alterar dados e decidir sobre solicitações. `[Origem: D1]`
+- **RN03 — Vínculo da reserva:** Uma reserva relaciona obrigatoriamente um organizador, um evento, um serviço, um prestador e um intervalo de datas. `[Origem: D1]`
+- **RN04 — Obrigatoriedade do motivo de recusa:** Nenhuma reserva pode ser alterada para `RECUSADA` sem que uma justificativa textual seja registrada. `[Origem: E1, E2]`
+- **RN05 — Máquina de estados estrita:** A reserva deve seguir rigorosamente a máquina de estados oficial com 8 estados, sem caminhos órfãos e sem transições não mapeadas. `[Origem: D1]`
+- **RN06 — Incompatibilidade de agenda:** Um serviço não pode ter duas reservas com períodos concorrentes no estado `CONFIRMADA`. `[Origem: E2, O1]`
+- **RN07 — Imutabilidade da auditoria:** O histórico de transições de uma reserva é permanente e imutável; nenhuma linha de histórico pode ser alterada ou apagada. `[Origem: D1]`
 
 ---
 
-### RN04 — Motivo de recusa
+## 8. Matriz de Rastreabilidade Unificada
 
-Toda reserva recusada deverá possuir um motivo registrado.
+A cadeia liga cada necessidade do `DESCOBERTA.md` aos requisitos, regras e modelos:
 
-O sistema não deverá permitir que uma reserva seja alterada para `RECUSADA` sem que o motivo seja informado.
-
----
-
-### RN05 — Estados válidos da reserva
-
-Uma reserva deverá obedecer às transições de estado definidas pelo sistema. As transições atualmente previstas são:
-
-```mermaid
-stateDiagram-v2
-    [*] --> SOLICITADA
-    SOLICITADA --> EM_ANALISE : EM ANÁLISE
-    EM_ANALISE --> APROVADA
-    EM_ANALISE --> RECUSADA
-    APROVADA --> CONFIRMADA
-    CONFIRMADA --> FINALIZADA
-    CONFIRMADA --> CANCELADA
-    RECUSADA --> [*]
-    FINALIZADA --> [*]
-    CANCELADA --> [*]
-```
-
-Uma reserva não deverá realizar uma transição que não esteja prevista nas regras do sistema.
+| Necessidade | Requisito Funcional | Regra de Negócio | Entidade de Domínio | Tabela de Banco |
+|:---:|:---:|:---:|:---:|:---:|
+| **N1** | RF05, RF06, RF07 | RN02 | `Servico`, `Arquivo` | `SERVICO`, `ARQUIVO` |
+| **N2** | RF10 | RN01, RN03, RN06 | `Reserva`, `Evento` | `RESERVA`, `EVENTO` |
+| **N3** | RF11, RF12 | RN02, RN04, RN05 | `Reserva` | `RESERVA` |
+| **N4** | RF13 | RN05, RN06 | `DisponibilidadeServico` | `DISPONIBILIDADE_SERVICO` |
+| **N5** | RF16, RF18 | RN05, RN07 | `HistoricoReserva` | `HISTORICO_RESERVA` |
 
 ---
 
-### RN06 — Disponibilidade do serviço
+## 9. Validações Realizadas
 
-Um serviço somente poderá ser confirmado para um período compatível com sua disponibilidade.
+### Sessão V1 — 01/10/2026, com Organizador Autônomo (Perfil de Carlos, E1)
 
-O sistema deverá impedir conflitos entre reservas que não possam ocorrer simultaneamente para o mesmo serviço.
+A sessão de validação foi realizada com o protótipo navegável de baixa/média fidelidade seguindo o procedimento da Seção 5.11.2 do livro didático (situar a tarefa sem explicar a tela, observar em silêncio e registrar o que o teste derrubou):
 
-A forma de representação da disponibilidade deverá ser definida no modelo de domínio e no modelo de dados.
-
----
-
-### RN07 — Histórico da reserva
-
-As alterações de estado de uma reserva deverão ser preservadas para permitir sua rastreabilidade.
-
-O histórico deverá manter, no mínimo:
-
-- estado anterior;
-- novo estado;
-- data e hora;
-- usuário responsável pela alteração, quando aplicável.
-
----
-
-## 4. Matriz de rastreabilidade
-
-| Requisito | Regra de negócio | Entidade principal | Protótipo/fluxo |
-|---|---|---|---|
-| RF01 | — | `Usuario` | Cadastro |
-| RF02 | — | `Usuario` | Autenticação |
-| RF03 | RN01/RN02 | `Usuario` | Perfil |
-| RF04 | RN02 | `Servico` | Cadastro de serviço |
-| RF05 | RN02 | `Servico` | Catálogo |
-| RF06 | RN02 | `Servico` | Busca e filtros |
-| RF07 | RN02 | `Servico` | Detalhes do serviço |
-| RF08 | RN02 | `Servico` | Gerenciamento de serviço |
-| RF09 | RN01 | `Evento` | Cadastro de evento |
-| RF10 | RN01/RN03/RN06 | `Reserva` | Solicitação |
-| RF11 | RN02/RN05 | `Reserva` | Análise |
-| RF12 | RN02/RN04/RN05 | `Reserva` | Aprovação/recusa |
-| RF13 | RN01/RN05 | `Reserva` | Confirmação |
-| RF14 | RN05/RN07 | `Reserva` | Cancelamento |
-| RF15 | RN01 | `Evento` | Gerenciamento de eventos |
-| RF16 | RN03/RN05/RN07 | `Reserva` | Acompanhamento |
-| RF17 | RN01 | `Avaliacao` | Avaliação |
-| RF18 | RN07 | `Reserva` | Histórico |
-| RNF01 | — | `Usuario` | Autenticação |
-| RNF02 | RN06 | `Reserva` | Confirmação |
-| RNF03 | — | Interface | Todos os fluxos |
-| RNF04 | — | Todas | Persistência |
-| RNF05 | RN07 | `Reserva` | Histórico |
-| RNF06 | RN01/RN02/RN03 | Todas | Persistência |
-
----
-
-## 5. Dependências e decisões pendentes
-
-Os seguintes pontos deverão ser definidos antes da implementação das funcionalidades correspondentes:
-
-| ID | Questão | Artefato afetado |
+| Achado na Validação | Efeito no Requisito / Projeto | Item Alterado |
 |---|---|---|
-| DP01 | Tipos definitivos de usuário e respectivas permissões | Requisitos, domínio e dados |
-| DP02 | Representação detalhada da disponibilidade dos serviços | Requisitos, domínio e dados |
-| DP03 | Condições específicas para cancelamento | Requisitos e estados |
-| DP04 | Necessidade e permissões do perfil administrador | Requisitos e domínio |
-| DP05 | Formato e conteúdo da avaliação | Requisitos, domínio e dados |
-| DP06 | Forma definitiva de armazenamento do histórico da reserva | Requisitos, domínio e dados |
-| DP07 | Regras para alteração de eventos que possuam reservas | Requisitos e domínio |
-| DP08 | Regras para alteração de serviços que possuam reservas | Requisitos e domínio |
-
-Essas decisões deverão ser registradas antes de serem incorporadas aos demais artefatos.
+| O usuário procurou um campo para explicar necessidades especiais ao solicitar o serviço | O campo de observações adicionais era opcional e estava pouco visível na tela de solicitação | `RF10` e tela `prototipo/reserva.html` atualizados para destacar observações |
+| O usuário tentou recusar uma reserva sem digitar nada para ver se o sistema permitia | A validação visual precisava bloquear o botão de envio enquanto o motivo estivesse em branco | `CA-02.3` reforçado e validação no script de `recusada.html` |
+| O usuário perguntou se o prestador podia sugerir outra data quando recusasse | Sugestão de reagendamento não estava prevista na recusa simples | Registrado no backlog como melhoria futura (`HU-12`) |
+| O usuário elogiou poder ver o status exato da reserva sem precisar mandar mensagem no WhatsApp | Confirmou o valor central da máquina de estados visível | `HU-04` e `RF16` validados com o usuário |
 
 ---
 
-## 6. Convenções de especificação
+## 10. Lista de Verificação da Revisão (Checklist de Fagan)
 
-Os requisitos deverão:
+Inspeção formal de requisitos conduzida segundo a Listagem 5.7 do livro-texto:
 
-- possuir identificador único;
-- descrever uma necessidade ou comportamento específico;
-- utilizar linguagem objetiva;
-- evitar termos subjetivos ou ambíguos;
-- utilizar `deverá` para requisitos obrigatórios;
-- possuir critérios de aceitação quando aplicável;
-- possuir rastreabilidade com regras e modelos relacionados;
-- ser verificáveis por meio de critérios objetivos.
+### Para cada História / Requisito:
+- [x] Tem origem declarada, e a origem existe no `DESCOBERTA.md` (`N1..N5`).
+- [x] O benefício declarado nomeia claramente quem se beneficia (*"para..."*).
+- [x] Tem critérios de aceitação para o caminho principal, para recusa/limite e para o efeito que persiste.
+- [x] Nenhum critério descreve elementos de tela (botão azul, cor) em vez do comportamento.
+- [x] Cabe em uma iteração de 2 semanas, na avaliação de quem vai construir.
 
-Termos como "rapidamente", "adequadamente", "fácil", "intuitivo" e "etc." deverão ser evitados quando não houver uma definição objetiva associada.
+### Para o Conjunto dos Requisitos:
+- [x] Nenhum par de requisitos se contradiz, e todo termo do domínio está no glossário.
+- [x] As nove características da ISO/IEC 25010 foram percorridas e registradas.
+- [x] Toda necessidade confirmada do `DESCOBERTA.md` possui item correspondente ou motivo para ficar fora.
+- [x] Todo item possui posição na ordem do backlog com critério declarado.
+- [x] Os itens obrigatórios consomem no máximo 60% do esforço previsto até a review parcial.
 
-Alterações nos requisitos deverão ser refletidas nos artefatos dependentes.
+---
+
+## 11. Histórico de Revisão e Linha de Base do Marco 1
+
+- **2026-09-03:** Linha de base inicial dos requisitos e regras de negócio.
+- **2026-10-21:** Reconciliação dos RFs com a máquina de estados de 8 estados e inclusão da auditoria imutável.
+- **2026-10-28:** **Linha de Base do Marco 1 (Encontro 5):** Inclusão do Glossário formal, Backlog ordenado com MoSCoW e risco técnico, Histórias de Usuário INVEST com Dado-Quando-Então, Caso de Uso UC-01, RNFs em Planguage (ISO 25010), registro de validação V1 e checklist de Fagan.

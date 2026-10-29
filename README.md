@@ -80,7 +80,7 @@ A proposta contempla, entre outras atividades:
 - Acompanhamento do estado das reservas
 - Gerenciamento dos serviços associados a um evento
 
-> O funcionamento detalhado dessas funcionalidades está especificado no documento de requisitos do projeto: [`REQUISITOS.md`](./REQUISITOS.md).
+> O funcionamento detalhado dessas funcionalidades está especificado no documento de requisitos do projeto: [`REQUISITOS.md`](./docs/REQUISITOS.md).
 
 ---
 
@@ -113,7 +113,7 @@ As principais funcionalidades previstas para o EventFy incluem:
 - [ ] **Cancelamento** — cancelamento de reservas de acordo com as regras de negócio definidas
 - [ ] **Avaliação** — avaliação de serviços após a conclusão de uma contratação *(caso permaneça no escopo da versão atual)*
 
-> Os detalhes e critérios de cada funcionalidade estão documentados em [`REQUISITOS.md`](./REQUISITOS.md).
+> Os detalhes e critérios de cada funcionalidade estão documentados em [`REQUISITOS.md`](./docs/REQUISITOS.md).
 
 ---
 
@@ -123,13 +123,17 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 
 | Artefato | Local | Descrição |
 |---|---|---|
-| Requisitos | [`REQUISITOS.md`](./REQUISITOS.md) | Requisitos funcionais, requisitos não funcionais e regras de negócio |
-| Projeto | [`PROJETO.md`](./PROJETO.md) | Informações sobre o projeto, decisões e organização dos artefatos |
-|Documentação| [`PROCESSOS-NEGOCIO.md](.docs/PROCESSOS-NEGOCIO.md)| Este documento descreve os processos do domínio|
-| Modelagem | [`diagrams/`](./diagrams) | Modelo de domínio, modelo de dados, modelo de estados e demais diagramas |
+| Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
+| Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
+| Tema | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e alinhamento com a disciplina |
+| Descoberta | [`DESCOBERTA.md`](./DESCOBERTA.md) | Problema, partes interessadas, personas, necessidades N1..N5 e riscos |
+| Processo de Desenvolvimento | [`PROCESSO.md`](./PROCESSO.md) | Fatores de Boehm & Turner, iterações de 2 semanas, papéis e Definição de Pronto |
+| Processos de Negócio | [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Especificação detalhada dos processos de negócio e máquina de estados |
+| Modelagem | [`docs/diagrams/`](./docs/diagrams) | Domínio, dados, estados da reserva e sequência UML |
 | Protótipo | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
-| Conferência cruzada | [`CONFERENCIA_CRUZADA.md`](./CONFERENCIA_CRUZADA.md) | Registro da conferência entre os diferentes artefatos do projeto |
-| Contribuição | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Orientações relacionadas ao processo de contribuição e organização do projeto |
+| Conferência cruzada | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Registro da conferência entre os diferentes artefatos do projeto |
+| Contribuição | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Orientações de contribuição, revisão e critérios de qualidade |
+| Registro de Mudanças | [`CHANGELOG.md`](./CHANGELOG.md) | Histórico de versões e notas de lançamento (SemVer) |
 
 ---
 
@@ -190,13 +194,17 @@ Quando a implementação estiver disponível, esta seção deverá conter:
 
 | Documento | Descrição |
 |---|---|
-| [`PROJETO.md`](./PROJETO.md) | Organização e informações gerais do projeto |
-| [`REQUISITOS.md`](./REQUISITOS.md) | Especificação dos requisitos e regras de negócio |
-| [`PROCESSOS-NEGOCIO.md](.docs/PROCESSOS-NEGOCIO.md)| Este documento descreve os processos do domínio|
-| [`CONFERENCIA_CRUZADA.md`](./CONFERENCIA_CRUZADA.md) | Conferência entre os artefatos |
-| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Processo de contribuição |
-| [`diagrams/`](./diagrams) | Diagramas e modelos do sistema |
-| [`prototipo/`](./prototipo) | Protótipo da aplicação |
+| [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
+| [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos, backlog ordenado e critérios |
+| [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e verificação |
+| [`DESCOBERTA.md`](./DESCOBERTA.md) | Descoberta do problema, stakeholders, personas e riscos |
+| [`PROCESSO.md`](./PROCESSO.md) | Processo de desenvolvimento, fatores de Boehm & Turner e DoD |
+| [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Processos de negócio e máquina de estados |
+| [`docs/diagrams/`](./docs/diagrams) | Diagramas conceituais, relacionais e comportamentais (.mmd) |
+| [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Conferência cruzada formal entre artefatos |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Processo de contribuição e diretrizes de revisão |
+| [`CHANGELOG.md`](./CHANGELOG.md) | Registro de mudanças e versionamento semântico |
+| [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
 
 ---
 

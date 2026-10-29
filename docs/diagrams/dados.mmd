@@ -1,0 +1,105 @@
+erDiagram
+    USUARIO ||--o{ EVENTO : organiza
+    USUARIO ||--o{ SERVICO : oferece
+    SERVICO ||--o{ ARQUIVO : possui
+    SERVICO ||--o{ DISPONIBILIDADE_SERVICO : possui
+    EVENTO ||--o{ RESERVA : possui
+    SERVICO ||--o{ RESERVA : recebe
+    USUARIO ||--o{ RESERVA : solicita
+    RESERVA ||--o| AVALIACAO : gera
+    USUARIO ||--o{ AVALIACAO : realiza
+    RESERVA ||--o{ HISTORICO_RESERVA : registra
+    USUARIO ||--o{ HISTORICO_RESERVA : executa
+
+    USUARIO {
+        int id_usuario PK
+        varchar nome
+        varchar email UK
+        varchar senha_hash
+        varchar tipo_usuario
+        boolean ativo
+        datetime criado_em
+        datetime atualizado_em
+    }
+
+    EVENTO {
+        int id_evento PK
+        int id_organizador FK
+        varchar nome
+        text descricao
+        datetime data_inicio
+        datetime data_fim
+        varchar local
+        boolean ativo
+        datetime criado_em
+        datetime atualizado_em
+    }
+
+    SERVICO {
+        int id_servico PK
+        int id_prestador FK
+        varchar nome
+        varchar categoria
+        text descricao
+        decimal preco
+        boolean ativo
+        datetime criado_em
+        datetime atualizado_em
+    }
+
+    DISPONIBILIDADE_SERVICO {
+        int id_disponibilidade PK
+        int id_servico FK
+        datetime data_inicio
+        datetime data_fim
+        varchar tipo
+        varchar motivo
+        boolean ativo
+        datetime criado_em
+    }
+
+    ARQUIVO {
+        int id_arquivo PK
+        int id_servico FK
+        varchar nome_original
+        varchar url
+        varchar tipo_mime
+        bigint tamanho
+        boolean ativo
+        datetime criado_em
+    }
+
+    RESERVA {
+        int id_reserva PK
+        int id_evento FK
+        int id_servico FK
+        int id_solicitante FK
+        varchar status
+        datetime data_inicio
+        datetime data_fim
+        text observacao
+        text motivo_recusa
+        boolean ativo
+        datetime criado_em
+        datetime atualizado_em
+    }
+
+    HISTORICO_RESERVA {
+        int id_historico PK
+        int id_reserva FK
+        int id_usuario FK
+        varchar status_anterior
+        varchar status_novo
+        datetime data_hora
+        text observacao
+        text motivo
+    }
+
+    AVALIACAO {
+        int id_avaliacao PK
+        int id_reserva FK
+        int id_avaliador FK
+        int nota
+        text comentario
+        datetime criado_em
+    }

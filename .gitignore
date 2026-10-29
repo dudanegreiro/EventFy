@@ -1,0 +1,19 @@
+# dependências e artefatos gerados
+/vendor/
+/node_modules/
+/build/
+/dist/
+__pycache__/
+*.pyc
+
+# configuração local e segredos
+.env
+*.local
+
+# arquivos do sistema operacional e do editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log

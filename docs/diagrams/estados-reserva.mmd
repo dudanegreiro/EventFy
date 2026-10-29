@@ -1,0 +1,23 @@
+stateDiagram-v2
+    [*] --> SOLICITADA : [Organizador] Solicita reserva para evento
+
+    SOLICITADA --> EM_ANALISE : [Prestador] Inicia análise da solicitação
+    SOLICITADA --> CANCELADA : [Organizador] Cancela antes do início da análise
+    SOLICITADA --> EXPIRADA : [Sistema] Prazo limite sem abertura da análise
+
+    EM_ANALISE --> APROVADA : [Prestador] Aprova solicitação
+    EM_ANALISE --> RECUSADA : [Prestador] Recusa solicitação + motivo obrigatório
+    EM_ANALISE --> CANCELADA : [Organizador] Cancela solicitação durante a análise
+    EM_ANALISE --> EXPIRADA : [Sistema] Prazo limite de análise excedido
+
+    APROVADA --> CONFIRMADA : [Organizador] Confirma a contratação aprovada
+    APROVADA --> CANCELADA : [Organizador] Desiste antes da confirmação
+    APROVADA --> EXPIRADA : [Sistema] Prazo de tolerância para confirmação expirado
+
+    CONFIRMADA --> FINALIZADA : [Sistema] Execução automática após término do período (data_fim)
+    CONFIRMADA --> CANCELADA : [Organizador/Prestador] Cancela conforme política de cancelamento
+
+    RECUSADA --> [*]
+    CANCELADA --> [*]
+    EXPIRADA --> [*]
+    FINALIZADA --> [*]
