@@ -5,12 +5,21 @@
   <title>EventFy — Solicitação recusada</title><link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<main class="status-page danger">
+<header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
+<main class="status-page danger" id="refused-view" hidden>
   <div class="status-icon">!</div><p class="eyebrow">SOLICITAÇÃO RECUSADA</p>
   <h1>Não foi possível confirmar esta reserva.</h1>
-  <div class="reason"><b>Motivo informado pelo fornecedor</b><p>A data solicitada já está reservada para outro evento.</p></div>
+  <div class="reason"><b>Motivo informado pelo fornecedor</b><p id="refusal-reason">O fornecedor informou que não pode atender à solicitação.</p></div>
   <p>Você pode voltar ao catálogo e escolher outra opção ou consultar outra data.</p>
+  <a class="text-link" href="historico.html" data-history-link>Ver histórico</a>
   <a class="button" href="catalogo.html">Escolher outro serviço</a>
 </main>
+<main class="status-page" id="refused-error">
+  <p class="eyebrow">FLUXO INDISPONÍVEL</p>
+  <h1>Não foi possível exibir esta recusa.</h1>
+  <p id="refused-error-message">Abra a tela pelo fluxo de uma solicitação válida.</p>
+  <a class="button" href="catalogo.html">Voltar ao catálogo</a>
+</main>
+<script src="js/script.js"></script>
 </body>
 </html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFy — Reserva cancelada</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
+<main class="status-page danger" id="cancelled-view" hidden>
+  <div class="status-icon">!</div>
+  <p class="eyebrow">RESERVA CANCELADA</p>
+  <h1>O cancelamento foi registrado.</h1>
+  <p id="cancellation-summary"></p>
+  <p><span class="status-pill">CANCELADA</span></p>
+  <nav class="flow-actions">
+    <a class="button" href="historico.html" data-history-link>Ver histórico</a>
+    <a class="text-link" href="catalogo.html">Voltar ao catálogo</a>
+  </nav>
+  <p class="form-error" id="flow-error" role="alert" hidden></p>
+</main>
+<main class="status-page" id="cancelled-error">
+  <p class="eyebrow">FLUXO INDISPONÍVEL</p>
+  <h1>Não foi possível exibir este cancelamento.</h1>
+  <p id="cancelled-error-message">Abra a tela pelo fluxo de uma solicitação válida.</p>
+  <a class="button" href="catalogo.html">Voltar ao catálogo</a>
+</main>
+<script src="js/script.js"></script>
+</body>
+</html>

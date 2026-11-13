@@ -6,16 +6,25 @@
 </head>
 <body>
 <header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">← Catálogo</a></header>
-<main class="container detail">
-  <div class="big-thumb">🔊</div>
+<main class="container detail" id="service-detail" hidden>
+  <div class="big-thumb" id="service-image" aria-hidden="true"></div>
   <section>
-    <span class="pill">Som e iluminação</span>
-    <h1>Som e iluminação profissional</h1>
-    <p>Estrutura completa de som e iluminação para eventos, com montagem e suporte durante o período contratado.</p>
-    <div class="price">R$ 1.800 <small>/ evento</small></div>
-    <div class="info-grid"><div><b>Disponibilidade</b><br>Consultar data</div><div><b>Fornecedor</b><br>EventFy Serviços</div></div>
-    <a class="button" href="reserva.html">Solicitar reserva</a>
+    <span class="pill" id="service-category"></span>
+    <h1 id="service-name"></h1>
+    <p id="service-description"></p>
+    <div class="price"><span id="service-price"></span> <small>/ evento</small></div>
+    <div class="info-grid">
+      <div><b>Disponibilidade</b><br>Consultar data na solicitação</div>
+      <div><b>Fornecedor</b><br><span id="service-provider"></span></div>
+    </div>
+    <a class="button" id="request-link" href="reserva.html">Solicitar reserva</a>
   </section>
 </main>
+<main class="container narrow" id="service-not-found">
+  <h1>Serviço não encontrado</h1>
+  <p>Volte ao catálogo e escolha um serviço para consultar os detalhes.</p>
+  <a class="button" href="catalogo.html">Voltar ao catálogo</a>
+</main>
+<script src="js/script.js"></script>
 </body>
 </html>
