@@ -2,7 +2,7 @@
 
 > Página do tema do projeto: quem é o usuário real, por que o software precisa existir e a verificação do tema contra os critérios da Tabela 1.5 (Aula 1).
 
-**Estado deste documento:** rascunho para revisão da equipe. Trechos marcados com ⚠️ dependem de informação que a equipe ainda precisa confirmar (conversa com usuário real, critérios da Tabela 1.5).
+**Base de evidências:** entrevistas com um organizador (E1) e um prestador (E2), além de observação da rotina atual (O1), registradas em [`DESCOBERTA.md`](../DESCOBERTA.md). Os indicadores quantitativos ainda não têm linha de base medida; as decisões pendentes estão explicitadas na Seção 2.5.
 
 ---
 
@@ -17,8 +17,6 @@
 ## 1. Usuário real e como falar com ele
 
 ### 1.1 Usuário principal
-
-> ⚠️ **Hipótese de trabalho.** A descrição abaixo foi construída a partir do problema documentado no [`README.md`](../README.md) e do contexto da equipe (Palmas–TO). Ela só deixa de ser hipótese depois que a conversa registrada na seção 1.4 for realizada.
 
 | Campo | Descrição |
 |---|---|
@@ -63,13 +61,11 @@
 
 ### 1.4 Registro das conversas
 
-> ⚠️ **A preencher pela equipe.** Até este registro ter ao menos uma linha, o usuário da seção 1.1 continua sendo hipótese.
-
-| Data | Entrevistado (perfil, sem dados pessoais) | Quem conduziu | Principais achados | O que mudou no projeto |
+| Data | Registro e perfil (sem dados pessoais) | Quem conduziu | Principais achados documentados | Relação com o projeto |
 |---|---|---|---|---|
-| ____/____/______ | | | | |
-| ____/____/______ | | | | |
-| ____/____/______ | | | | |
+| 25/08/2026 | E1 — organizador autônomo em Palmas | Duda Negreiro | Busca fornecedores por canais distintos; demora de resposta e risco de conflito de datas. | Catálogo, solicitação vinculada a evento e acompanhamento da reserva. |
+| 26/08/2026 | E2 — prestador de som e iluminação em Palmas | Igor Oliveira | Pedidos chegam em conversas dispersas; precisa controlar agenda e explicar recusas. | Fila do prestador, disponibilidade e recusa com motivo obrigatório. |
+| 27/08/2026 | O1 — observação da rotina de contratação | Equipe | Busca e fechamento de reservas ocorrem por perfis comerciais e conversas de WhatsApp, sem registro centralizado. | Reforça a necessidade de catálogo e histórico estruturado. |
 
 ---
 
@@ -98,7 +94,7 @@ Cada ferramenta usada hoje resolve uma parte e deixa o resto descoberto:
 
 ### 2.3 Como saber se o software está resolvendo o problema
 
-> ⚠️ As metas numéricas só podem ser definidas depois que a equipe medir a situação atual nas conversas da seção 1.4. Até lá, os indicadores abaixo são o que será medido, não promessas.
+Os registros E1, E2 e O1 são qualitativos. A equipe ainda não documentou uma linha de base numérica nem resultados de teste de usabilidade do protótipo; portanto, os indicadores abaixo definem o que medir, não resultados já obtidos.
 
 | Indicador | Como medir hoje (linha de base) | Como medir com o EventFy | Sentido esperado |
 |---|---|---|---|
@@ -107,7 +103,7 @@ Cada ferramenta usada hoje resolve uma parte e deixa o resto descoberto:
 | Tempo entre pedir e saber se foi aceito | Perguntar na conversa (pergunta 4) | Diferença entre os registros `SOLICITADA` e `APROVADA`/`RECUSADA` no histórico (RF18) | ↓ |
 | Conflitos de data descobertos tarde | Perguntar na conversa (pergunta 6) | Conflitos bloqueados pelo sistema (CA-RNF02.1) | ↓ |
 
-### 2.4 O que o EventFy **não** pretende resolver
+### 2.4 Limites do escopo atual
 
 Limites deste tema, para evitar crescimento de escopo (ver também [`PROJETO.md`](./PROJETO.md), seção 5):
 
@@ -115,7 +111,15 @@ Limites deste tema, para evitar crescimento de escopo (ver também [`PROJETO.md`
 - Não substitui a negociação direta quando o usuário quiser conversar com o prestador.
 - Não gerencia a execução do evento (cronograma, convidados, ingressos).
 
-> ⚠️ A equipe deve confirmar esta lista. Se algum item for, na verdade, desejado, ele precisa entrar em [`REQUISITOS.md`](./REQUISITOS.md) antes de aparecer aqui como escopo.
+Pagamentos, gestão de convidados e chat interno estão fora do escopo descrito em [`DESCOBERTA.md`](../DESCOBERTA.md), Seção 8.2.
+
+### 2.5 Decisões e validações pendentes da equipe
+
+| Item | Situação atual | Próxima ação |
+|---|---|---|
+| Inclusão de administração e moderação no MVP | `RF20` está especificado em [`REQUISITOS.md`](./REQUISITOS.md), mas não consta na lista de escopo ativo da descoberta. | PO e Pessoas 2, 3 e 4 confirmam se o recurso integra o MVP e alinham os artefatos. |
+| Linha de base dos indicadores | E1, E2 e O1 documentam evidências qualitativas; não há medidas numéricas registradas. | Medir os indicadores com usuários e registrar método e resultados sem dados pessoais. |
+| Teste de usabilidade do protótipo | As entrevistas e a observação estão registradas; uma sessão de validação do protótipo não está documentada. | Realizar a sessão após o fluxo principal estar navegável e registrar os achados. |
 
 ---
 
@@ -129,18 +133,18 @@ Legenda: ✅ atende · 🟡 atende em parte · ❌ não atende
 
 | # | Critério (Tabela 1.5 do livro) | Atende? | Evidência no repositório | Observação |
 |---|---|:---:|---|---|
-| 1 | **Usuário real e acessível**<br>*(Elicitação e validação exigem alguém para conversar; usuário imaginário produz requisito imaginário)* | ✅ | Seção 1 deste documento, [`REQUISITOS.md`](./REQUISITOS.md) e [`DESCOBERTA.md`](../DESCOBERTA.md) | Organizadores de eventos locais autônomos e pequenos fornecedores de Palmas–TO (espaço, som, buffet) acessíveis para entrevistas e testes do protótipo. |
+| 1 | **Usuário real e acessível**<br>*(Elicitação e validação exigem alguém para conversar; usuário imaginário produz requisito imaginário)* | ✅ | E1, E2 e O1 em [`DESCOBERTA.md`](../DESCOBERTA.md) e na Seção 1.4 deste documento | Foram documentados contato com um organizador e um prestador locais e observação da rotina. O teste de usabilidade do protótipo ainda está pendente. |
 | 2 | **Regra de negócio, e não apenas cadastro**<br>*(Sem regra, não há o que modelar, decidir nem testar de forma interessante)* | ✅ | [`REQUISITOS.md`](./REQUISITOS.md) (RN01 a RN07), [`PROJETO.md`](./PROJETO.md) (Seção 13) e [`diagrams/estados-reserva.md`](./diagrams/estados-reserva.md) | O sistema possui regras críticas de domínio: bloqueio de colisão de datas (RN06/RNF02), máquina de estados estrita com 8 estados (RN05), obrigatoriedade de motivo em recusa (RN04) e auditoria imutável (RN07). |
 | 3 | **Dado que justifique persistência**<br>*(Consulta, alteração e histórico são o que exercita modelagem e camada de dados)* | ✅ | [`diagrams/modelo-dados.md`](./diagrams/modelo-dados.md) e [`PROJETO.md`](./PROJETO.md) (Seção 8 e 10) | Persistência com integridade relacional, histórico de auditoria imutável (`HISTORICO_RESERVA`), controle de agenda (`DISPONIBILIDADE_SERVICO`) e exclusão lógica (`ativo`). |
 | 4 | **Escopo cabível em um semestre**<br>*(O objetivo é atravessar o ciclo inteiro, não construir o sistema mais ambicioso)* | ✅ | Seção 2.4 deste documento e [`PROJETO.md`](./PROJETO.md) (Seção 5) | Escopo estritamente delimitado no fluxo de ponta a ponta (solicitar, analisar, aprovar/recusar, confirmar). Pagamentos e gestão de convidados foram declarados fora de escopo. |
-| 5 | **Sem dependência de acesso incerto**<br>*(Integração que depende de credencial ou autorização externa costuma inviabilizar o projeto no meio do caminho)* | ✅ | [`PROJETO.md`](./PROJETO.md) (Seção 16.1, D-05) e [`DESCOBERTA.md`](../DESCOBERTA.md) | O sistema funciona de forma autônoma sem depender de homologações burocráticas de APIs bancárias ou órgãos externos. |
-| 6 | **Sem dado pessoal sensível**<br>*(Coletar menos evita risco que a equipe ainda não tem repertório para tratar)* | ✅ | [`REQUISITOS.md`](./REQUISITOS.md) (RF01) e [`diagrams/modelo-dados.md`](./diagrams/modelo-dados.md) | O EventFy coleta apenas dados cadastrais estritamente necessários para contato e operação (nome, e-mail comercial, telefone). Nenhum dado sensível (LGPD art. 5º, II) é coletado. |
+| 5 | **Sem dependência de acesso incerto**<br>*(Integração que depende de credencial ou autorização externa costuma inviabilizar o projeto no meio do caminho)* | ✅ | [`DESCOBERTA.md`](../DESCOBERTA.md), Seção 8.2, e [`REQUISITOS.md`](./REQUISITOS.md), RE-03 | Pagamentos integrados estão fora do escopo; o fluxo especificado não depende de acesso a gateway financeiro. |
+| 6 | **Sem dado pessoal sensível**<br>*(Coletar menos evita risco que a equipe ainda não tem repertório para tratar)* | ✅ | [`REQUISITOS.md`](./REQUISITOS.md), RF01 e RE-03, e [`diagrams/modelo-dados.md`](./diagrams/modelo-dados.md) | O modelo especifica dados cadastrais e de operação, como nome, e-mail e papel. Não há requisito para coleta de dados pessoais sensíveis. |
 
 ### 3.2 Lacunas e Ações
 
 | Critério | Situação | Ação mitigadora | Responsável | Prazo |
 |---|---|---|---|---|
-| Validação de campo com usuário real | Hipótese estruturada | Realizar sessão presencial/WhatsApp com roteiro da Seção 1.3 para confirmar premissas de tempo e atrito de agenda | Equipe | Iteração 2 |
+| Validação com usuário real | Entrevistas E1/E2 e observação O1 concluídas; teste do protótipo não documentado | Testar o fluxo navegável com organizador e prestador e registrar achados sem dados pessoais | Equipe | Após a conclusão do fluxo principal |
 
 ### 3.3 Evidências disponíveis para citar
 
@@ -158,4 +162,5 @@ Para facilitar o preenchimento da coluna "Evidência", estes são os artefatos q
 | Ciclo de vida da reserva | [`diagrams/estados-reserva.md`](./diagrams/estados-reserva.md) |
 | Interface | [`../prototipo/`](../prototipo) |
 | Conferência entre artefatos | [`CONFERENCIA_CRUZADA.md`](./CONFERENCIA_CRUZADA.md) |
-| Validação com usuário real | Seção 1.4 deste documento (ainda sem registros) |
+| Entrevistas e observação | E1, E2 e O1 em [`DESCOBERTA.md`](../DESCOBERTA.md) e na Seção 1.4 deste documento |
+| Teste de usabilidade do protótipo | Pendente; registrar o resultado após a sessão prevista na Seção 3.2 |

@@ -5,7 +5,7 @@
 **Plataforma web para centralização de serviços e estruturas para gestão de eventos**
 
 [![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)](#)
-[![Licença](https://img.shields.io/badge/licença-a%20definir-lightgrey)](#-licença)
+[![Licença](https://img.shields.io/badge/licença-pendente-lightgrey)](#-licença)
 [![UFT](https://img.shields.io/badge/UFT-Câmpus%20Palmas-blue)](#)
 [![Disciplina](https://img.shields.io/badge/disciplina-Engenharia%20de%20Software-green)](#)
 
@@ -92,26 +92,27 @@ O sistema considera diferentes papéis envolvidos no processo de organização d
 |---|---|
 | 🧑‍💼 **Organizador** | Usuário responsável por criar e gerenciar eventos e solicitar serviços para esses eventos. |
 | 🏢 **Prestador ou fornecedor** | Usuário responsável por disponibilizar serviços ou estruturas e analisar solicitações de reserva. |
-| 🛡️ **Administrador** | Caso seja adotado no escopo final do sistema, será responsável por atividades administrativas necessárias ao gerenciamento da plataforma. |
+| 🛡️ **Administrador** | O requisito RF20 especifica gerenciamento de contas e moderação de publicações. A inclusão dessa funcionalidade no MVP depende da decisão registrada em “Decisões que dependem da equipe”. |
 
-> As permissões e responsabilidades de cada perfil devem ser definidas na especificação de requisitos.
+As permissões dos papéis estão especificadas em [`docs/REQUISITOS.md`](./docs/REQUISITOS.md). A decisão pendente refere-se à inclusão da administração e moderação no escopo do MVP, não à existência do papel nos requisitos.
 
 ---
 
 ## ⚙️ Funcionalidades
 
-As principais funcionalidades previstas para o EventFy incluem:
+O escopo funcional especificado para o EventFy inclui:
 
-- [ ] **Cadastro de usuários** — criação de contas com informações necessárias para utilização da plataforma
-- [ ] **Autenticação** — acesso à plataforma por meio das credenciais cadastradas
-- [ ] **Catálogo de serviços** — consulta aos serviços e estruturas disponibilizados pelos prestadores
-- [ ] **Busca e filtragem** — localização de serviços de acordo com critérios definidos pelo sistema
-- [ ] **Gerenciamento de eventos** — criação e gerenciamento dos eventos do organizador
-- [ ] **Solicitação de reserva** — solicitação de um serviço para determinado evento e período
-- [ ] **Gerenciamento de reservas** — acompanhamento do ciclo de vida das solicitações
-- [ ] **Análise de solicitações** — possibilidade de o prestador analisar uma solicitação e aprová-la ou recusá-la
-- [ ] **Cancelamento** — cancelamento de reservas de acordo com as regras de negócio definidas
-- [ ] **Avaliação** — avaliação de serviços após a conclusão de uma contratação *(caso permaneça no escopo da versão atual)*
+- Cadastro, autenticação e gerenciamento de perfil de usuários.
+- Cadastro e manutenção de serviços e eventos.
+- Catálogo, busca, filtros e consulta de detalhes dos serviços.
+- Disponibilidade e solicitação de reserva vinculada a evento e período.
+- Análise pelo prestador, aprovação ou recusa com motivo obrigatório e confirmação pelo organizador.
+- Acompanhamento e histórico das transições da reserva.
+- Cancelamento justificado conforme as regras de negócio.
+- Avaliação do serviço pelo organizador após a finalização.
+- Anexos de serviços e gerenciamento de contas/moderação, conforme RF19 e RF20.
+
+Esta lista descreve funcionalidades especificadas, não afirma que a aplicação já esteja implementada. A situação de implementação é descrita em “Execução”.
 
 > Os detalhes e critérios de cada funcionalidade estão documentados em [`REQUISITOS.md`](./docs/REQUISITOS.md).
 
@@ -139,54 +140,31 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 
 ## 🧩 Arquitetura e Modelagem
 
-A arquitetura do EventFy será definida a partir dos requisitos e modelos estabelecidos para o sistema.
+A arquitetura do EventFy deve seguir os requisitos e modelos estabelecidos para o sistema. A especificação determina frontend desacoplado consumindo backend por API REST/JSON e persistência relacional (RE-01 e RE-02).
 
-A documentação arquitetural deverá especificar:
+O documento arquitetural deve especificar:
 
 - Componentes da aplicação
 - Responsabilidades de cada componente
 - Comunicação entre os componentes
 - Persistência dos dados
-- Interfaces entre frontend e backend, caso sejam adotados
+- Contrato da API entre frontend e backend
 - Tecnologias utilizadas
 - Decisões arquiteturais e suas justificativas
 
-> Os diagramas e decisões arquiteturais devem permanecer consistentes com os requisitos e com o modelo de domínio.
+Essa especificação é responsabilidade da Pessoa 5, com decisão de stack pendente de validação pela equipe.
 
 ---
 
 ## 🛠️ Tecnologias
 
-> ⚠️ As tecnologias de implementação **ainda não estão definidas/documentadas** neste repositório.
-
-Quando a implementação for iniciada, esta seção deverá informar, no mínimo:
-
-| Camada | Informação a preencher |
-|---|---|
-| **Frontend** | Tecnologia e versão |
-| **Backend** | Tecnologia e versão |
-| **Banco de dados** | SGBD e versão |
-| **Outras tecnologias** | Bibliotecas, frameworks e ferramentas relevantes |
-
-Não são informadas tecnologias nesta versão do README sem que elas estejam efetivamente definidas no projeto.
+**Decisão pendente:** a Pessoa 5 deve propor frontend, backend, banco de dados e versões em `ARQUITETURA.md`; a equipe precisa aprovar a escolha antes de esta seção registrar uma stack.
 
 ---
 
 ## 🚀 Execução
 
-No estado atual do repositório, os artefatos disponíveis são predominantemente de **especificação, modelagem e prototipação**. Por isso, não é apresentado um comando de execução de uma aplicação que ainda não esteja disponível no repositório.
-
-Quando a implementação estiver disponível, esta seção deverá conter:
-
-- [ ] Pré-requisitos
-- [ ] Versão das ferramentas necessárias
-- [ ] Procedimento para instalação
-- [ ] Configuração das variáveis de ambiente
-- [ ] Configuração do banco de dados
-- [ ] Comando para iniciar o backend
-- [ ] Comando para iniciar o frontend
-- [ ] Endereço para acesso à aplicação
-- [ ] Informações necessárias para executar o sistema localmente
+O repositório contém especificação, modelos e um protótipo estático; ainda não contém uma aplicação executável com backend e banco de dados. Para percorrer o protótipo, siga as instruções em [`prototipo/README.md`](./prototipo/README.md) e abra `prototipo/index.html` em um navegador.
 
 ---
 
@@ -214,13 +192,21 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software** da Universi
 
 | Integrante | Papel | GitHub |
 |---|---|---|
-| Eduarda Negreiro | A definir | [@dudanegreiro](https://github.com/dudanegreiro) |
-| Gustavo Leite Bringel | A definir | [@GustavoBringel](https://github.com/GustavoBringel) |
-| Igor Anicezio Oliveira | A definir | [@IgorAnicezioOliveira](https://github.com/IgorAnicezioOliveira) |
-| Thalita Teixeira Menezes | A definir | [@thalist](https://github.com/thalist) |
-| José Guilherme Costa Oliveira | A definir | [@ZezinG14](https://github.com/ZezinG14) |
+| Eduarda Negreiro | Levantamento, revisão e rastreabilidade de requisitos ([PROJETO.md](./docs/PROJETO.md)). A função de PO está atribuída a “Duda Negreiro” em [PROCESSO.md](./PROCESSO.md); confirmar se o nome corresponde. | [@dudanegreiro](https://github.com/dudanegreiro) |
+| Gustavo Leite Bringel | Atribuição individual não registrada nos artefatos consultados; confirmar com a equipe. | [@GustavoBringel](https://github.com/GustavoBringel) |
+| Igor Anicezio Oliveira | Arquitetura, modelagem e integridade técnica ([PROCESSO.md](./PROCESSO.md) e [PROJETO.md](./docs/PROJETO.md)). | [@IgorAnicezioOliveira](https://github.com/IgorAnicezioOliveira) |
+| Thalita Teixeira Menezes | Processos de negócio e reconciliação ([PROJETO.md](./docs/PROJETO.md)). | [@thalist](https://github.com/thalist) |
+| José Guilherme Costa Oliveira | Atribuição individual não registrada nos artefatos consultados; confirmar com a equipe. | [@ZezinG14](https://github.com/ZezinG14) |
 
 **Docente responsável:** Prof. Jackson Gomes de Souza
+
+### Decisões que dependem da equipe
+
+- Confirmar a correspondência entre “Duda Negreiro” e “Eduarda Negreiro”, a atribuição de Product Owner e o mapeamento dos papéis Pessoa 1–5 para os integrantes. O plano de divisão de tarefas disponível não identifica os nomes por pessoa.
+- Decidir se administração e moderação (RF20) integram o MVP. O requisito está especificado, mas não consta no escopo ativo de [`DESCOBERTA.md`](./DESCOBERTA.md).
+- Aprovar a licença de distribuição antes de criar um arquivo `LICENSE`.
+- Aprovar a stack proposta pela Pessoa 5 antes de registrá-la como tecnologia adotada.
+- Realizar e registrar a validação de usabilidade do protótipo e a linha de base quantitativa descrita em [`docs/TEMA.md`](./docs/TEMA.md).
 
 ---
 
@@ -228,7 +214,7 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software** da Universi
 
 Este projeto foi desenvolvido para fins acadêmicos no contexto da disciplina de Engenharia de Software da Universidade Federal do Tocantins.
 
-A licença de distribuição do projeto deverá ser definida pela equipe caso o repositório seja disponibilizado como software de código aberto.
+**Status:** licença ainda não aprovada. A equipe deve decidir os termos de distribuição antes de adicionar um arquivo `LICENSE` ou divulgar uma licença como adotada.
 
 ---
 
