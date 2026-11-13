@@ -1,5 +1,9 @@
 # Protótipo Navegável — EventFy
 
-Abra o arquivo `index.html` diretamente em qualquer navegador web moderno.
-O percurso principal inicia pela navegação do Catálogo (`catalogo.html`), seleção do serviço (`servico.html`), solicitação de reserva (`reserva.html`), visualização da aprovação (`aprovada.html`), confirmação (`confirmada.html`) e teste da tela de recusa com motivo obrigatório (`recusada.html`).
-Para reiniciar a demonstração, retorne a `index.html`.
+Abra `index.html` diretamente em um navegador moderno.
+
+O fluxo disponível neste protótipo estático é:
+
+`Início → Catálogo e filtros → Detalhes do serviço selecionado → Solicitação (evento e período) → Solicitação enviada (SOLICITADA)`
+
+O formulário demonstra validação local e os dados da solicitação são transportados apenas para a tela de resultado; não há backend nem persistência. As telas de análise do prestador, aprovação, recusa e confirmação serão conectadas no fluxo complementar.
