@@ -143,3 +143,52 @@ Todo revisor deve ler a contribuição através de três perspectivas:
 1. **Legibilidade:** Os nomes utilizam o vocabulário do glossário do domínio (`Reserva`, `Servico`, `Disponibilidade`)? Uma pessoa que não escreveu a função compreende o fluxo na primeira leitura?
 2. **Manutenibilidade:** A regra de negócio está no backend e isolada conforme as decisões de projeto (critério de Parnas)? A alteração duplica código? Trata os casos de multiplicidade (zero, um e muitos)?
 3. **Rastreabilidade:** O PR e os commits referenciam a issue e os requisitos que motivaram a mudança?
+
+---
+
+## 7. Configuração do Repositório e Planejamento no GitHub
+
+### 7.1 Proteção da branch `main`
+
+A regra de proteção é uma configuração do GitHub e não pode ser garantida apenas por este documento. Um administrador do repositório deve configurá-la em **Settings → Branches** para a branch `main`, com estas regras:
+
+- Exigir Pull Request antes do merge.
+- Exigir ao menos uma aprovação de integrante diferente do autor.
+- Descartar aprovações obsoletas após novos commits e exigir resolução das conversas de revisão.
+- Bloquear force push e exclusão da branch.
+- Exigir verificações de CI somente depois que os workflows correspondentes existirem e estiverem ativos.
+
+Até a configuração ser conferida por um administrador, a proteção efetiva da branch deve ser tratada como **não verificada**. A regra deve ser revisada quando o fluxo de CI ou as permissões da equipe mudarem.
+
+### 7.2 Issues de backlog
+
+Cada item de trabalho deve ter uma Issue própria. A Issue deve registrar:
+
+- Problema ou contexto e resultado esperado.
+- História de usuário, requisito ou decisão relacionada.
+- Critérios de aceitação verificáveis.
+- Como conferir o resultado, incluindo testes ou demonstração aplicáveis.
+- Dependências, responsável e bloqueios conhecidos.
+
+Aplicar os rótulos existentes de tipo de trabalho, pessoa responsável e aula da disciplina; criar os rótulos que estiverem faltando, sem duplicar os já existentes. Cada PR deve tratar um item de backlog e vinculá-lo à Issue com `Closes #<número>`.
+
+### 7.3 Project Board
+
+Manter um cartão por Issue e mover o cartão conforme o andamento:
+
+1. **Backlog** — item registrado, ainda não selecionado.
+2. **Pronto** — critérios e dependências permitem iniciar.
+3. **Em andamento** — trabalho ativo em uma branch.
+4. **Em revisão** — Pull Request aberto, aguardando revisão ou ajustes.
+5. **Bloqueado** — impedimento documentado na Issue, com próxima ação e responsável.
+6. **Concluído** — PR integrado ao `main` e Definition of Done atendida.
+
+O cartão não deve ser marcado como concluído apenas porque o código foi escrito ou o PR foi aberto.
+
+### 7.4 Verificações de configuração do projeto
+
+- Cada integrante configura `user.name` e `user.email` localmente; esses dados não devem ser incluídos em arquivos do repositório.
+- `.gitignore` deve excluir segredos, configurações locais e artefatos gerados; `.env.example` deve conter apenas valores fictícios e instruções.
+- Issues, Project Board e proteção de `main` são configurações do GitHub; sua existência precisa ser verificada no repositório, não presumida a partir dos arquivos locais.
+- Enquanto a stack e a aplicação não estiverem definidas, não criar configuração de build ou CI vinculada a uma tecnologia não aprovada. Quando houver workflow de CI, torná-lo obrigatório na proteção de `main`.
+- `CHANGELOG.md` já registra versões; criar tags somente após a aprovação da versão e a integração das mudanças correspondentes.
