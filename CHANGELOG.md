@@ -6,6 +6,23 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ---
 
+## [Unreleased]
+
+> Rascunho de release; nenhuma tag é criada por esta alteração.
+
+### Adicionado
+- Governança do processo, rastreabilidade de Issues/PRs e orientações de configuração do repositório entregues pela Pessoa 1.
+- Fluxo navegável do protótipo para solicitação, análise, aprovação, recusa, confirmação, histórico e cancelamento justificado.
+
+### Alterado
+- Documentação institucional, tema e papéis da equipe; arquivos de ambiente e instruções de Git.
+- Guia de navegação do protótipo e documentação das limitações da demonstração estática.
+
+### Preparação da versão
+- A próxima versão e a referência futura a `v0.1.0` devem ser confirmadas pela equipe antes da publicação: este changelog já registra `0.1.0` e `0.2.0`. A seção permanece `Unreleased` até essa decisão.
+
+---
+
 ## [0.2.0] - 2026-10-21
 
 ### Adicionado

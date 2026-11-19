@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFy — Cancelar reserva</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
+<main class="container narrow">
+  <p class="eyebrow">CANCELAMENTO JUSTIFICADO</p>
+  <h1>Cancelar solicitação</h1>
+  <p id="cancellation-context" class="selected-service"></p>
+  <p class="muted">O organizador pode cancelar antes do início do evento nos estados SOLICITADA, EM_ANALISE, APROVADA ou CONFIRMADA. O prestador pode cancelar somente no estado CONFIRMADA.</p>
+  <p class="form-error" id="cancellation-error" role="alert"></p>
+  <form id="cancellation-form" hidden>
+    <label for="cancellation-reason">Justificativa obrigatória</label>
+    <textarea id="cancellation-reason" required placeholder="Informe por que a reserva está sendo cancelada"></textarea>
+    <button class="button" type="submit">Confirmar cancelamento</button>
+  </form>
+  <a class="text-link" href="historico.html" data-history-link>Ver histórico</a>
+  <a class="text-link" href="catalogo.html">Voltar ao catálogo</a>
+</main>
+<script src="js/script.js"></script>
+</body>
+</html>

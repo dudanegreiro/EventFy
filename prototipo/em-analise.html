@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFy — Em análise</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
+<main class="status-page" id="analysis-view" hidden>
+  <p class="eyebrow">SOLICITAÇÃO EM ANÁLISE</p>
+  <h1>O prestador está analisando o pedido.</h1>
+  <p>A próxima etapa demonstrativa é aprovar ou recusar a solicitação.</p>
+  <form class="decision-form" id="provider-decision-form" hidden>
+    <label for="refusal-reason-input">Justificativa da recusa</label>
+    <textarea id="refusal-reason-input" placeholder="Informe o motivo caso recuse"></textarea>
+    <div class="decision-actions">
+      <button class="button" type="submit" data-decision="APROVADA">Aprovar solicitação</button>
+      <button class="button secondary" type="submit" data-decision="RECUSADA">Recusar solicitação</button>
+    </div>
+  </form>
+  <a class="button secondary" href="cancelar.html" data-cancel-link data-actor="organizador">Cancelar como organizador</a>
+  <a class="text-link" href="historico.html" data-history-link>Ver histórico</a>
+  <p class="form-error" id="flow-error" role="alert" hidden></p>
+  <a class="text-link" href="catalogo.html">Voltar ao catálogo</a>
+</main>
+<main class="status-page" id="analysis-error">
+  <p class="eyebrow">FLUXO INDISPONÍVEL</p>
+  <h1>Não foi possível exibir esta análise.</h1>
+  <p id="analysis-error-message">Abra a tela pelo fluxo de uma solicitação válida.</p>
+  <a class="button" href="catalogo.html">Voltar ao catálogo</a>
+</main>
+<script src="js/script.js"></script>
+</body>
+</html>

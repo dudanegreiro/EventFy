@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFy — Histórico da solicitação</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
+<main class="container narrow">
+  <section id="history-view" hidden>
+    <p class="eyebrow">TRILHA DA SOLICITAÇÃO</p>
+    <h1>Histórico de alterações</h1>
+    <p id="history-context" class="selected-service"></p>
+    <ol class="history-list" id="history-list"></ol>
+    <p class="muted">Demonstração local: os registros desta trilha são transportados pela URL e não constituem auditoria persistida.</p>
+  </section>
+  <section id="history-error" class="form-error" role="alert">
+    <h1>Histórico indisponível</h1>
+    <p id="history-error-message">Abra o histórico pelo fluxo de uma solicitação para carregar seus dados.</p>
+  </section>
+  <a class="button" href="catalogo.html">Voltar ao catálogo</a>
+</main>
+<script src="js/script.js"></script>
+</body>
+</html>

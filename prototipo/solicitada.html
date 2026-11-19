@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFy — Solicitação enviada</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
+<main class="container narrow">
+  <section class="request-summary" id="request-summary" hidden>
+    <div class="status-icon">✓</div>
+    <p class="eyebrow">SOLICITAÇÃO ENVIADA</p>
+    <h1>Pedido registrado</h1>
+    <p>A solicitação está aguardando a análise do prestador.</p>
+    <p><span class="status-pill" id="summary-status">SOLICITADA</span></p>
+    <dl class="request-details">
+      <div><dt>Serviço</dt><dd id="summary-service"></dd></div>
+      <div><dt>Evento</dt><dd id="summary-event"></dd></div>
+      <div><dt>Início</dt><dd id="summary-start"></dd></div>
+      <div><dt>Fim</dt><dd id="summary-end"></dd></div>
+      <div><dt>Observação</dt><dd id="summary-observation"></dd></div>
+    </dl>
+    <p class="muted">Demonstração estática: os dados aparecem somente nesta navegação e não são enviados a um servidor.</p>
+    <nav class="flow-actions" id="request-actions" hidden>
+      <a class="button" href="em-analise.html" data-transition="EM_ANALISE" data-actor="Prestador">Simular início da análise</a>
+      <a class="button secondary" href="cancelar.html" data-cancel-link data-actor="organizador">Cancelar solicitação</a>
+      <a class="text-link" href="historico.html" data-history-link>Ver histórico</a>
+    </nav>
+    <p class="form-error" id="flow-error" role="alert" hidden></p>
+    <a class="text-link" href="catalogo.html">Voltar ao catálogo</a>
+  </section>
+  <section id="invalid-request" role="alert">
+    <h1>Não foi possível exibir a solicitação</h1>
+    <p id="request-error-message">Volte ao catálogo, selecione um serviço e preencha os dados do evento e do período.</p>
+    <a class="button" href="catalogo.html">Voltar ao catálogo</a>
+  </section>
+</main>
+<script src="js/script.js"></script>
+</body>
+</html>
