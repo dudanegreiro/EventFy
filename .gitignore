@@ -1,14 +1,22 @@
-# dependências e artefatos gerados
-/vendor/
-/node_modules/
-/build/
-/dist/
+# dependências, caches e artefatos gerados
+vendor/
+node_modules/
+build/
+dist/
+coverage/
 __pycache__/
-*.pyc
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
 
 # configuração local e segredos
 .env
+.env.*
+!.env.example
 *.local
+/uploads/
 
 # arquivos do sistema operacional e do editor
 .DS_Store
