@@ -193,7 +193,6 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software** da Universi
 
 | Integrante | Papel | GitHub |
 |---|---|---|
-<<<<<<< HEAD
 | Eduarda Negreiro | Produto e requisitos | [@dudanegreiro](https://github.com/dudanegreiro) |
 | Gustavo Leite Bringel | Dados e backend | [@GustavoBringel](https://github.com/GustavoBringel) |
 | Igor Anicezio Oliveira | Arquitetura e integração | [@IgorAnicezioOliveira](https://github.com/IgorAnicezioOliveira) |
