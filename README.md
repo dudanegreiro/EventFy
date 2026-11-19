@@ -123,6 +123,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 
 | Artefato | Local | Descrição |
 |---|---|---|
+| Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
 | Tema | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e alinhamento com a disciplina |
@@ -214,11 +215,11 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software** da Universi
 
 | Integrante | Papel | GitHub |
 |---|---|---|
-| Eduarda Negreiro | A definir | [@dudanegreiro](https://github.com/dudanegreiro) |
-| Gustavo Leite Bringel | A definir | [@GustavoBringel](https://github.com/GustavoBringel) |
-| Igor Anicezio Oliveira | A definir | [@IgorAnicezioOliveira](https://github.com/IgorAnicezioOliveira) |
-| Thalita Teixeira Menezes | A definir | [@thalist](https://github.com/thalist) |
-| José Guilherme Costa Oliveira | A definir | [@ZezinG14](https://github.com/ZezinG14) |
+| Eduarda Negreiro | Produto e requisitos | [@dudanegreiro](https://github.com/dudanegreiro) |
+| Gustavo Leite Bringel | Dados e backend | [@GustavoBringel](https://github.com/GustavoBringel) |
+| Igor Anicezio Oliveira | Arquitetura e integração | [@IgorAnicezioOliveira](https://github.com/IgorAnicezioOliveira) |
+| Thalita Teixeira Menezes | Processos e qualidade | [@thalist](https://github.com/thalist) |
+| José Guilherme Costa Oliveira | Interface e experiência | [@ZezinG14](https://github.com/ZezinG14) |
 
 **Docente responsável:** Prof. Jackson Gomes de Souza
 
