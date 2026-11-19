@@ -117,7 +117,8 @@ Um item do backlog só é considerado **concluído (Pronto)** e computado na vel
 - [ ] **Revisão de Código:** O código foi integrado ao `main` por Pull Request revisado e aprovado.
 - [ ] **Acesso e Demonstração:** A funcionalidade está acessível no ambiente local/demonstração da equipe.
 - [ ] **Requisitos Não Funcionais:** Os requisitos não funcionais aplicáveis ao item foram validados.
-- [ ] **Rastreabilidade Preservada:** A issue correspondente referencia a história de usuário, os commits citam a issue (`Closes #numero`) e o PR vincula a issue.
+- [ ] **Rastreabilidade Preservada:** A Issue referencia a história de usuário e a necessidade; os commits citam a Issue e o PR a vincula (`Closes #<número>`).
+- [ ] **Consistência dos Artefatos:** Os requisitos, regras de negócio e modelos afetados refletem o comportamento entregue e permanecem consistentes entre si.
 
 ---
 

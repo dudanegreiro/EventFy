@@ -28,13 +28,16 @@ Como o fator *Pessoal* aponta para plano-dirigido, a equipe adota salvaguardas e
 
 ## 2. Estrutura e Cadência das Iterações
 
-As iterações têm duração fixa de **duas semanas** (10 dias úteis), sincronizadas com o cronograma de 16 encontros da disciplina:
+As iterações têm duração fixa de **duas semanas** (10 dias úteis). O cronograma da disciplina tem 16 encontros, mas o mapeamento entre encontros e iterações é confirmado pela equipe no planejamento, evitando sobrepor períodos:
 
-- **Encontros 4 a 5:** Descoberta e Especificação (Marco 1: Escopo e Requisitos)
-- **Encontros 6 a 8 (Iteração 1):** Modelagem de domínio, arquitetura e prototipação navegável
-- **Encontros 8 a 10 (Iteração 2):** Implementação da fatia vertical do MVP (Marco 2: Review Parcial no Encontro 9)
-- **Encontros 11 a 13 (Iteração 3):** Qualidade, testes automatizados e segurança (Marco 3)
-- **Encontros 14 a 16 (Iterações 4 e 5):** Implantação, manutenção evolutiva e encerramento (Marco 4: Review Final)
+- **Antes da Iteração 1 — Marco 1:** Descoberta, escopo e requisitos (Encontros 4 e 5).
+- **Iteração 1:** Modelagem de domínio, arquitetura e prototipação navegável.
+- **Iteração 2:** Implementação da fatia vertical do MVP.
+- **Marco 2:** Review parcial após **2,5 iterações** desde o início do trabalho iterativo.
+- **Iteração 3 — Marco 3:** Qualidade, testes automatizados e segurança.
+- **Iterações 4 e 5 — Marco 4:** Implantação, manutenção evolutiva e encerramento; review final ao término da Iteração 5.
+
+As datas dos encontros que correspondem a cada iteração são registradas no planejamento da equipe. A duração de duas semanas e a quantidade de iterações até cada marco não mudam por causa desse mapeamento.
 
 ### 2.1 Eventos da Iteração
 
@@ -71,11 +74,11 @@ Seguindo o princípio ágil de responsabilidades explícitas:
 
 Um item é considerado pronto quando:
 
-1. Todos os critérios de aceitação foram verificados e aprovados por alguém que **não escreveu** o código do item.
-2. O código está integrado ao ramo `main` por Pull Request revisado e aprovado.
+1. Todos os critérios de aceitação foram verificados por alguém que **não escreveu** o item.
+2. O item foi integrado ao ramo `main` por Pull Request revisado e aprovado.
 3. A funcionalidade está acessível e testável no ambiente de demonstração local da equipe.
-4. Os requisitos não funcionais aplicáveis ao item foram conferidos contra os valores aceitáveis.
-5. A issue correspondente referencia a história de usuário, com a rastreabilidade da necessidade preservada.
+4. Os requisitos não funcionais aplicáveis foram verificados contra seus valores aceitáveis.
+5. A Issue referencia a história de usuário e a necessidade; os commits e o PR preservam essa rastreabilidade.
 6. Os requisitos, regras de negócio e modelos afetados refletem o comportamento entregue e permanecem consistentes entre si.
 
 ---
