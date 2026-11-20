@@ -126,6 +126,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 |---|---|---|
 | Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
 | Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas e dados fictícios de demonstração |
+| API REST | [`docs/API.md`](./docs/API.md) | FastAPI, autenticação, contrato dos endpoints e testes |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
 | Tema | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e alinhamento com a disciplina |
@@ -154,19 +155,19 @@ O documento arquitetural deve especificar:
 - Tecnologias utilizadas
 - Decisões arquiteturais e suas justificativas
 
-Essa especificação é responsabilidade da Pessoa 5. PostgreSQL 17 foi escolhido para o banco local da issue #22; a escolha das demais tecnologias e da arquitetura completa ainda depende de validação pela equipe.
+Essa especificação é responsabilidade da Pessoa 5. PostgreSQL 17, FastAPI e Psycopg 3 são usados nas entregas das issues #22 e #23; a arquitetura completa e as tecnologias do frontend ainda dependem de validação pela equipe.
 
 ---
 
 ## 🛠️ Tecnologias
 
-**Decisão parcial:** PostgreSQL 17 é usado no banco local, com migrações em `db/migrations/`. As tecnologias de frontend, backend e suas versões ainda precisam ser propostas e aprovadas pela equipe em `ARQUITETURA.md`.
+**Decisão parcial:** PostgreSQL 17 é usado no banco local, com migrações em `db/migrations/`; a API do fluxo principal usa FastAPI e Psycopg 3. A tecnologia do frontend ainda precisa ser proposta e aprovada pela equipe em `ARQUITETURA.md`.
 
 ---
 
 ## 🚀 Execução
 
-O repositório contém especificação, modelos, um protótipo estático e scripts para criar o banco PostgreSQL local. O backend executável ainda não está disponível. Para preparar o banco, instale PostgreSQL 17 e siga [`docs/DATABASE.md`](./docs/DATABASE.md). Para percorrer o protótipo, siga [`prototipo/README.md`](./prototipo/README.md) e abra `prototipo/index.html` em um navegador.
+O repositório contém a API REST do fluxo principal, especificação, modelos, um protótipo estático e scripts para criar o banco PostgreSQL local. Para preparar o banco, instale PostgreSQL 17 e siga [`docs/DATABASE.md`](./docs/DATABASE.md); para executar e testar a API, siga [`docs/API.md`](./docs/API.md). Para percorrer o protótipo, siga [`prototipo/README.md`](./prototipo/README.md) e abra `prototipo/index.html` em um navegador.
 
 ---
 
@@ -175,6 +176,7 @@ O repositório contém especificação, modelos, um protótipo estático e scrip
 | Documento | Descrição |
 |---|---|
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
+| [`docs/API.md`](./docs/API.md) | Execução, autenticação e contrato da API REST |
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
 | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos, backlog ordenado e critérios |
 | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e verificação |

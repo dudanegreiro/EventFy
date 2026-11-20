@@ -1,6 +1,6 @@
 # Banco de dados local — EventFy
 
-O banco relacional de desenvolvimento desta entrega usa PostgreSQL 17. A decisao de SGBD cobre o trabalho da issue #22; a escolha do restante da stack ainda deve ser registrada pela equipe em `ARQUITETURA.md`.
+O banco relacional de desenvolvimento usa PostgreSQL 17. A API REST do fluxo principal usa FastAPI e Psycopg 3; sua configuracao, contrato e testes estao descritos em [`API.md`](./API.md).
 
 O modelo implementa as entidades descritas em [`diagrams/dados.mmd`](./diagrams/dados.mmd) e [`PROJETO.md`](./PROJETO.md). Datas e horas usam `timestamptz`; exclusoes logicas usam `ativo`; chaves estrangeiras impedem a remocao fisica de registros referenciados. Uma restricao de exclusao do PostgreSQL impede intervalos sobrepostos para reservas ativas do mesmo servico. O historico de reservas tem trigger que rejeita `UPDATE` e `DELETE`.
 
