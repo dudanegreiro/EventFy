@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
+from uuid import uuid4
 
 import psycopg
 from fastapi import Depends, FastAPI, Query, Request
@@ -23,6 +24,8 @@ from eventfy_api.schemas import (
     ReservationResponse,
     TransitionResponse,
     TokenResponse,
+    UserRegistrationRequest,
+    UserResponse,
 )
 from eventfy_api.security import create_access_token, get_current_user, require_role
 
@@ -93,12 +96,63 @@ def login(
             "E-mail ou senha invalidos.",
             {"WWW-Authenticate": "Bearer"},
         )
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(minutes=settings.duracao_token_minutos)
+    token_id = uuid4()
+    connection.execute(
+        "DELETE FROM public.sessao_autenticacao WHERE expira_em <= %s",
+        (now,),
+    )
+    connection.execute(
+        """
+        INSERT INTO public.sessao_autenticacao (token_id, id_usuario, expira_em)
+        VALUES (%s, %s, %s)
+        """,
+        (token_id, user["id_usuario"], expires_at),
+    )
     return TokenResponse(
         access_token=create_access_token(
             user["id_usuario"],
             user["tipo_usuario"],
+            token_id,
             settings,
         )
+    )
+
+
+@app.post("/api/auth/register", status_code=201, response_model=UserResponse)
+def register(
+    request: UserRegistrationRequest,
+    connection: psycopg.Connection = Depends(get_connection),
+) -> dict[str, Any]:
+    user = connection.execute(
+        """
+        INSERT INTO public.usuario (nome, email, senha_hash, tipo_usuario)
+        VALUES (%s, %s, crypt(%s, gen_salt('bf', 12)), %s)
+        RETURNING id_usuario, nome, email, tipo_usuario
+        """,
+        (
+            request.nome,
+            request.email,
+            request.senha,
+            request.tipo_usuario,
+        ),
+    ).fetchone()
+    return user
+
+
+@app.post("/api/auth/logout", status_code=204)
+def logout(
+    user: dict[str, Any] = Depends(get_current_user),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> None:
+    connection.execute(
+        """
+        UPDATE public.sessao_autenticacao
+        SET revogada_em = now()
+        WHERE token_id = %s AND revogada_em IS NULL
+        """,
+        (user["_token_id"],),
     )
 
 
