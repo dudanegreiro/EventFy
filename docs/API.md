@@ -19,7 +19,11 @@ O health check fica em `http://127.0.0.1:8000/api/health`. As contas ficticias e
 
 ## Autenticacao e erros
 
-`POST /api/auth/login` recebe `email` e `senha` em JSON. A resposta contem um token Bearer JWT com validade de 30 minutos. Cada requisicao protegida deve enviar `Authorization: Bearer <token>`. O usuario e o papel sao consultados novamente no banco; contas inativas nao autenticam.
+`POST /api/auth/register` recebe `nome`, `email`, `senha` (12 a 72 bytes em UTF-8) e `tipo_usuario` (`ORGANIZADOR` ou `PRESTADOR`). O papel `ADMINISTRADOR` nao pode ser escolhido no cadastro publico. Senhas sao armazenadas como hashes bcrypt com fator 12 usando `pgcrypto`.
+
+`POST /api/auth/login` recebe `email` e `senha` em JSON. A resposta contem um token Bearer JWT com validade de 30 minutos. Cada requisicao protegida deve enviar `Authorization: Bearer <token>`. O usuario e o papel sao consultados novamente no banco; contas inativas nao autenticam. Cada token esta associado a uma sessao persistida, permitindo invalidacao imediata.
+
+`POST /api/auth/logout` revoga a sessao do token autenticado. O token deixa de ser aceito e as demais sessoes do usuario permanecem ativas. O logout requer um token valido.
 
 Erros usam um envelope uniforme:
 
@@ -49,7 +53,9 @@ Respostas principais:
 | Metodo | Rota | Papel | Descricao |
 |---|---|---|---|
 | `GET` | `/api/health` | Publico | Verifica disponibilidade do processo da API |
+| `POST` | `/api/auth/register` | Publico | Cria conta de organizador ou prestador |
 | `POST` | `/api/auth/login` | Publico | Emite token Bearer |
+| `POST` | `/api/auth/logout` | Autenticado | Revoga a sessao do token enviado |
 | `GET` | `/api/servicos` | Publico | Lista servicos ativos; suporta `categoria`, `preco_minimo`, `preco_maximo`, `limit` e `offset` |
 | `GET` | `/api/servicos/{id}` | Publico | Consulta um servico ativo |
 | `POST` | `/api/eventos` | Organizador | Cria evento proprio |
@@ -73,4 +79,4 @@ $env:TEST_DATABASE_URL = 'postgresql://postgres:SENHA_LOCAL@localhost:5432/event
 pytest
 ```
 
-Os testes de integracao cobrem login, catalogo, fluxo de solicitacao ate confirmacao, historico, recusa sem motivo suficiente, controle de acesso e conflito de agenda.
+Os testes de integracao cobrem cadastro e hash de senha, login/logout e revogacao de token, usuarios inativos, matriz de papeis e titularidade, catalogo, fluxo de solicitacao ate confirmacao, historico, recusa sem motivo suficiente e conflito de agenda.

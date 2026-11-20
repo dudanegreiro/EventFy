@@ -24,6 +24,43 @@ class LoginRequest(BaseModel):
         return normalized
 
 
+class UserRegistrationRequest(BaseModel):
+    nome: str = Field(min_length=1, max_length=120)
+    email: str = Field(min_length=3, max_length=254)
+    senha: str = Field(min_length=12, max_length=72)
+    tipo_usuario: Literal["ORGANIZADOR", "PRESTADOR"]
+
+    @field_validator("nome")
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("O nome nao pode ficar vazio.")
+        return normalized
+
+    @field_validator("senha")
+    @classmethod
+    def validate_password_bytes(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("A senha deve ter no maximo 72 bytes em UTF-8.")
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if "@" not in normalized or "." not in normalized.rsplit("@", 1)[-1]:
+            raise ValueError("Informe um e-mail valido.")
+        return normalized
+
+
+class UserResponse(BaseModel):
+    id_usuario: int
+    nome: str
+    email: str
+    tipo_usuario: Literal["ORGANIZADOR", "PRESTADOR", "ADMINISTRADOR"]
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"
