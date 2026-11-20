@@ -1,3 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta
+from threading import Barrier
 from time import perf_counter
 from uuid import uuid4
 
@@ -579,6 +582,309 @@ def test_organizer_provider_flow_records_immutable_history(
                 "DELETE FROM public.historico_reserva WHERE id_reserva = %s",
                 (reservation_id,),
             )
+
+
+def test_organizer_cancels_approved_reservation_and_releases_schedule(
+    client: TestClient,
+    service_availability: None,
+    test_settings: Settings,
+) -> None:
+    organizer_token = access_token(client, ORGANIZER_EMAIL)
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    event = create_event(client, organizer_token, "Cancelamento aprovado", day=13)
+    headers = {"Authorization": f"Bearer {organizer_token}"}
+    created = client.post(
+        "/api/reservas",
+        headers=headers,
+        json={
+            "id_evento": event["id_evento"],
+            "id_servico": 1001,
+            "data_inicio": "2030-06-13T18:00:00Z",
+            "data_fim": "2030-06-13T21:00:00Z",
+        },
+    )
+    assert created.status_code == 201, created.text
+    reservation_id = created.json()["id_reserva"]
+    provider_headers = {"Authorization": f"Bearer {provider_token}"}
+    assert (
+        client.post(
+            f"/api/reservas/{reservation_id}/analise",
+            headers=provider_headers,
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            f"/api/reservas/{reservation_id}/decisao",
+            headers=provider_headers,
+            json={"decisao": "APROVADA"},
+        ).status_code
+        == 200
+    )
+
+    forbidden_cancel = client.post(
+        f"/api/reservas/{reservation_id}/cancelamento",
+        headers=provider_headers,
+        json={"motivo": "Nao posso cancelar antes da confirmacao."},
+    )
+    assert forbidden_cancel.status_code == 409
+    invalid_reason = client.post(
+        f"/api/reservas/{reservation_id}/cancelamento",
+        headers=headers,
+        json={"motivo": "  "},
+    )
+    assert invalid_reason.status_code == 422
+
+    cancelled = client.post(
+        f"/api/reservas/{reservation_id}/cancelamento",
+        headers=headers,
+        json={"motivo": "O evento foi adiado pelo organizador."},
+    )
+    assert cancelled.status_code == 200, cancelled.text
+    assert cancelled.json()["status"] == "CANCELADA"
+    with psycopg.connect(
+        test_settings.url_do_banco, row_factory=dict_row
+    ) as connection:
+        block = connection.execute(
+            """
+            SELECT ativo
+            FROM public.disponibilidade_servico
+            WHERE id_reserva = %s
+            """,
+            (reservation_id,),
+        ).fetchone()
+        history = connection.execute(
+            """
+            SELECT status_anterior, status_novo, motivo
+            FROM public.historico_reserva
+            WHERE id_reserva = %s
+            ORDER BY id_historico DESC
+            LIMIT 1
+            """,
+            (reservation_id,),
+        ).fetchone()
+    assert block["ativo"] is False
+    assert history == {
+        "status_anterior": "APROVADA",
+        "status_novo": "CANCELADA",
+        "motivo": "O evento foi adiado pelo organizador.",
+    }
+
+
+def test_confirmed_reservation_can_be_cancelled_by_provider(
+    client: TestClient,
+    service_availability: None,
+) -> None:
+    organizer_token = access_token(client, ORGANIZER_EMAIL)
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    organizer_headers = {"Authorization": f"Bearer {organizer_token}"}
+    provider_headers = {"Authorization": f"Bearer {provider_token}"}
+    event = create_event(client, organizer_token, "Cancelamento confirmado", day=14)
+    created = client.post(
+        "/api/reservas",
+        headers=organizer_headers,
+        json={
+            "id_evento": event["id_evento"],
+            "id_servico": 1001,
+            "data_inicio": "2030-06-14T18:00:00Z",
+            "data_fim": "2030-06-14T21:00:00Z",
+        },
+    )
+    assert created.status_code == 201, created.text
+    reservation_id = created.json()["id_reserva"]
+    assert (
+        client.post(
+            f"/api/reservas/{reservation_id}/analise",
+            headers=provider_headers,
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            f"/api/reservas/{reservation_id}/decisao",
+            headers=provider_headers,
+            json={"decisao": "APROVADA"},
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            f"/api/reservas/{reservation_id}/confirmacao",
+            headers=organizer_headers,
+        ).status_code
+        == 200
+    )
+
+    cancelled = client.post(
+        f"/api/reservas/{reservation_id}/cancelamento",
+        headers=provider_headers,
+        json={"motivo": "O prestador teve uma emergencia."},
+    )
+
+    assert cancelled.status_code == 200, cancelled.text
+    assert cancelled.json()["status"] == "CANCELADA"
+
+
+def test_expiration_job_expires_each_unanswered_stage(
+    client: TestClient,
+    service_availability: None,
+    test_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    organizer_token = access_token(client, ORGANIZER_EMAIL)
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    organizer_headers = {"Authorization": f"Bearer {organizer_token}"}
+    provider_headers = {"Authorization": f"Bearer {provider_token}"}
+    reservation_ids = []
+
+    for day, final_stage in ((17, "SOLICITADA"), (18, "EM_ANALISE"), (19, "APROVADA")):
+        event = create_event(client, organizer_token, f"Expiracao {day}", day=day)
+        created = client.post(
+            "/api/reservas",
+            headers=organizer_headers,
+            json={
+                "id_evento": event["id_evento"],
+                "id_servico": 1001,
+                "data_inicio": f"2030-06-{day:02d}T18:00:00Z",
+                "data_fim": f"2030-06-{day:02d}T21:00:00Z",
+            },
+        )
+        assert created.status_code == 201, created.text
+        reservation_id = created.json()["id_reserva"]
+        reservation_ids.append(reservation_id)
+        if final_stage in {"EM_ANALISE", "APROVADA"}:
+            assert (
+                client.post(
+                    f"/api/reservas/{reservation_id}/analise",
+                    headers=provider_headers,
+                ).status_code
+                == 200
+            )
+        if final_stage == "APROVADA":
+            assert (
+                client.post(
+                    f"/api/reservas/{reservation_id}/decisao",
+                    headers=provider_headers,
+                    json={"decisao": "APROVADA"},
+                ).status_code
+                == 200
+            )
+
+    admin_headers = {
+        "Authorization": f"Bearer {access_token(client, ADMIN_EMAIL)}"
+    }
+    real_datetime = datetime
+
+    class FutureDateTime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return real_datetime.now(tz) + timedelta(hours=49)
+
+    monkeypatch.setattr("eventfy_api.main.datetime", FutureDateTime)
+    lazy_expired = client.get(
+        f"/api/reservas/{reservation_ids[0]}",
+        headers=organizer_headers,
+    )
+    assert lazy_expired.status_code == 200
+    assert lazy_expired.json()["status"] == "EXPIRADA"
+    unauthorized = client.post("/api/jobs/reservas/expiracoes")
+    assert unauthorized.status_code == 401
+    expired = client.post(
+        "/api/jobs/reservas/expiracoes",
+        headers=admin_headers,
+    )
+
+    assert expired.status_code == 200, expired.text
+    assert expired.json()["quantidade"] == len(expired.json()["reservas_expiradas"])
+    assert set(reservation_ids[1:]).issubset(expired.json()["reservas_expiradas"])
+    for reservation_id in reservation_ids:
+        reservation = client.get(
+            f"/api/reservas/{reservation_id}",
+            headers=organizer_headers,
+        )
+        assert reservation.status_code == 200
+        assert reservation.json()["status"] == "EXPIRADA"
+        history = client.get(
+            f"/api/reservas/{reservation_id}/historico",
+            headers=organizer_headers,
+        )
+        assert history.status_code == 200
+        assert history.json()[-1]["status_novo"] == "EXPIRADA"
+        assert history.json()[-1]["id_usuario"] is None
+    with psycopg.connect(test_settings.url_do_banco, row_factory=dict_row) as connection:
+        schedule_block = connection.execute(
+            """
+            SELECT ativo
+            FROM public.disponibilidade_servico
+            WHERE id_reserva = %s
+            """,
+            (reservation_ids[-1],),
+        ).fetchone()
+    assert schedule_block["ativo"] is False
+
+
+def test_concurrent_confirmation_records_only_one_transition(
+    client: TestClient,
+    service_availability: None,
+    test_settings: Settings,
+) -> None:
+    organizer_token = access_token(client, ORGANIZER_EMAIL)
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    organizer_headers = {"Authorization": f"Bearer {organizer_token}"}
+    provider_headers = {"Authorization": f"Bearer {provider_token}"}
+    event = create_event(client, organizer_token, "Confirmacao concorrente", day=23)
+    created = client.post(
+        "/api/reservas",
+        headers=organizer_headers,
+        json={
+            "id_evento": event["id_evento"],
+            "id_servico": 1001,
+            "data_inicio": "2030-06-23T18:00:00Z",
+            "data_fim": "2030-06-23T21:00:00Z",
+        },
+    )
+    assert created.status_code == 201, created.text
+    reservation_id = created.json()["id_reserva"]
+    assert (
+        client.post(
+            f"/api/reservas/{reservation_id}/analise",
+            headers=provider_headers,
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            f"/api/reservas/{reservation_id}/decisao",
+            headers=provider_headers,
+            json={"decisao": "APROVADA"},
+        ).status_code
+        == 200
+    )
+
+    barrier = Barrier(2)
+
+    def confirm() -> int:
+        barrier.wait()
+        response = client.post(
+            f"/api/reservas/{reservation_id}/confirmacao",
+            headers=organizer_headers,
+        )
+        return response.status_code
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        statuses = list(executor.map(lambda _: confirm(), range(2)))
+
+    assert sorted(statuses) == [200, 409]
+    with psycopg.connect(test_settings.url_do_banco) as connection:
+        confirmed_transitions = connection.execute(
+            """
+            SELECT count(*)
+            FROM public.historico_reserva
+            WHERE id_reserva = %s AND status_novo = 'CONFIRMADA'
+            """,
+            (reservation_id,),
+        ).fetchone()[0]
+    assert confirmed_transitions == 1
 
 
 def test_overlapping_active_reservation_returns_conflict(

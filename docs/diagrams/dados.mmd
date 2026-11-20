@@ -3,6 +3,7 @@ erDiagram
     USUARIO ||--o{ SERVICO : oferece
     SERVICO ||--o{ ARQUIVO : possui
     SERVICO ||--o{ DISPONIBILIDADE_SERVICO : possui
+    RESERVA ||--o| DISPONIBILIDADE_SERVICO : bloqueia
     EVENTO ||--o{ RESERVA : possui
     SERVICO ||--o{ RESERVA : recebe
     USUARIO ||--o{ RESERVA : solicita
@@ -51,6 +52,7 @@ erDiagram
     DISPONIBILIDADE_SERVICO {
         int id_disponibilidade PK
         int id_servico FK
+        int id_reserva FK
         datetime data_inicio
         datetime data_fim
         varchar tipo

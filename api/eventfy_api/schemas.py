@@ -113,6 +113,18 @@ class ReservationDecision(BaseModel):
         return self
 
 
+class ReservationCancellation(BaseModel):
+    motivo: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("motivo")
+    @classmethod
+    def validate_reason(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("A justificativa do cancelamento e obrigatoria.")
+        return normalized
+
+
 class PublicService(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -230,6 +242,17 @@ class ReservationResponse(BaseModel):
 class TransitionResponse(BaseModel):
     id_reserva: int
     status: Literal["EM_ANALISE", "CONFIRMADA"]
+
+
+class CancellationResponse(BaseModel):
+    id_reserva: int
+    status: Literal["CANCELADA"]
+    motivo: str
+
+
+class ExpirationResponse(BaseModel):
+    quantidade: int
+    reservas_expiradas: list[int]
 
 
 class DecisionResponse(BaseModel):
