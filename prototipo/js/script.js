@@ -198,20 +198,59 @@ function showFlowError(message, errorId) {
 function filterCards() {
   const search = document.getElementById('search');
   const category = document.getElementById('category');
+  const priceMin = document.getElementById('price-min');
+  const priceMax = document.getElementById('price-max');
+  const location = document.getElementById('location');
+  const dateStart = document.getElementById('date-start');
+  const dateEnd = document.getElementById('date-end');
   const cards = document.querySelectorAll('.card');
   const emptyState = document.getElementById('empty-state');
+  const filterError = document.getElementById('filter-error');
 
-  if (!search || !category || !emptyState) {
+  if (!search || !category || !priceMin || !priceMax || !location
+      || !dateStart || !dateEnd || !emptyState || !filterError) {
     return;
   }
 
+  const minPrice = priceMin.value === '' ? null : Number(priceMin.value);
+  const maxPrice = priceMax.value === '' ? null : Number(priceMax.value);
+  if (minPrice !== null && (!Number.isFinite(minPrice) || minPrice < 0)
+      || maxPrice !== null && (!Number.isFinite(maxPrice) || maxPrice < 0)
+      || minPrice !== null && maxPrice !== null && maxPrice < minPrice) {
+    filterError.textContent = 'Informe uma faixa de preço válida.';
+    filterError.hidden = false;
+    emptyState.hidden = true;
+    cards.forEach(card => { card.hidden = true; });
+    return;
+  }
+  if ((dateStart.value && !dateEnd.value)
+      || (!dateStart.value && dateEnd.value)
+      || (dateStart.value && dateEnd.value && dateEnd.value < dateStart.value)) {
+    filterError.textContent = 'Informe um período de disponibilidade válido.';
+    filterError.hidden = false;
+    emptyState.hidden = true;
+    cards.forEach(card => { card.hidden = true; });
+    return;
+  }
+
+  filterError.hidden = true;
   const query = search.value.trim().toLocaleLowerCase('pt-BR');
+  const locationQuery = location.value.trim().toLocaleLowerCase('pt-BR');
   let visibleCount = 0;
 
   cards.forEach(card => {
     const nameMatches = card.dataset.name.toLocaleLowerCase('pt-BR').includes(query);
     const categoryMatches = !category.value || card.dataset.category === category.value;
-    card.hidden = !(nameMatches && categoryMatches);
+    const price = Number(card.dataset.price);
+    const priceMatches = (minPrice === null || price >= minPrice)
+      && (maxPrice === null || price <= maxPrice);
+    const locationMatches = card.dataset.location
+      .toLocaleLowerCase('pt-BR').includes(locationQuery);
+    const dateMatches = !dateStart.value
+      || (card.dataset.availableStart <= dateStart.value
+        && card.dataset.availableEnd >= dateEnd.value);
+    card.hidden = !(nameMatches && categoryMatches && priceMatches
+      && locationMatches && dateMatches);
     if (!card.hidden) {
       visibleCount += 1;
     }
@@ -228,8 +267,15 @@ function initializeCatalog() {
     return;
   }
 
-  search.addEventListener('input', filterCards);
-  category.addEventListener('change', filterCards);
+  ['search', 'category', 'price-min', 'price-max', 'location', 'date-start', 'date-end']
+    .map(id => document.getElementById(id))
+    .filter(Boolean)
+    .forEach(control => {
+      control.addEventListener(
+        control.tagName === 'SELECT' || control.type === 'date' ? 'change' : 'input',
+        filterCards
+      );
+    });
   filterCards();
 }
 

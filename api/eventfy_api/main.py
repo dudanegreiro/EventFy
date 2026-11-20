@@ -1,18 +1,22 @@
+import io
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
+import zipfile
 
 import psycopg
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import Depends, FastAPI, File, Query, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from psycopg.errors import ExclusionViolation, ForeignKeyViolation, UniqueViolation
 
 from eventfy_api.config import Settings, get_settings
 from eventfy_api.database import get_connection
 from eventfy_api.errors import ApiError, error_response
 from eventfy_api.schemas import (
+    AvailabilityCreate,
     DecisionResponse,
     EventCreate,
     EventResponse,
@@ -22,10 +26,13 @@ from eventfy_api.schemas import (
     ReservationDecision,
     ReservationHistoryEntry,
     ReservationResponse,
+    ServiceCreate,
+    ServiceUpdate,
     TransitionResponse,
     TokenResponse,
     UserRegistrationRequest,
     UserResponse,
+    require_timezone,
 )
 from eventfy_api.security import create_access_token, get_current_user, require_role
 
@@ -34,6 +41,18 @@ app = FastAPI(
     version="0.1.0",
     description="API REST para catalogo, eventos e fluxo principal de reservas.",
 )
+
+MAX_ATTACHMENT_BYTES = 10_000_000
+ATTACHMENT_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".pdf": "application/pdf",
+    ".docx": (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ),
+}
 
 
 @app.exception_handler(ApiError)
@@ -156,15 +175,128 @@ def logout(
     )
 
 
+def _validate_catalog_period(
+    data_inicio: datetime | None,
+    data_fim: datetime | None,
+) -> bool:
+    if (data_inicio is None) != (data_fim is None):
+        raise ApiError(
+            422,
+            "INVALID_AVAILABILITY_FILTER",
+            "Informe data_inicio e data_fim juntos para filtrar disponibilidade.",
+        )
+    if data_inicio is None or data_fim is None:
+        return False
+    try:
+        require_timezone(data_inicio)
+        require_timezone(data_fim)
+    except ValueError as exception:
+        raise ApiError(
+            422,
+            "INVALID_AVAILABILITY_FILTER",
+            str(exception),
+        ) from exception
+    if data_fim <= data_inicio:
+        raise ApiError(
+            422,
+            "INVALID_AVAILABILITY_FILTER",
+            "data_fim deve ser posterior a data_inicio.",
+        )
+    return True
+
+
+def _service_has_active_reservations(
+    connection: psycopg.Connection,
+    service_id: int,
+) -> bool:
+    return connection.execute(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM public.reserva
+            WHERE id_servico = %s
+              AND ativo
+              AND status IN ('SOLICITADA', 'EM_ANALISE', 'APROVADA', 'CONFIRMADA')
+        ) AS possui_reservas_ativas
+        """,
+        (service_id,),
+    ).fetchone()["possui_reservas_ativas"]
+
+
+def _owned_service(
+    connection: psycopg.Connection,
+    service_id: int,
+    user: dict[str, Any],
+) -> dict[str, Any]:
+    service = connection.execute(
+        """
+        SELECT id_servico, id_prestador, nome, categoria, descricao,
+               preco, localizacao, ativo
+        FROM public.servico
+        WHERE id_servico = %s
+        FOR UPDATE
+        """,
+        (service_id,),
+    ).fetchone()
+    if service is None:
+        raise ApiError(404, "SERVICE_NOT_FOUND", "Servico nao encontrado.")
+    if service["id_prestador"] != user["id_usuario"]:
+        raise ApiError(403, "FORBIDDEN", "Voce nao e titular deste servico.")
+    return service
+
+
+def _detect_attachment_type(filename: str, content: bytes) -> str | None:
+    if filename.rsplit(".", 1)[-1].lower() not in {
+        extension.removeprefix(".") for extension in ATTACHMENT_TYPES
+    }:
+        return None
+
+    extension = Path(filename).suffix.lower()
+    if content.startswith(b"\xff\xd8\xff"):
+        detected = "image/jpeg"
+    elif content.startswith(b"\x89PNG\r\n\x1a\n"):
+        detected = "image/png"
+    elif (
+        len(content) >= 12
+        and content.startswith(b"RIFF")
+        and content[8:12] == b"WEBP"
+    ):
+        detected = "image/webp"
+    elif content.startswith(b"%PDF-"):
+        detected = "application/pdf"
+    elif zipfile.is_zipfile(io.BytesIO(content)):
+        try:
+            with zipfile.ZipFile(io.BytesIO(content)) as archive:
+                names = set(archive.namelist())
+        except zipfile.BadZipFile:
+            return None
+        if {"[Content_Types].xml", "word/document.xml"}.issubset(names):
+            detected = (
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+        else:
+            return None
+    else:
+        return None
+    if ATTACHMENT_TYPES.get(extension) != detected:
+        return None
+    return detected
+
+
 @app.get("/api/servicos", response_model=list[PublicService])
 def list_services(
     categoria: str | None = None,
+    termo: str | None = Query(default=None, max_length=160),
     preco_minimo: Decimal | None = Query(default=None, ge=0),
     preco_maximo: Decimal | None = Query(default=None, ge=0),
+    localizacao: str | None = Query(default=None, max_length=200),
+    data_inicio: datetime | None = None,
+    data_fim: datetime | None = None,
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     connection: psycopg.Connection = Depends(get_connection),
 ) -> list[dict[str, Any]]:
+    has_availability_filter = _validate_catalog_period(data_inicio, data_fim)
     if (
         preco_minimo is not None
         and preco_maximo is not None
@@ -176,25 +308,86 @@ def list_services(
             "preco_maximo deve ser maior ou igual a preco_minimo.",
         )
 
+    normalized_term = termo.strip() if termo and termo.strip() else None
+    normalized_location = (
+        localizacao.strip() if localizacao and localizacao.strip() else None
+    )
+    search_pattern = f"%{normalized_term}%" if normalized_term else None
+    location_pattern = f"%{normalized_location}%" if normalized_location else None
     rows = connection.execute(
         """
         SELECT s.id_servico, s.nome, s.categoria, s.descricao,
-               s.preco, s.id_prestador
+               s.preco, s.id_prestador, s.localizacao, s.ativo
         FROM public.servico AS s
         WHERE s.ativo
           AND (%s::text IS NULL OR lower(s.categoria) = lower(%s))
+          AND (
+              %s::text IS NULL
+              OR s.nome ILIKE %s
+              OR coalesce(s.descricao, '') ILIKE %s
+          )
           AND (%s::numeric IS NULL OR s.preco >= %s)
           AND (%s::numeric IS NULL OR s.preco <= %s)
+          AND (
+              %s::text IS NULL
+              OR coalesce(s.localizacao, '') ILIKE %s
+          )
+          AND (
+              NOT %s
+              OR (
+                  EXISTS (
+                      SELECT 1
+                      FROM public.disponibilidade_servico AS d
+                      WHERE d.id_servico = s.id_servico
+                        AND d.ativo
+                        AND d.tipo = 'DISPONIVEL'
+                        AND d.data_inicio <= %s
+                        AND d.data_fim >= %s
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM public.disponibilidade_servico AS d
+                      WHERE d.id_servico = s.id_servico
+                        AND d.ativo
+                        AND d.tipo = 'BLOQUEIO_MANUAL'
+                        AND tstzrange(d.data_inicio, d.data_fim, '[)')
+                            && tstzrange(%s, %s, '[)')
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM public.reserva AS r
+                      WHERE r.id_servico = s.id_servico
+                        AND r.ativo
+                        AND r.status IN (
+                            'SOLICITADA', 'EM_ANALISE', 'APROVADA', 'CONFIRMADA'
+                        )
+                        AND tstzrange(r.data_inicio, r.data_fim, '[)')
+                            && tstzrange(%s, %s, '[)')
+                  )
+              )
+          )
         ORDER BY s.id_servico
         LIMIT %s OFFSET %s
         """,
         (
             categoria,
             categoria,
+            normalized_term,
+            search_pattern,
+            search_pattern,
             preco_minimo,
             preco_minimo,
             preco_maximo,
             preco_maximo,
+            normalized_location,
+            location_pattern,
+            has_availability_filter,
+            data_inicio,
+            data_fim,
+            data_inicio,
+            data_fim,
+            data_inicio,
+            data_fim,
             limit,
             offset,
         ),
@@ -209,7 +402,8 @@ def get_service(
 ) -> dict[str, Any]:
     service = connection.execute(
         """
-        SELECT id_servico, nome, categoria, descricao, preco, id_prestador
+        SELECT id_servico, nome, categoria, descricao, preco, id_prestador,
+               localizacao, ativo
         FROM public.servico
         WHERE id_servico = %s AND ativo
         """,
@@ -226,7 +420,351 @@ def get_service(
         """,
         (service_id,),
     ).fetchall()
-    return {**service, "arquivos": files}
+    availability = connection.execute(
+        """
+        SELECT data_inicio, data_fim
+        FROM public.disponibilidade_servico
+        WHERE id_servico = %s AND ativo AND tipo = 'DISPONIVEL'
+        ORDER BY data_inicio
+        """,
+        (service_id,),
+    ).fetchall()
+    return {
+        **service,
+        "arquivos": files,
+        "disponibilidades": availability,
+    }
+
+
+@app.post("/api/servicos", status_code=201, response_model=PublicService)
+def create_service(
+    request: ServiceCreate,
+    user: dict[str, Any] = Depends(require_role("PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> dict[str, Any]:
+    return connection.execute(
+        """
+        INSERT INTO public.servico (
+            id_prestador, nome, categoria, descricao, preco, localizacao
+        )
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id_servico, id_prestador, nome, categoria, descricao,
+                  preco, localizacao, ativo
+        """,
+        (
+            user["id_usuario"],
+            request.nome,
+            request.categoria,
+            request.descricao,
+            request.preco,
+            request.localizacao,
+        ),
+    ).fetchone()
+
+
+@app.get("/api/prestador/servicos", response_model=list[PublicService])
+def list_provider_services(
+    user: dict[str, Any] = Depends(require_role("PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> list[dict[str, Any]]:
+    return connection.execute(
+        """
+        SELECT id_servico, id_prestador, nome, categoria, descricao,
+               preco, localizacao, ativo
+        FROM public.servico
+        WHERE id_prestador = %s
+        ORDER BY id_servico
+        """,
+        (user["id_usuario"],),
+    ).fetchall()
+
+
+@app.patch("/api/servicos/{service_id}", response_model=PublicService)
+def update_service(
+    service_id: int,
+    request: ServiceUpdate,
+    user: dict[str, Any] = Depends(require_role("PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> dict[str, Any]:
+    service = _owned_service(connection, service_id, user)
+    changes = request.model_dump(exclude_unset=True)
+    if (
+        {"preco", "localizacao"}.intersection(changes)
+        and _service_has_active_reservations(connection, service_id)
+    ):
+        raise ApiError(
+            409,
+            "SERVICE_HAS_ACTIVE_RESERVATIONS",
+            "Preco e localizacao nao podem ser alterados enquanto houver reservas ativas.",
+        )
+    assignments = ", ".join(f"{field} = %s" for field in changes)
+    values = list(changes.values()) + [service_id]
+    updated = connection.execute(
+        f"""
+        UPDATE public.servico
+        SET {assignments}, atualizado_em = now()
+        WHERE id_servico = %s
+        RETURNING id_servico, id_prestador, nome, categoria, descricao,
+                  preco, localizacao, ativo
+        """,
+        values,
+    ).fetchone()
+    return updated
+
+
+@app.delete("/api/servicos/{service_id}", status_code=204)
+def deactivate_service(
+    service_id: int,
+    user: dict[str, Any] = Depends(require_role("PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> None:
+    service = _owned_service(connection, service_id, user)
+    if not service["ativo"]:
+        raise ApiError(409, "SERVICE_ALREADY_INACTIVE", "O servico ja esta desativado.")
+    if _service_has_active_reservations(connection, service_id):
+        raise ApiError(
+            409,
+            "SERVICE_HAS_ACTIVE_RESERVATIONS",
+            "O servico nao pode ser desativado enquanto houver reservas ativas.",
+        )
+    connection.execute(
+        """
+        UPDATE public.servico
+        SET ativo = false, atualizado_em = now()
+        WHERE id_servico = %s
+        """,
+        (service_id,),
+    )
+
+
+@app.post(
+    "/api/servicos/{service_id}/disponibilidades",
+    status_code=201,
+)
+def add_service_availability(
+    service_id: int,
+    request: AvailabilityCreate,
+    user: dict[str, Any] = Depends(require_role("PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> dict[str, Any]:
+    service = _owned_service(connection, service_id, user)
+    if not service["ativo"]:
+        raise ApiError(409, "SERVICE_INACTIVE", "Nao e possivel editar servico inativo.")
+    if _service_has_active_reservations(connection, service_id):
+        raise ApiError(
+            409,
+            "SERVICE_HAS_ACTIVE_RESERVATIONS",
+            "A disponibilidade nao pode ser alterada enquanto houver reservas ativas.",
+        )
+    availability = connection.execute(
+        """
+        INSERT INTO public.disponibilidade_servico (
+            id_servico, data_inicio, data_fim, tipo, motivo
+        )
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING id_disponibilidade, id_servico, data_inicio, data_fim,
+                  tipo, motivo, ativo
+        """,
+        (
+            service_id,
+            request.data_inicio,
+            request.data_fim,
+            request.tipo,
+            request.motivo,
+        ),
+    ).fetchone()
+    return availability
+
+
+@app.get("/api/servicos/{service_id}/disponibilidades")
+def list_service_availability(
+    service_id: int,
+    user: dict[str, Any] = Depends(require_role("PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> list[dict[str, Any]]:
+    _owned_service(connection, service_id, user)
+    return connection.execute(
+        """
+        SELECT id_disponibilidade, id_servico, data_inicio, data_fim,
+               tipo, motivo, ativo
+        FROM public.disponibilidade_servico
+        WHERE id_servico = %s
+        ORDER BY data_inicio, id_disponibilidade
+        """,
+        (service_id,),
+    ).fetchall()
+
+
+@app.delete(
+    "/api/servicos/{service_id}/disponibilidades/{availability_id}",
+    status_code=204,
+)
+def deactivate_service_availability(
+    service_id: int,
+    availability_id: int,
+    user: dict[str, Any] = Depends(require_role("PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> None:
+    _owned_service(connection, service_id, user)
+    if _service_has_active_reservations(connection, service_id):
+        raise ApiError(
+            409,
+            "SERVICE_HAS_ACTIVE_RESERVATIONS",
+            "A disponibilidade nao pode ser alterada enquanto houver reservas ativas.",
+        )
+    result = connection.execute(
+        """
+        UPDATE public.disponibilidade_servico
+        SET ativo = false
+        WHERE id_disponibilidade = %s
+          AND id_servico = %s
+          AND ativo
+        """,
+        (availability_id, service_id),
+    )
+    if result.rowcount == 0:
+        raise ApiError(
+            404,
+            "AVAILABILITY_NOT_FOUND",
+            "Periodo de disponibilidade nao encontrado.",
+        )
+
+
+@app.post(
+    "/api/servicos/{service_id}/arquivos",
+    status_code=201,
+)
+def upload_service_file(
+    service_id: int,
+    file: UploadFile = File(...),
+    user: dict[str, Any] = Depends(require_role("PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+    settings: Settings = Depends(get_settings),
+) -> dict[str, Any]:
+    service = _owned_service(connection, service_id, user)
+    if not service["ativo"]:
+        raise ApiError(409, "SERVICE_INACTIVE", "Nao e possivel editar servico inativo.")
+    if _service_has_active_reservations(connection, service_id):
+        raise ApiError(
+            409,
+            "SERVICE_HAS_ACTIVE_RESERVATIONS",
+            "Anexos nao podem ser alterados enquanto houver reservas ativas.",
+        )
+
+    filename = Path(file.filename or "").name
+    if not filename or len(filename) > 255:
+        raise ApiError(422, "INVALID_FILE_NAME", "Nome do arquivo invalido.")
+    content = file.file.read(MAX_ATTACHMENT_BYTES + 1)
+    if not content:
+        raise ApiError(422, "EMPTY_FILE", "O arquivo enviado esta vazio.")
+    if len(content) > MAX_ATTACHMENT_BYTES:
+        raise ApiError(
+            413,
+            "FILE_TOO_LARGE",
+            "O tamanho maximo permitido por arquivo e 10.000.000 bytes.",
+        )
+
+    detected_type = _detect_attachment_type(filename, content)
+    if detected_type is None or file.content_type != detected_type:
+        raise ApiError(
+            415,
+            "UNSUPPORTED_FILE_TYPE",
+            "Envie JPEG, PNG, WebP, PDF ou DOCX com tipo MIME correspondente ao conteudo.",
+        )
+
+    file_key = uuid4()
+    file_path = settings.local_dos_arquivos / str(file_key)
+    try:
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        with file_path.open("xb") as stored_file:
+            stored_file.write(content)
+    except OSError as exception:
+        raise ApiError(
+            500,
+            "FILE_STORAGE_ERROR",
+            "Nao foi possivel armazenar o arquivo.",
+        ) from exception
+
+    file_url = f"/api/arquivos/{file_key}"
+    try:
+        metadata = connection.execute(
+            """
+            INSERT INTO public.arquivo (
+                id_servico, nome_original, url, tipo_mime, tamanho
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id_arquivo, id_servico, nome_original, url,
+                      tipo_mime, tamanho, ativo, criado_em
+            """,
+            (
+                service_id,
+                filename,
+                file_url,
+                detected_type,
+                len(content),
+            ),
+        ).fetchone()
+        connection.commit()
+    except psycopg.Error:
+        file_path.unlink(missing_ok=True)
+        raise
+    return metadata
+
+
+@app.get("/api/arquivos/{file_key}")
+def download_service_file(
+    file_key: UUID,
+    connection: psycopg.Connection = Depends(get_connection),
+    settings: Settings = Depends(get_settings),
+) -> FileResponse:
+    file_record = connection.execute(
+        """
+        SELECT f.nome_original, f.tipo_mime, f.url
+        FROM public.arquivo AS f
+        JOIN public.servico AS s ON s.id_servico = f.id_servico
+        WHERE f.url = %s AND f.ativo AND s.ativo
+        """,
+        (f"/api/arquivos/{file_key}",),
+    ).fetchone()
+    if file_record is None:
+        raise ApiError(404, "FILE_NOT_FOUND", "Arquivo nao encontrado.")
+    file_path = settings.local_dos_arquivos / str(file_key)
+    if not file_path.is_file():
+        raise ApiError(404, "FILE_NOT_FOUND", "Arquivo nao encontrado.")
+    return FileResponse(
+        file_path,
+        media_type=file_record["tipo_mime"],
+        filename=file_record["nome_original"],
+    )
+
+
+@app.delete(
+    "/api/servicos/{service_id}/arquivos/{file_id}",
+    status_code=204,
+)
+def deactivate_service_file(
+    service_id: int,
+    file_id: int,
+    user: dict[str, Any] = Depends(require_role("PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> None:
+    _owned_service(connection, service_id, user)
+    if _service_has_active_reservations(connection, service_id):
+        raise ApiError(
+            409,
+            "SERVICE_HAS_ACTIVE_RESERVATIONS",
+            "Anexos nao podem ser alterados enquanto houver reservas ativas.",
+        )
+    result = connection.execute(
+        """
+        UPDATE public.arquivo
+        SET ativo = false
+        WHERE id_arquivo = %s AND id_servico = %s AND ativo
+        """,
+        (file_id, service_id),
+    )
+    if result.rowcount == 0:
+        raise ApiError(404, "FILE_NOT_FOUND", "Arquivo nao encontrado.")
 
 
 @app.post("/api/eventos", status_code=201, response_model=EventResponse)
@@ -371,6 +909,7 @@ def create_reservation(
         SELECT id_servico
         FROM public.servico
         WHERE id_servico = %s AND ativo
+        FOR UPDATE
         """,
         (request.id_servico,),
     ).fetchone()

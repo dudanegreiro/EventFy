@@ -122,7 +122,63 @@ class PublicService(BaseModel):
     descricao: str | None
     preco: Decimal
     id_prestador: int
+    localizacao: str | None = None
+    ativo: bool = True
     arquivos: list["ServiceFile"] = Field(default_factory=list)
+    disponibilidades: list["AvailablePeriod"] = Field(default_factory=list)
+
+
+class ServiceCreate(BaseModel):
+    nome: str = Field(min_length=1, max_length=160)
+    categoria: str = Field(min_length=1, max_length=80)
+    descricao: str | None = None
+    preco: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
+    localizacao: str = Field(min_length=1, max_length=200)
+
+    @field_validator("nome", "categoria", "localizacao")
+    @classmethod
+    def validate_service_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("O campo nao pode ficar vazio.")
+        return normalized
+
+
+class ServiceUpdate(BaseModel):
+    nome: str | None = Field(default=None, min_length=1, max_length=160)
+    categoria: str | None = Field(default=None, min_length=1, max_length=80)
+    descricao: str | None = None
+    preco: Decimal | None = Field(
+        default=None,
+        ge=0,
+        max_digits=12,
+        decimal_places=2,
+    )
+    localizacao: str | None = Field(default=None, min_length=1, max_length=200)
+
+    @field_validator("nome", "categoria", "localizacao")
+    @classmethod
+    def validate_service_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("O campo nao pode ficar vazio.")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_changes(self) -> "ServiceUpdate":
+        if not self.model_fields_set:
+            raise ValueError("Informe ao menos um campo para atualizar.")
+        for field in ("nome", "categoria", "preco", "localizacao"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"O campo {field} nao pode ser nulo.")
+        return self
+
+
+class AvailabilityCreate(PeriodModel):
+    tipo: Literal["DISPONIVEL", "BLOQUEIO_MANUAL"]
+    motivo: str | None = Field(default=None, max_length=500)
 
 
 class ServiceFile(BaseModel):
@@ -131,6 +187,11 @@ class ServiceFile(BaseModel):
     url: str
     tipo_mime: str
     tamanho: int
+
+
+class AvailablePeriod(BaseModel):
+    data_inicio: datetime
+    data_fim: datetime
 
 
 class EventResponse(BaseModel):

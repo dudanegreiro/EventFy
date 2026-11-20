@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -8,6 +9,7 @@ class Settings(BaseSettings):
     url_do_banco: str
     chave_secreta_jwt: SecretStr
     duracao_token_minutos: int = 30
+    local_dos_arquivos: Path = Path("./uploads")
 
     model_config = SettingsConfigDict(
         env_file=".env",
