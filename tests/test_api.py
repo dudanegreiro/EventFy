@@ -963,3 +963,140 @@ def test_admin_cannot_read_other_users_reservation(client: TestClient) -> None:
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "FORBIDDEN"
+
+
+def test_reservation_queue_and_detail_align_expiration_before_job(
+    client: TestClient,
+    service_availability: None,
+    test_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    organizer_token = access_token(client, ORGANIZER_EMAIL)
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    organizer_headers = {"Authorization": f"Bearer {organizer_token}"}
+    provider_headers = {"Authorization": f"Bearer {provider_token}"}
+
+    requested_event = create_event(client, organizer_token, "Fila vencida solicitada", day=24)
+    requested = client.post(
+        "/api/reservas",
+        headers=organizer_headers,
+        json={
+            "id_evento": requested_event["id_evento"],
+            "id_servico": 1001,
+            "data_inicio": "2030-06-24T18:00:00Z",
+            "data_fim": "2030-06-24T21:00:00Z",
+        },
+    )
+    assert requested.status_code == 201, requested.text
+    requested_id = requested.json()["id_reserva"]
+
+    approved_event = create_event(client, organizer_token, "Fila vencida aprovada", day=25)
+    approved = client.post(
+        "/api/reservas",
+        headers=organizer_headers,
+        json={
+            "id_evento": approved_event["id_evento"],
+            "id_servico": 1001,
+            "data_inicio": "2030-06-25T18:00:00Z",
+            "data_fim": "2030-06-25T21:00:00Z",
+        },
+    )
+    assert approved.status_code == 201, approved.text
+    approved_id = approved.json()["id_reserva"]
+    assert (
+        client.post(
+            f"/api/reservas/{approved_id}/analise",
+            headers=provider_headers,
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            f"/api/reservas/{approved_id}/decisao",
+            headers=provider_headers,
+            json={"decisao": "APROVADA"},
+        ).status_code
+        == 200
+    )
+
+    real_datetime = datetime
+
+    class FutureDateTime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return real_datetime.now(tz) + timedelta(hours=49)
+
+    monkeypatch.setattr("eventfy_api.main.datetime", FutureDateTime)
+
+    provider_queue = client.get("/api/reservas", headers=provider_headers)
+    assert provider_queue.status_code == 200, provider_queue.text
+    provider_statuses = {
+        item["id_reserva"]: item["status"] for item in provider_queue.json()
+    }
+    assert provider_statuses[requested_id] == "EXPIRADA"
+    assert provider_statuses[approved_id] == "EXPIRADA"
+
+    organizer_queue = client.get("/api/reservas", headers=organizer_headers)
+    assert organizer_queue.status_code == 200, organizer_queue.text
+    organizer_statuses = {
+        item["id_reserva"]: item["status"] for item in organizer_queue.json()
+    }
+    assert organizer_statuses[requested_id] == "EXPIRADA"
+    assert organizer_statuses[approved_id] == "EXPIRADA"
+
+    for reservation_id in (requested_id, approved_id):
+        detail = client.get(
+            f"/api/reservas/{reservation_id}",
+            headers=provider_headers,
+        )
+        assert detail.status_code == 200
+        assert detail.json()["status"] == "EXPIRADA"
+
+    blocked_analysis = client.post(
+        f"/api/reservas/{requested_id}/analise",
+        headers=provider_headers,
+    )
+    assert blocked_analysis.status_code == 409
+    assert blocked_analysis.json()["error"]["code"] == "RESERVATION_EXPIRED"
+
+    blocked_confirmation = client.post(
+        f"/api/reservas/{approved_id}/confirmacao",
+        headers=organizer_headers,
+    )
+    assert blocked_confirmation.status_code == 409
+    assert blocked_confirmation.json()["error"]["code"] == "RESERVATION_EXPIRED"
+
+    admin_headers = {
+        "Authorization": f"Bearer {access_token(client, ADMIN_EMAIL)}"
+    }
+    job_response = client.post(
+        "/api/jobs/reservas/expiracoes",
+        headers=admin_headers,
+    )
+    assert job_response.status_code == 200
+    assert requested_id not in job_response.json()["reservas_expiradas"]
+    assert approved_id not in job_response.json()["reservas_expiradas"]
+
+    with psycopg.connect(test_settings.url_do_banco, row_factory=dict_row) as connection:
+        schedule_block = connection.execute(
+            """
+            SELECT ativo
+            FROM public.disponibilidade_servico
+            WHERE id_reserva = %s
+            """,
+            (approved_id,),
+        ).fetchone()
+        expired_counts = connection.execute(
+            """
+            SELECT id_reserva, count(*) AS total
+            FROM public.historico_reserva
+            WHERE id_reserva = ANY(%s) AND status_novo = 'EXPIRADA'
+            GROUP BY id_reserva
+            """,
+            ([requested_id, approved_id],),
+        ).fetchall()
+    assert schedule_block["ativo"] is False
+    assert {row["id_reserva"]: row["total"] for row in expired_counts} == {
+        requested_id: 1,
+        approved_id: 1,
+    }

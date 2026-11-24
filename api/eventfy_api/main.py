@@ -946,6 +946,58 @@ def _expire_if_overdue(
     return True
 
 
+def _expire_overdue_reservations(
+    connection: psycopg.Connection,
+    scope_predicate: str | None = None,
+    scope_params: tuple[Any, ...] = (),
+    *,
+    skip_locked: bool = True,
+) -> list[int]:
+    now = datetime.now(timezone.utc)
+    extra_filter = f"AND {scope_predicate}" if scope_predicate else ""
+    lock_clause = "FOR UPDATE OF r SKIP LOCKED" if skip_locked else "FOR UPDATE OF r"
+    expired = connection.execute(
+        f"""
+        SELECT r.id_reserva, r.status, r.criado_em, sla.estado_desde
+        FROM public.reserva AS r
+        JOIN public.servico AS s ON s.id_servico = r.id_servico
+        CROSS JOIN LATERAL (
+            SELECT CASE r.status
+                       WHEN 'SOLICITADA' THEN r.criado_em
+                       WHEN 'EM_ANALISE' THEN COALESCE(
+                           (
+                               SELECT max(h.data_hora)
+                               FROM public.historico_reserva AS h
+                               WHERE h.id_reserva = r.id_reserva
+                                 AND h.status_novo = 'EM_ANALISE'
+                           ),
+                           r.criado_em
+                       )
+                       WHEN 'APROVADA' THEN COALESCE(
+                           (
+                               SELECT max(h.data_hora)
+                               FROM public.historico_reserva AS h
+                               WHERE h.id_reserva = r.id_reserva
+                                 AND h.status_novo = 'APROVADA'
+                           ),
+                           r.criado_em
+                       )
+                   END AS estado_desde
+        ) AS sla
+        WHERE r.ativo
+          AND r.status IN ('SOLICITADA', 'EM_ANALISE', 'APROVADA')
+          AND sla.estado_desde <= %s - interval '48 hours'
+          {extra_filter}
+        ORDER BY sla.estado_desde, r.id_reserva
+        {lock_clause}
+        """,
+        (now, *scope_params),
+    ).fetchall()
+    for reservation in expired:
+        _transition_to_expired(connection, reservation)
+    return [reservation["id_reserva"] for reservation in expired]
+
+
 def _raise_if_expired(reservation: dict[str, Any]) -> None:
     if reservation["status"] == "EXPIRADA":
         raise ApiError(
@@ -1080,6 +1132,14 @@ def list_reservations(
         predicate = "s.id_prestador = %s"
     else:
         raise ApiError(403, "FORBIDDEN", "Seu perfil nao pode consultar reservas.")
+
+    if _expire_overdue_reservations(
+        connection,
+        predicate,
+        (user["id_usuario"],),
+        skip_locked=False,
+    ):
+        connection.commit()
 
     return connection.execute(
         f"""
@@ -1356,45 +1416,7 @@ def expire_overdue_reservations(
     _: dict[str, Any] = Depends(require_role("ADMINISTRADOR")),
     connection: psycopg.Connection = Depends(get_connection),
 ) -> dict[str, Any]:
-    now = datetime.now(timezone.utc)
-    expired = connection.execute(
-        """
-        SELECT r.id_reserva, r.status, r.criado_em, sla.estado_desde
-        FROM public.reserva AS r
-        CROSS JOIN LATERAL (
-            SELECT CASE r.status
-                       WHEN 'SOLICITADA' THEN r.criado_em
-                       WHEN 'EM_ANALISE' THEN COALESCE(
-                           (
-                               SELECT max(h.data_hora)
-                               FROM public.historico_reserva AS h
-                               WHERE h.id_reserva = r.id_reserva
-                                 AND h.status_novo = 'EM_ANALISE'
-                           ),
-                           r.criado_em
-                       )
-                       WHEN 'APROVADA' THEN COALESCE(
-                           (
-                               SELECT max(h.data_hora)
-                               FROM public.historico_reserva AS h
-                               WHERE h.id_reserva = r.id_reserva
-                                 AND h.status_novo = 'APROVADA'
-                           ),
-                           r.criado_em
-                       )
-                   END AS estado_desde
-        ) AS sla
-        WHERE r.ativo
-          AND r.status IN ('SOLICITADA', 'EM_ANALISE', 'APROVADA')
-          AND sla.estado_desde <= %s - interval '48 hours'
-        ORDER BY sla.estado_desde, r.id_reserva
-        FOR UPDATE OF r SKIP LOCKED
-        """,
-        (now,),
-    ).fetchall()
-    for reservation in expired:
-        _transition_to_expired(connection, reservation)
-    reservation_ids = [reservation["id_reserva"] for reservation in expired]
+    reservation_ids = _expire_overdue_reservations(connection)
     return {
         "quantidade": len(reservation_ids),
         "reservas_expiradas": reservation_ids,
