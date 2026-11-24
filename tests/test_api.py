@@ -674,6 +674,7 @@ def test_organizer_cancels_approved_reservation_and_releases_schedule(
 def test_confirmed_reservation_can_be_cancelled_by_provider(
     client: TestClient,
     service_availability: None,
+    test_settings: Settings,
 ) -> None:
     organizer_token = access_token(client, ORGANIZER_EMAIL)
     provider_token = access_token(client, PROVIDER_EMAIL)
@@ -723,6 +724,37 @@ def test_confirmed_reservation_can_be_cancelled_by_provider(
 
     assert cancelled.status_code == 200, cancelled.text
     assert cancelled.json()["status"] == "CANCELADA"
+
+    with psycopg.connect(
+        test_settings.url_do_banco, row_factory=dict_row
+    ) as connection:
+        schedule_block = connection.execute(
+            """
+            SELECT ativo
+            FROM public.disponibilidade_servico
+            WHERE id_reserva = %s
+            """,
+            (reservation_id,),
+        ).fetchone()
+        history = connection.execute(
+            """
+            SELECT h.status_anterior, h.status_novo, h.motivo, u.email
+            FROM public.historico_reserva AS h
+            JOIN public.usuario AS u ON u.id_usuario = h.id_usuario
+            WHERE h.id_reserva = %s
+            ORDER BY h.id_historico DESC
+            LIMIT 1
+            """,
+            (reservation_id,),
+        ).fetchone()
+
+    assert schedule_block == {"ativo": False}
+    assert history == {
+        "status_anterior": "CONFIRMADA",
+        "status_novo": "CANCELADA",
+        "motivo": "O prestador teve uma emergencia.",
+        "email": PROVIDER_EMAIL,
+    }
 
 
 def test_expiration_job_expires_each_unanswered_stage(
