@@ -1,5 +1,7 @@
 import os
+import re
 from collections.abc import Iterator
+from pathlib import Path
 
 import psycopg
 import pytest
@@ -15,15 +17,38 @@ ADMIN_EMAIL = "admin.demo@eventfy.local"
 DEMO_PASSWORD = "EventFyDemo123!"
 
 
+def reset_test_database(database_url: str) -> None:
+    migration_directory = Path(__file__).resolve().parents[1] / "db" / "migrations"
+    migration_files = []
+    for migration_file in migration_directory.glob("V*__*.sql"):
+        match = re.match(r"^V(\d+)__.+\.sql$", migration_file.name)
+        if match:
+            migration_files.append((int(match.group(1)), migration_file))
+
+    migration_files.sort(key=lambda item: item[0])
+    if not migration_files:
+        raise RuntimeError("Nenhuma migracao encontrada para preparar o banco de testes.")
+
+    with psycopg.connect(database_url) as connection:
+        connection.execute("DROP SCHEMA public CASCADE")
+        connection.execute("CREATE SCHEMA public")
+        for _, migration_file in migration_files:
+            connection.execute(migration_file.read_text(encoding="utf-8"))
+
+
 @pytest.fixture(scope="session")
-def test_settings() -> Settings:
+def test_settings() -> Iterator[Settings]:
     database_url = os.getenv("TEST_DATABASE_URL")
     if not database_url:
         pytest.skip("Defina TEST_DATABASE_URL para executar os testes de integracao.")
-    return Settings(
-        url_do_banco=database_url,
-        chave_secreta_jwt=SecretStr("test-only-secret-key-with-at-least-32-chars"),
-    )
+    reset_test_database(database_url)
+    try:
+        yield Settings(
+            url_do_banco=database_url,
+            chave_secreta_jwt=SecretStr("test-only-secret-key-with-at-least-32-chars"),
+        )
+    finally:
+        reset_test_database(database_url)
 
 
 @pytest.fixture()
