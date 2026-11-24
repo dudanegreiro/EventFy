@@ -40,6 +40,7 @@ Uma sessão com uma pessoa fornece evidência qualitativa para investigação, n
 - Registrar apenas um código anônimo, como `U-01`, e uma descrição geral do perfil. Não registrar nome, telefone, e-mail ou dados pessoais do evento.
 - Iniciar em `prototipo/index.html`, em navegador moderno, com uma janela limpa e sem parâmetros de fluxo na URL.
 - Antes da sessão, escolher uma data futura e preencher esse valor no texto da Tarefa T1. O período deve ter início anterior ao fim.
+- Registrar o viewport utilizado. Para a verificação técnica do RNF-04, conferir separadamente o fluxo em 360 × 640, sem incluir instruções de navegação na tarefa lida ao participante.
 - Obter consentimento para a participação e perguntar separadamente se a pessoa aceita gravação. Gravação é opcional; não coletar nem guardar dados pessoais sem necessidade.
 - Planejar cerca de 15 a 20 minutos, conforme a conversa com o usuário descrita em [`TEMA.md`](./TEMA.md).
 
@@ -99,6 +100,7 @@ Use uma nova execução do fluxo para T4. T5 pode ser executada após T2, se hou
 | Data e duração da sessão | A preencher |
 | Facilitador / observador | A preencher |
 | Dispositivo e navegador | A preencher |
+| Viewport utilizado | A preencher |
 | Consentimento para participação | A preencher |
 | Consentimento separado para gravação, se aplicável | A preencher |
 
@@ -136,7 +138,8 @@ Os itens abaixo definem o que a sessão pretende observar; **não são resultado
 | V-04 | T2 | Necessidade N4; [`REQUISITOS.md`](./REQUISITOS.md) | HU-03; RF13; CA-03.1 — confirmação da contratação aprovada | Se e como a pessoa confirma e entende o resultado | Pendente |
 | V-05 | T3 | Necessidade N5; [`REQUISITOS.md`](./REQUISITOS.md) | HU-04; RF16, RF18; CA-04.1 — consulta cronológica do histórico | Se encontra a trilha e identifica estados, autoria e sequência | Pendente |
 | V-06 | T4 (opcional) | Necessidade N3; [`REQUISITOS.md`](./REQUISITOS.md) | HU-02; RF12; CA-02.2, CA-02.3 e CA-02.4 — recusa com motivo obrigatório e visível | Validação do motivo, resultado da recusa e compreensão do texto exibido | Pendente / não executado |
-| V-07 | T5 (opcional) | HU-08; [`REQUISITOS.md`](./REQUISITOS.md) | RF14; RN05 — cancelamento permitido e justificado conforme o estado | Estado antes/depois, justificativa e compreensão do resultado | Pendente / não executado |
+| V-07 | T5 (opcional) | HU-08; [`REQUISITOS.md`](./REQUISITOS.md) | RF14; RN09 — cancelamento permitido e justificado conforme o estado | Estado antes/depois, justificativa e compreensão do resultado | Pendente / não executado |
+| V-08 | Verificação técnica separada do fluxo principal | O1, E1 e E2; [`REQUISITOS.md`](./REQUISITOS.md) | RNF-04 — solicitação, aprovação e recusa concluíveis em viewport 360 × 640 sem rolagem horizontal | Registrar viewport, largura útil/rolável e conclusão de cada ramo; a verificação técnica não substitui a sessão com usuário externo | Pendente |
 
 **Resultado** pode ser `validado`, `parcial`, `não validado` ou `não observado`. Registre a evidência que sustenta a classificação; se a sessão ainda não ocorreu, mantenha `Pendente`.
 
