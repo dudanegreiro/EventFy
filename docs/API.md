@@ -77,10 +77,12 @@ Respostas principais:
 | `GET` | `/api/reservas/{id}` | Participante | Consulta reserva propria |
 | `POST` | `/api/reservas/{id}/analise` | Prestador titular | Transita de `SOLICITADA` para `EM_ANALISE` |
 | `POST` | `/api/reservas/{id}/decisao` | Prestador titular | Aprova ou recusa; recusa exige justificativa com 10 caracteres ou mais |
-| `POST` | `/api/reservas/{id}/confirmacao` | Organizador titular | Confirma aprovacao em ate 48 horas |
+| `POST` | `/api/reservas/{id}/confirmacao` | Organizador titular | Confirma aprovacao em ate 48 horas, sob bloqueio transacional da reserva |
+| `POST` | `/api/reservas/{id}/cancelamento` | Organizador titular ou prestador titular | Cancela com justificativa antes do inicio do evento; prestador somente cancela reservas confirmadas |
+| `POST` | `/api/jobs/reservas/expiracoes` | Administrador | Expira reservas sem resposta ha 48 horas; destinado a uma rotina agendada |
 | `GET` | `/api/reservas/{id}/historico` | Participante | Consulta transicoes em ordem cronologica |
 
-O servidor valida papel, titularidade, periodo do evento, disponibilidade, estado atual, justificativa, prazo e conflitos. As mutacoes e os respectivos registros de historico usam a mesma transacao PostgreSQL. A restricao de exclusao de `reserva` protege tambem contra requisicoes concorrentes.
+O servidor valida papel, titularidade, periodo do evento, disponibilidade, estado atual, justificativa, prazo e conflitos. A expiracao tambem e verificada ao consultar ou tentar alterar uma reserva. As mutacoes e os respectivos registros de historico usam a mesma transacao PostgreSQL; o pre-bloqueio de agenda referencia diretamente a reserva e e liberado ao cancelar ou expirar. A restricao de exclusao de `reserva` e os bloqueios de linha protegem contra conflitos e requisicoes concorrentes.
 
 Filtros de data devem ser enviados juntos e incluir fuso horario. Quando usados, o servico precisa ter um intervalo `DISPONIVEL` que cubra todo o periodo, sem bloqueio manual ou reserva ativa conflitante. A ordenacao por identificador e a paginacao limitada a 100 resultados permitem percorrer catalogos maiores.
 

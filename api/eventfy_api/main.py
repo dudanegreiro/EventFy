@@ -17,12 +17,15 @@ from eventfy_api.database import get_connection
 from eventfy_api.errors import ApiError, error_response
 from eventfy_api.schemas import (
     AvailabilityCreate,
+    CancellationResponse,
     DecisionResponse,
     EventCreate,
     EventResponse,
+    ExpirationResponse,
     LoginRequest,
     PublicService,
     ReservationCreate,
+    ReservationCancellation,
     ReservationDecision,
     ReservationHistoryEntry,
     ReservationResponse,
@@ -820,7 +823,7 @@ def _reservation_for_user(
         SELECT r.id_reserva, r.id_evento, r.id_servico, r.id_solicitante,
                r.status, r.data_inicio, r.data_fim, r.observacao,
                r.motivo_recusa, r.criado_em, e.id_organizador,
-               s.id_prestador
+               e.data_inicio AS evento_data_inicio, s.id_prestador
         FROM public.reserva AS r
         JOIN public.evento AS e ON e.id_evento = r.id_evento
         JOIN public.servico AS s ON s.id_servico = r.id_servico
@@ -847,6 +850,8 @@ def _reservation_for_user(
             "FORBIDDEN",
             "Voce nao participa desta reserva.",
         )
+    if _expire_if_overdue(connection, reservation):
+        connection.commit()
     return reservation
 
 
@@ -876,6 +881,130 @@ def _record_transition(
             reason,
         ),
     )
+
+
+def _expiration_started_at(
+    connection: psycopg.Connection,
+    reservation: dict[str, Any],
+) -> datetime:
+    if reservation["status"] == "SOLICITADA":
+        return reservation["criado_em"]
+    status = reservation["status"]
+    entered_at = connection.execute(
+        """
+        SELECT max(data_hora) AS entrou_em
+        FROM public.historico_reserva
+        WHERE id_reserva = %s AND status_novo = %s
+        """,
+        (reservation["id_reserva"], status),
+    ).fetchone()["entrou_em"]
+    return entered_at or reservation["criado_em"]
+
+
+def _transition_to_expired(
+    connection: psycopg.Connection,
+    reservation: dict[str, Any],
+) -> None:
+    previous_status = reservation["status"]
+    connection.execute(
+        """
+        UPDATE public.reserva
+        SET status = 'EXPIRADA', atualizado_em = now()
+        WHERE id_reserva = %s
+        """,
+        (reservation["id_reserva"],),
+    )
+    connection.execute(
+        """
+        UPDATE public.disponibilidade_servico
+        SET ativo = false
+        WHERE id_reserva = %s AND ativo
+        """,
+        (reservation["id_reserva"],),
+    )
+    _record_transition(
+        connection,
+        reservation["id_reserva"],
+        None,
+        previous_status,
+        "EXPIRADA",
+        "Prazo de 48 horas sem resposta expirado.",
+    )
+    reservation["status"] = "EXPIRADA"
+
+
+def _expire_if_overdue(
+    connection: psycopg.Connection,
+    reservation: dict[str, Any],
+) -> bool:
+    if reservation["status"] not in {"SOLICITADA", "EM_ANALISE", "APROVADA"}:
+        return False
+    deadline = _expiration_started_at(connection, reservation) + timedelta(hours=48)
+    if datetime.now(timezone.utc) < deadline:
+        return False
+    _transition_to_expired(connection, reservation)
+    return True
+
+
+def _expire_overdue_reservations(
+    connection: psycopg.Connection,
+    scope_predicate: str | None = None,
+    scope_params: tuple[Any, ...] = (),
+    *,
+    skip_locked: bool = True,
+) -> list[int]:
+    now = datetime.now(timezone.utc)
+    extra_filter = f"AND {scope_predicate}" if scope_predicate else ""
+    lock_clause = "FOR UPDATE OF r SKIP LOCKED" if skip_locked else "FOR UPDATE OF r"
+    expired = connection.execute(
+        f"""
+        SELECT r.id_reserva, r.status, r.criado_em, sla.estado_desde
+        FROM public.reserva AS r
+        JOIN public.servico AS s ON s.id_servico = r.id_servico
+        CROSS JOIN LATERAL (
+            SELECT CASE r.status
+                       WHEN 'SOLICITADA' THEN r.criado_em
+                       WHEN 'EM_ANALISE' THEN COALESCE(
+                           (
+                               SELECT max(h.data_hora)
+                               FROM public.historico_reserva AS h
+                               WHERE h.id_reserva = r.id_reserva
+                                 AND h.status_novo = 'EM_ANALISE'
+                           ),
+                           r.criado_em
+                       )
+                       WHEN 'APROVADA' THEN COALESCE(
+                           (
+                               SELECT max(h.data_hora)
+                               FROM public.historico_reserva AS h
+                               WHERE h.id_reserva = r.id_reserva
+                                 AND h.status_novo = 'APROVADA'
+                           ),
+                           r.criado_em
+                       )
+                   END AS estado_desde
+        ) AS sla
+        WHERE r.ativo
+          AND r.status IN ('SOLICITADA', 'EM_ANALISE', 'APROVADA')
+          AND sla.estado_desde <= %s - interval '48 hours'
+          {extra_filter}
+        ORDER BY sla.estado_desde, r.id_reserva
+        {lock_clause}
+        """,
+        (now, *scope_params),
+    ).fetchall()
+    for reservation in expired:
+        _transition_to_expired(connection, reservation)
+    return [reservation["id_reserva"] for reservation in expired]
+
+
+def _raise_if_expired(reservation: dict[str, Any]) -> None:
+    if reservation["status"] == "EXPIRADA":
+        raise ApiError(
+            409,
+            "RESERVATION_EXPIRED",
+            "O prazo de 48 horas para responder a reserva expirou.",
+        )
 
 
 @app.post("/api/reservas", status_code=201, response_model=ReservationResponse)
@@ -1004,6 +1133,14 @@ def list_reservations(
     else:
         raise ApiError(403, "FORBIDDEN", "Seu perfil nao pode consultar reservas.")
 
+    if _expire_overdue_reservations(
+        connection,
+        predicate,
+        (user["id_usuario"],),
+        skip_locked=False,
+    ):
+        connection.commit()
+
     return connection.execute(
         f"""
         SELECT r.id_reserva, r.id_evento, r.id_servico, r.id_solicitante,
@@ -1037,6 +1174,7 @@ def begin_analysis(
     connection: psycopg.Connection = Depends(get_connection),
 ) -> dict[str, Any]:
     reservation = _reservation_for_user(connection, reservation_id, user)
+    _raise_if_expired(reservation)
     if reservation["status"] != "SOLICITADA":
         raise ApiError(
             409,
@@ -1074,6 +1212,7 @@ def decide_reservation(
     connection: psycopg.Connection = Depends(get_connection),
 ) -> dict[str, Any]:
     reservation = _reservation_for_user(connection, reservation_id, user)
+    _raise_if_expired(reservation)
     if reservation["status"] != "EM_ANALISE":
         raise ApiError(
             409,
@@ -1094,12 +1233,13 @@ def decide_reservation(
         connection.execute(
             """
             INSERT INTO public.disponibilidade_servico (
-                id_servico, data_inicio, data_fim, tipo, motivo
+                id_servico, id_reserva, data_inicio, data_fim, tipo, motivo
             )
-            VALUES (%s, %s, %s, 'RESERVA', %s)
+            VALUES (%s, %s, %s, %s, 'RESERVA', %s)
             """,
             (
                 reservation["id_servico"],
+                reservation_id,
                 reservation["data_inicio"],
                 reservation["data_fim"],
                 f"Pre-bloqueio da reserva {reservation_id}",
@@ -1134,6 +1274,71 @@ def decide_reservation(
 
 
 @app.post(
+    "/api/reservas/{reservation_id}/cancelamento",
+    response_model=CancellationResponse,
+)
+def cancel_reservation(
+    reservation_id: int,
+    request: ReservationCancellation,
+    user: dict[str, Any] = Depends(require_role("ORGANIZADOR", "PRESTADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> dict[str, Any]:
+    reservation = _reservation_for_user(connection, reservation_id, user)
+    _raise_if_expired(reservation)
+    status = reservation["status"]
+    organizer_can_cancel = user["tipo_usuario"] == "ORGANIZADOR" and status in {
+        "SOLICITADA",
+        "EM_ANALISE",
+        "APROVADA",
+        "CONFIRMADA",
+    }
+    provider_can_cancel = user["tipo_usuario"] == "PRESTADOR" and status == "CONFIRMADA"
+    if not (organizer_can_cancel or provider_can_cancel):
+        raise ApiError(
+            409,
+            "INVALID_RESERVATION_STATE",
+            "Seu papel nao pode cancelar a reserva neste estado.",
+        )
+    if datetime.now(timezone.utc) >= reservation["evento_data_inicio"]:
+        raise ApiError(
+            409,
+            "CANCELLATION_WINDOW_CLOSED",
+            "A reserva so pode ser cancelada antes do inicio do evento.",
+        )
+
+    connection.execute(
+        """
+        UPDATE public.reserva
+        SET status = 'CANCELADA', atualizado_em = now()
+        WHERE id_reserva = %s
+        """,
+        (reservation_id,),
+    )
+    connection.execute(
+        """
+        UPDATE public.disponibilidade_servico
+        SET ativo = false
+        WHERE id_reserva = %s AND ativo
+        """,
+        (reservation_id,),
+    )
+    _record_transition(
+        connection,
+        reservation_id,
+        user["id_usuario"],
+        status,
+        "CANCELADA",
+        "Reserva cancelada.",
+        request.motivo,
+    )
+    return {
+        "id_reserva": reservation_id,
+        "status": "CANCELADA",
+        "motivo": request.motivo,
+    }
+
+
+@app.post(
     "/api/reservas/{reservation_id}/confirmacao",
     response_model=TransitionResponse,
 )
@@ -1143,6 +1348,7 @@ def confirm_reservation(
     connection: psycopg.Connection = Depends(get_connection),
 ) -> dict[str, Any]:
     reservation = _reservation_for_user(connection, reservation_id, user)
+    _raise_if_expired(reservation)
     if reservation["status"] != "APROVADA":
         raise ApiError(
             409,
@@ -1165,46 +1371,24 @@ def confirm_reservation(
             "A reserva nao possui registro da aprovacao.",
         )
 
-    if datetime.now(timezone.utc) - approved_at > timedelta(hours=48):
-        connection.execute(
-            """
-            UPDATE public.reserva
-            SET status = 'EXPIRADA', atualizado_em = now()
-            WHERE id_reserva = %s
-            """,
-            (reservation_id,),
-        )
-        connection.execute(
-            """
-            UPDATE public.disponibilidade_servico
-            SET ativo = false
-            WHERE id_servico = %s
-              AND tipo = 'RESERVA'
-              AND data_inicio = %s
-              AND data_fim = %s
-              AND ativo
-            """,
-            (
-                reservation["id_servico"],
-                reservation["data_inicio"],
-                reservation["data_fim"],
-            ),
-        )
-        _record_transition(
-            connection,
+    block = connection.execute(
+        """
+        UPDATE public.disponibilidade_servico
+        SET motivo = %s
+        WHERE id_reserva = %s AND tipo = 'RESERVA' AND ativo
+        RETURNING id_disponibilidade
+        """,
+        (
+            f"Bloqueio definitivo da reserva {reservation_id}",
             reservation_id,
-            None,
-            "APROVADA",
-            "EXPIRADA",
-            "Prazo de confirmacao de 48 horas expirado.",
-        )
-        connection.commit()
+        ),
+    ).fetchone()
+    if block is None:
         raise ApiError(
             409,
-            "RESERVATION_EXPIRED",
-            "O prazo de 48 horas para confirmar a reserva expirou.",
+            "MISSING_SCHEDULE_BLOCK",
+            "A reserva aprovada nao possui pre-bloqueio ativo na agenda.",
         )
-
     connection.execute(
         """
         UPDATE public.reserva
@@ -1222,6 +1406,21 @@ def confirm_reservation(
         "Contratacao confirmada.",
     )
     return {"id_reserva": reservation_id, "status": "CONFIRMADA"}
+
+
+@app.post(
+    "/api/jobs/reservas/expiracoes",
+    response_model=ExpirationResponse,
+)
+def expire_overdue_reservations(
+    _: dict[str, Any] = Depends(require_role("ADMINISTRADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> dict[str, Any]:
+    reservation_ids = _expire_overdue_reservations(connection)
+    return {
+        "quantidade": len(reservation_ids),
+        "reservas_expiradas": reservation_ids,
+    }
 
 
 @app.get(

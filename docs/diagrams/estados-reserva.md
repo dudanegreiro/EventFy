@@ -68,3 +68,7 @@ Todos os estados do ciclo de vida são **alcançáveis** e possuem rotas explíc
 1. **Rastreabilidade (RF18, RNF05):** Cada transição de T01 a T13 gera obrigatoriamente um registro na tabela `HISTORICO_RESERVA`, contendo estado anterior, estado novo, data/hora exata, usuário executor (ou identificação do sistema nas transições T04, T08, T11 e T12) e justificativa.
 2. **Imutabilidade e Exclusão Lógica:** Nenhuma reserva em qualquer estado é excluída fisicamente do banco de dados (Seção 10 do PROJETO.md).
 3. **Desbloqueio de Agenda:** Caso uma reserva passe para `RECUSADA`, `CANCELADA` ou `EXPIRADA`, qualquer alocação provisória ou bloqueio em `DISPONIBILIDADE_SERVICO` é imediatamente liberado (RN06).
+
+## Execucao da expiracao
+
+A API expõe `POST /api/jobs/reservas/expiracoes`, restrita ao papel `ADMINISTRADOR`, para ser acionada por uma rotina agendada autenticada. Ela expira em lote reservas sem resposta ha 48 horas e registra cada transicao como executada pelo sistema. Consultas e tentativas de transicao tambem verificam o prazo da reserva individual, evitando que uma tarefa agendada atrasada permita uma acao fora do SLA. Os bloqueios de agenda ficam vinculados por chave estrangeira a reserva e sao desativados na mesma transacao da expiracao ou cancelamento.
