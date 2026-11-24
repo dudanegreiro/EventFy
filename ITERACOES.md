@@ -83,7 +83,7 @@ Fonte: quadro "EventFy - Desenvolvimento", campo Iteração.
 | #28 EVT-08 Preparar review parcial executável | Eduarda | 3 | Em revisão (PR #85 aberto) |
 | #29 EVT-09 Testes unitários e de integração | Thalita | 8 | A fazer |
 | #30 EVT-10 Integração contínua e proteção do `main` | Igor | 5 | A fazer |
-| #31 EVT-11 Checklist de revisão e evidências | Thalita | 5 | Parcial: PR #82 no `main`; falta este arquivo e as estimativas das dívidas |
+| #31 EVT-11 Checklist de revisão e evidências | Thalita | 5 | Parcial: PR #82 no `main`; este arquivo e as dívidas com estimativa (#89 a #93) entram no PR #86 |
 | #32 EVT-12 Documentação operacional e linha de base | Eduarda | 5 | Em progresso |
 
 ### Retrospectiva
@@ -136,8 +136,23 @@ Fonte: quadro "EventFy - Desenvolvimento", campo Iteração.
 
 **Riscos revisados:** [A PREENCHER], com o `DESCOBERTA.md`.
 
+### Dívidas técnicas e defeitos registrados
+
+Registrei 3 dívidas e 2 defeitos que apareceram nas revisões dos PRs #78, #79 e #81. Cada um tem origem, impacto, estimativa em pontos e gatilho na própria issue. Somam 19 pontos. Vou comparar a estimativa com o esforço real quando forem pagos (#63).
+
+| Item | Tipo | Pontos | Gatilho |
+|---|---|---:|---|
+| #89 Login sem limite de tentativas | dívida | 5 | antes de publicar a API fora do ambiente local |
+| #90 E-mail repetido sem teste e sem mensagem clara | dívida | 3 | junto à EVT-09 |
+| #91 Faltam testes de valor limite da senha | dívida | 3 | ao montar a suíte da EVT-09 e da EVT-23 |
+| #92 Testes quebram na segunda execução | bug | 3 | antes de levar o ramo ao `main` |
+| #93 Fila e detalhe divergem na expiração | bug | 5 | antes de integrar o #81 ao `main` |
+
+Fonte: issues #89 a #93 e as revisões dos PRs #78, #79 e #81. Os pontos são estimativa minha e podem mudar quando a equipe revisar.
+
 ---
 
 ## Histórico de alterações deste arquivo
 
 - **2026-11-24:** criação, com o replanejamento até 03/12, o plano da Iteração 2 e a retrospectiva da Iteração 1. Autora: Thalita Menezes (@thalist).
+- **2026-11-24:** registro das dívidas técnicas e defeitos das revisões (#89 a #93), com estimativa em pontos. Autora: Thalita Menezes (@thalist).
