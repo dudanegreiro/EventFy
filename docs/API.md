@@ -97,6 +97,6 @@ $env:TEST_DATABASE_URL = 'postgresql://postgres:SENHA_LOCAL@localhost:5432/event
 pytest
 ```
 
-Os testes de integracao cobrem cadastro e hash de senha, login/logout e revogacao de token, usuarios inativos, matriz de papeis e titularidade, filtros de catalogo, 200 servicos dentro do limite de 3 segundos, protecao de servico com reserva ativa, disponibilidade, validacao e ciclo de vida de anexos, fluxo de solicitacao ate confirmacao, cancelamento e liberacao de agenda, expiracao em cada etapa, historico, recusa sem motivo suficiente, conflito de agenda e confirmacoes concorrentes.
+Os testes de integracao cobrem cadastro e hash de senha, login/logout e revogacao de token, usuarios inativos, matriz de papeis e titularidade, filtros de catalogo, 200 servicos dentro do limite de 3 segundos, protecao de servico com reserva ativa, disponibilidade, validacao e ciclo de vida de anexos, fluxo de solicitacao ate confirmacao, cancelamento e liberacao de agenda, expiracao em cada etapa, historico, recusa sem motivo suficiente, controle de acesso, conflito de agenda e confirmacoes concorrentes.
 
 Ao iniciar e ao terminar uma execucao, a fixture de testes recria completamente o schema do banco apontado por `TEST_DATABASE_URL` a partir das migracoes. Use exclusivamente um banco descartavel de testes: executar `pytest` duas vezes seguidas deve produzir o mesmo conjunto de dados sem conflitos residuais.
