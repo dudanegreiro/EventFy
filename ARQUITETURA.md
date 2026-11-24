@@ -10,7 +10,7 @@ O ambiente desta entrega serve o protótipo e expõe uma rota de diagnóstico qu
 |---|---|---|
 | Frontend | HTML Living Standard, CSS com Grid/Flexbox e JavaScript ECMAScript 2022 | Reaproveitar o protótipo. O navegador consome JSON com Fetch. A interface dispensa compilação e pode ser servida como arquivos estáticos. |
 | API | Python 3.14, FastAPI 0.165.0 e Uvicorn 0.54.0 | Validar requisições, servir rotas HTTP e publicar o contrato OpenAPI. O ambiente local lê o arquivo de configuração com python-dotenv 1.2.4. |
-| Persistência | PostgreSQL 17 e Psycopg 3.3.9 | Executar SQL parametrizado e transações. As migrações versionadas e os dados fictícios pertencem à EVT-02. |
+| Persistência | PostgreSQL 17 e Psycopg 3.3.9 | Executar SQL parametrizado e transações. As migrações versionadas e os dados fictícios estão em `db/migrations/` e `docs/DATABASE.md`; as rotas de negócio são entregas posteriores. |
 | Autenticação | JWT Bearer com HS256, PyJWT 2.x (a partir de 2.10) e bcrypt pelo pgcrypto do PostgreSQL 17 | A EVT-04 implementa login, expiração e revogação de sessão. |
 | Anexos | Sistema de arquivos em volume persistente, acessado por `pathlib` do Python 3.14 | Conservar os binários fora do banco e servir o conteúdo pela API. |
 | Testes | pytest 8.4.x, HTTPX 0.28.x e PostgreSQL 17 | Testes de unidade para regras de domínio e testes de integração da API com banco isolado. O uso do mesmo SGBD permite testar conflitos reais de agenda. |

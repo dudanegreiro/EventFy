@@ -137,13 +137,19 @@ Para dar clareza à intenção, todo comentário de revisão deve receber uma da
 | **`[Pergunta]`** | Dúvida sobre contexto, premissa ou regra de negócio. | O autor esclarece antes da decisão. |
 | **`[Elogia]`** | Solução elegante, boa clareza ou cobertura de teste relevante. | Reconhece boas práticas no código. |
 
-### 6.2 As Três Lentes de Avaliação
+### 6.2 Lentes de Avaliação
 
-Todo revisor deve ler a contribuição através de três perspectivas:
+Todo revisor deve ler a contribuição através das lentes abaixo (Capítulo 10, Tabela 10.5). Elas também aparecem como lista de verificação na seção "Revisão (revisor)" do `.github/pull_request_template.md`:
 
-1. **Legibilidade:** Os nomes utilizam o vocabulário do glossário do domínio (`Reserva`, `Servico`, `Disponibilidade`)? Uma pessoa que não escreveu a função compreende o fluxo na primeira leitura?
-2. **Manutenibilidade:** A regra de negócio está no backend e isolada conforme as decisões de projeto (critério de Parnas)? A alteração duplica código? Trata os casos de multiplicidade (zero, um e muitos)?
-3. **Rastreabilidade:** O PR e os commits referenciam a issue e os requisitos que motivaram a mudança?
+1. **Item:** A mudança atende aos critérios de aceitação da issue, sem faltar nem sobrar?
+2. **Legibilidade:** Os nomes utilizam o vocabulário do glossário do domínio (`Reserva`, `Servico`, `Disponibilidade`)? Uma pessoa que não escreveu a função compreende o fluxo na primeira leitura?
+3. **Manutenibilidade:** A regra de negócio está no backend e isolada conforme as decisões de projeto (critério de Parnas)? A alteração duplica código? Trata os casos de multiplicidade (zero, um e muitos)?
+4. **Contrato:** Rotas, respostas JSON e códigos de erro seguem `docs/API.md`?
+5. **Testes:** Há testes para o caminho principal, para os erros e para os valores limite?
+6. **Segurança e dados:** O servidor confere papel e titularidade? Há segredo ou dado pessoal real no código, nos testes ou nos dados de exemplo?
+7. **Rastreabilidade:** O PR e os commits referenciam a issue e os requisitos que motivaram a mudança?
+
+Todo defeito encontrado na revisão e não corrigido no próprio PR deve virar uma issue com rótulo `bug` ou uma dívida técnica com rótulo `divida-tecnica`. Assim a lista evolui: cada defeito que escapar da revisão acrescenta uma pergunta nova a ela.
 
 ---
 

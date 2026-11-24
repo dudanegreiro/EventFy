@@ -125,6 +125,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 | Artefato | Local | Descrição |
 |---|---|---|
 | Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
+| Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas e dados fictícios de demonstração |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
 | Tema | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e alinhamento com a disciplina |
@@ -162,6 +163,14 @@ createuser -h 127.0.0.1 -U postgres --pwprompt eventfy_dev
 createdb -h 127.0.0.1 -U postgres --owner=eventfy_dev eventfy
 ```
 
+No Windows, você também pode preparar o esquema e os dados de demonstração com o script de migrações, usando o usuário criado acima:
+
+```powershell
+.\scripts\db-setup.ps1 -Username eventfy_dev
+```
+
+Consulte [Banco de dados local](./docs/DATABASE.md) para os pré-requisitos e detalhes do script.
+
 Na raiz do projeto, prepare o ambiente conforme seu sistema.
 
 **Windows (PowerShell)**
@@ -189,7 +198,7 @@ Em `.env`, substitua `SUBSTITUA_LOCALMENTE` pela senha de `eventfy_dev` em `URL_
 
 Abra o [protótipo](http://127.0.0.1:8000/) e clique em **Entrar no catálogo**. Para verificar a conexão real da API com o banco, abra a [verificação do ambiente](http://127.0.0.1:8000/api/ambiente). A resposta deve conter `"aplicacao": "EventFy"` e a versão `17.x` do PostgreSQL. Um HTTP 503 nessa rota indica que a configuração ou o banco precisa de atenção.
 
-Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar o PostgreSQL e repetir o comando do Uvicorn. As telas demonstram o fluxo com dados do protótipo. O esquema de negócio e as rotas de reserva são entregas da EVT-02 e da EVT-03.
+Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar o PostgreSQL e repetir o comando do Uvicorn. As telas demonstram o fluxo com dados do protótipo. O esquema e os dados de demonstração estão descritos em [Banco de dados local](./docs/DATABASE.md); as rotas de reserva são entregas da EVT-03.
 
 ---
 
@@ -197,6 +206,7 @@ Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar 
 
 | Documento | Descrição |
 |---|---|
+| [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
 | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos, backlog ordenado e critérios |
 | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e verificação |
