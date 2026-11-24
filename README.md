@@ -126,7 +126,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 |---|---|---|
 | Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
 | Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas e dados fictícios de demonstração |
-| API REST | [`docs/API.md`](./docs/API.md) | FastAPI, autenticação, contrato dos endpoints e testes |
+| API REST | [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato dos endpoints |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
 | Tema | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e alinhamento com a disciplina |
@@ -143,31 +143,63 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 
 ## 🧩 Arquitetura e Modelagem
 
-A arquitetura do EventFy deve seguir os requisitos e modelos estabelecidos para o sistema. A especificação determina frontend desacoplado consumindo backend por API REST/JSON e persistência relacional (RE-01 e RE-02).
-
-O documento arquitetural deve especificar:
-
-- Componentes da aplicação
-- Responsabilidades de cada componente
-- Comunicação entre os componentes
-- Persistência dos dados
-- Contrato da API entre frontend e backend
-- Tecnologias utilizadas
-- Decisões arquiteturais e suas justificativas
-
-Essa especificação é responsabilidade da Pessoa 5. PostgreSQL 17, FastAPI e Psycopg 3 são usados nas entregas das issues #22 e #23; a arquitetura completa e as tecnologias do frontend ainda dependem de validação pela equipe.
+O frontend usa uma API REST/JSON. O backend segue um monólito modular para que reserva, bloqueio de agenda e histórico possam ser gravados na mesma transação. As quatro vistas e as decisões sobre banco, anexos e autenticação estão em [ARQUITETURA.md](./ARQUITETURA.md).
 
 ---
 
 ## 🛠️ Tecnologias
 
-**Decisão parcial:** PostgreSQL 17 é usado no banco local, com migrações em `db/migrations/`; a API do fluxo principal usa FastAPI e Psycopg 3. A tecnologia do frontend ainda precisa ser proposta e aprovada pela equipe em `ARQUITETURA.md`.
+O ambiente local usa HTML, CSS e JavaScript nativos, Python 3.14, FastAPI, Uvicorn, Psycopg 3 e PostgreSQL 17. As versões das dependências do ambiente estão em [requirements-dev.txt](./requirements-dev.txt). As escolhas para autenticação e testes constam na [arquitetura](./ARQUITETURA.md).
 
 ---
 
 ## 🚀 Execução
 
-O repositório contém a API REST do fluxo principal, especificação, modelos, um protótipo estático e scripts para criar o banco PostgreSQL local. Para preparar o banco, instale PostgreSQL 17 e siga [`docs/DATABASE.md`](./docs/DATABASE.md); para executar e testar a API, siga [`docs/API.md`](./docs/API.md). Para percorrer o protótipo, siga [`prototipo/README.md`](./prototipo/README.md) e abra `prototipo/index.html` em um navegador.
+Instale Git, Python **3.14** e PostgreSQL **17** com as ferramentas de linha de comando. Inicie o serviço PostgreSQL. Na primeira execução, clone o projeto e crie um usuário e um banco locais. Os comandos abaixo presumem que o administrador local se chama `postgres`. O primeiro comando do PostgreSQL solicita que você escolha a senha de `eventfy_dev`.
+
+```sh
+git clone https://github.com/dudanegreiro/EventFy.git
+cd EventFy
+createuser -h 127.0.0.1 -U postgres --pwprompt eventfy_dev
+createdb -h 127.0.0.1 -U postgres --owner=eventfy_dev eventfy
+```
+
+No Windows, você também pode preparar o esquema e os dados de demonstração com o script de migrações, usando o usuário criado acima:
+
+```powershell
+.\scripts\db-setup.ps1 -Username eventfy_dev
+```
+
+Consulte [Banco de dados local](./docs/DATABASE.md) para os pré-requisitos e detalhes do script.
+
+Na raiz do projeto, prepare o ambiente conforme seu sistema.
+
+**Windows (PowerShell)**
+
+```powershell
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+Copy-Item .env.example .env
+```
+
+**Linux ou macOS**
+
+```sh
+python3.14 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+cp .env.example .env
+```
+
+Em `.env`, substitua `SUBSTITUA_LOCALMENTE` pela senha de `eventfy_dev` em `URL_DO_BANCO`, gere um segredo aleatório com pelo menos 32 caracteres para `CHAVE_SECRETA_JWT` e configure `LOCAL_DOS_ARQUIVOS` se necessário. Codifique caracteres reservados da senha na URL (por exemplo, `@` vira `%40`). Guarde o arquivo apenas na sua máquina.
+
+| Sistema | Comando para iniciar na raiz do projeto |
+|---|---|
+| Windows | `.\.venv\Scripts\python.exe -m uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` |
+| Linux ou macOS | `.venv/bin/python -m uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` |
+
+O health check da API fica em `http://127.0.0.1:8000/api/health`; a documentação interativa fica em `http://127.0.0.1:8000/docs`. Para percorrer o protótipo estático, siga [`prototipo/README.md`](./prototipo/README.md) e abra `prototipo/index.html` em um navegador.
+
+Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar o PostgreSQL e repetir o comando do Uvicorn. O esquema, as migrações e as contas fictícias estão descritos em [Banco de dados local](./docs/DATABASE.md); as rotas e credenciais de demonstração estão em [API REST](./docs/API.md).
 
 ---
 
@@ -176,7 +208,7 @@ O repositório contém a API REST do fluxo principal, especificação, modelos, 
 | Documento | Descrição |
 |---|---|
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
-| [`docs/API.md`](./docs/API.md) | Execução, autenticação e contrato da API REST |
+| [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato da API REST |
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
 | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos, backlog ordenado e critérios |
 | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e verificação |
@@ -210,7 +242,7 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software** da Universi
 - Confirmar a correspondência entre “Duda Negreiro” e “Eduarda Negreiro”, a atribuição de Product Owner e o mapeamento dos papéis Pessoa 1–5 para os integrantes. O plano de divisão de tarefas disponível não identifica os nomes por pessoa.
 - Decidir se administração e moderação (RF20) integram o MVP. O requisito está especificado, mas não consta no escopo ativo de [`DESCOBERTA.md`](./DESCOBERTA.md).
 - Aprovar a licença de distribuição antes de criar um arquivo `LICENSE`.
-- Aprovar a stack proposta pela Pessoa 5 antes de registrá-la como tecnologia adotada.
+- Revisar as decisões da [EVT-01](./ARQUITETURA.md) no pull request da entrega.
 - Realizar e registrar a validação de usabilidade do protótipo e a linha de base quantitativa descrita em [`docs/TEMA.md`](./docs/TEMA.md).
 
 ---

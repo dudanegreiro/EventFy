@@ -11,6 +11,7 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 
 ### Adicionado
+- EVT-01 (#21) — Quatro vistas arquiteturais, decisões de banco, anexos e autenticação e ambiente local com verificação da conexão ao PostgreSQL.
 - Esquema PostgreSQL 17, migrações versionadas, dados fictícios e script PowerShell para preparar o banco local.
 - Documentação de configuração e acesso ao banco pelo pgAdmin em `docs/DATABASE.md`.
 - API REST do fluxo principal com FastAPI, Psycopg 3, autenticação Bearer, catálogo, eventos, reservas e histórico auditável.
