@@ -2,7 +2,7 @@
 
 O banco relacional de desenvolvimento usa PostgreSQL 17. A API REST do fluxo principal usa FastAPI e Psycopg 3; sua configuracao, contrato e testes estao descritos em [`API.md`](./API.md).
 
-O modelo implementa as entidades descritas em [`diagrams/dados.mmd`](./diagrams/dados.mmd) e [`PROJETO.md`](./PROJETO.md). Datas e horas usam `timestamptz`; exclusoes logicas usam `ativo`; chaves estrangeiras impedem a remocao fisica de registros referenciados. Uma restricao de exclusao do PostgreSQL impede intervalos sobrepostos para reservas ativas do mesmo servico. O historico de reservas tem trigger que rejeita `UPDATE` e `DELETE`.
+O modelo implementa as entidades descritas em [`diagrams/dados.mmd`](./diagrams/dados.mmd) e [`PROJETO.md`](./PROJETO.md). Datas e horas usam `timestamptz`; exclusoes logicas usam `ativo`; chaves estrangeiras impedem a remocao fisica de registros referenciados. Uma restricao de exclusao do PostgreSQL impede intervalos sobrepostos para reservas ativas do mesmo servico. O historico de reservas tem trigger que rejeita `UPDATE` e `DELETE`. Migracoes incrementais adicionam sessao de autenticacao e localizacao aos servicos sem alterar migracoes ja aplicadas.
 
 ## Pre-requisitos
 
@@ -54,6 +54,8 @@ As tabelas ficam no schema `public`. O historico de aplicacao das migracoes fica
 ## Dados de demonstracao
 
 A segunda migracao inclui organizador, prestador, administrador, servico, evento, disponibilidade, anexo com URL ficticia, reservas em diferentes estados, historico e avaliacao.
+
+Novos servicos exigem localizacao. O campo foi adicionado pela migracao V4; servicos anteriores permanecem sem localizacao ate o titular atualizar seus dados.
 
 Contas locais:
 

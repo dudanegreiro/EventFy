@@ -15,6 +15,7 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - Documentação de configuração e acesso ao banco pelo pgAdmin em `docs/DATABASE.md`.
 - API REST do fluxo principal com FastAPI, Psycopg 3, autenticação Bearer, catálogo, eventos, reservas e histórico auditável.
 - Cadastro de organizadores e prestadores, hash bcrypt de senhas e sessões JWT revogáveis com autorização por papel e titularidade.
+- Catálogo de serviços com filtros, gerenciamento do prestador, disponibilidade e anexos validados.
 - Contrato da API e testes de integração PostgreSQL em `docs/API.md` e `tests/`.
 - Governança do processo, rastreabilidade de Issues/PRs e orientações de configuração do repositório entregues pela Pessoa 1.
 - Fluxo navegável do protótipo para solicitação, análise, aprovação, recusa, confirmação, histórico e cancelamento justificado.

@@ -1,3 +1,4 @@
+from time import perf_counter
 from uuid import uuid4
 
 import jwt
@@ -26,6 +27,283 @@ def test_health_and_public_catalog(client: TestClient) -> None:
     details = client.get("/api/servicos/1001")
     assert details.status_code == 200
     assert details.json()["arquivos"][0]["nome_original"] == "buffet-demonstracao.jpg"
+
+
+def test_service_management_catalog_filters_and_file_lifecycle(
+    client: TestClient,
+    test_settings: Settings,
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(test_settings, "local_dos_arquivos", tmp_path)
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    headers = {"Authorization": f"Bearer {provider_token}"}
+    created = client.post(
+        "/api/servicos",
+        headers=headers,
+        json={
+            "nome": "Fotografia de Eventos",
+            "categoria": "Fotografia",
+            "descricao": "Cobertura profissional para eventos.",
+            "preco": "1200.00",
+            "localizacao": "Palmas - TO",
+        },
+    )
+    assert created.status_code == 201, created.text
+    service_id = created.json()["id_servico"]
+
+    other_provider_email = f"provider.{uuid4().hex}@example.test"
+    other_provider = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Outro Prestador",
+            "email": other_provider_email,
+            "senha": "SecureTestPassword123!",
+            "tipo_usuario": "PRESTADOR",
+        },
+    )
+    assert other_provider.status_code == 201
+    other_provider_login = client.post(
+        "/api/auth/login",
+        json={
+            "email": other_provider_email,
+            "senha": "SecureTestPassword123!",
+        },
+    )
+    assert other_provider_login.status_code == 200
+    not_owner = client.patch(
+        f"/api/servicos/{service_id}",
+        headers={
+            "Authorization": f"Bearer {other_provider_login.json()['access_token']}"
+        },
+        json={"nome": "Tentativa de outro titular"},
+    )
+    assert not_owner.status_code == 403
+
+    updated = client.patch(
+        f"/api/servicos/{service_id}",
+        headers=headers,
+        json={"descricao": "Cobertura fotografica completa."},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["descricao"] == "Cobertura fotografica completa."
+
+    availability = client.post(
+        f"/api/servicos/{service_id}/disponibilidades",
+        headers=headers,
+        json={
+            "data_inicio": "2035-01-01T00:00:00Z",
+            "data_fim": "2036-01-01T00:00:00Z",
+            "tipo": "DISPONIVEL",
+        },
+    )
+    assert availability.status_code == 201, availability.text
+    own_periods = client.get(
+        f"/api/servicos/{service_id}/disponibilidades",
+        headers=headers,
+    )
+    assert own_periods.status_code == 200
+    assert len(own_periods.json()) == 1
+
+    filtered = client.get(
+        "/api/servicos",
+        params={
+            "termo": "fotografia",
+            "categoria": "Fotografia",
+            "preco_minimo": 1000,
+            "preco_maximo": 1500,
+            "localizacao": "palmas",
+            "data_inicio": "2035-05-01T12:00:00Z",
+            "data_fim": "2035-05-01T18:00:00Z",
+        },
+    )
+    assert filtered.status_code == 200
+    assert [item["id_servico"] for item in filtered.json()] == [service_id]
+    invalid_range = client.get(
+        "/api/servicos",
+        params={"preco_minimo": 2000, "preco_maximo": 1000},
+    )
+    assert invalid_range.status_code == 422
+    incomplete_period = client.get(
+        "/api/servicos",
+        params={"data_inicio": "2035-05-01T12:00:00Z"},
+    )
+    assert incomplete_period.status_code == 422
+
+    blocked = client.post(
+        f"/api/servicos/{service_id}/disponibilidades",
+        headers=headers,
+        json={
+            "data_inicio": "2035-05-01T14:00:00Z",
+            "data_fim": "2035-05-01T15:00:00Z",
+            "tipo": "BLOQUEIO_MANUAL",
+            "motivo": "Indisponibilidade de demonstracao.",
+        },
+    )
+    assert blocked.status_code == 201
+    unavailable = client.get(
+        "/api/servicos",
+        params={
+            "data_inicio": "2035-05-01T12:00:00Z",
+            "data_fim": "2035-05-01T18:00:00Z",
+        },
+    )
+    assert service_id not in {item["id_servico"] for item in unavailable.json()}
+
+    upload = client.post(
+        f"/api/servicos/{service_id}/arquivos",
+        headers=headers,
+        files={"file": ("portfolio.pdf", b"%PDF-1.7\nportfolio", "application/pdf")},
+    )
+    assert upload.status_code == 201, upload.text
+    file_url = upload.json()["url"]
+    assert client.get(file_url).content == b"%PDF-1.7\nportfolio"
+
+    removed = client.delete(
+        f"/api/servicos/{service_id}/arquivos/{upload.json()['id_arquivo']}",
+        headers=headers,
+    )
+    assert removed.status_code == 204
+    assert client.get(file_url).status_code == 404
+
+    deactivated = client.delete(f"/api/servicos/{service_id}", headers=headers)
+    assert deactivated.status_code == 204
+    assert client.get(f"/api/servicos/{service_id}").status_code == 404
+    assert service_id not in {
+        item["id_servico"] for item in client.get("/api/servicos").json()
+    }
+
+
+def test_service_edits_respect_ownership_and_active_reservations(
+    client: TestClient,
+) -> None:
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    organizer_token = access_token(client, ORGANIZER_EMAIL)
+    service_url = "/api/servicos/1001"
+
+    descriptive_edit = client.patch(
+        service_url,
+        headers={"Authorization": f"Bearer {provider_token}"},
+        json={"nome": "Buffet de demonstracao atualizado"},
+    )
+    assert descriptive_edit.status_code == 200
+
+    price_edit = client.patch(
+        service_url,
+        headers={"Authorization": f"Bearer {provider_token}"},
+        json={"preco": 3000},
+    )
+    assert price_edit.status_code == 409
+
+    deactivate = client.delete(
+        service_url,
+        headers={"Authorization": f"Bearer {provider_token}"},
+    )
+    assert deactivate.status_code == 409
+
+    availability_edit = client.post(
+        f"{service_url}/disponibilidades",
+        headers={"Authorization": f"Bearer {provider_token}"},
+        json={
+            "data_inicio": "2035-01-01T00:00:00Z",
+            "data_fim": "2036-01-01T00:00:00Z",
+            "tipo": "DISPONIVEL",
+        },
+    )
+    assert availability_edit.status_code == 409
+
+    attachment_edit = client.delete(
+        f"{service_url}/arquivos/1001",
+        headers={"Authorization": f"Bearer {provider_token}"},
+    )
+    assert attachment_edit.status_code == 409
+
+    denied = client.patch(
+        service_url,
+        headers={"Authorization": f"Bearer {organizer_token}"},
+        json={"nome": "Alteracao indevida"},
+    )
+    assert denied.status_code == 403
+
+
+def test_catalog_returns_200_services_within_rnf03(
+    client: TestClient,
+    test_settings: Settings,
+) -> None:
+    with psycopg.connect(test_settings.url_do_banco) as connection:
+        connection.execute(
+            """
+            INSERT INTO public.servico (
+                id_prestador, nome, categoria, descricao, preco, localizacao
+            )
+            SELECT 1002, 'Servico de carga ' || n, 'Carga', 'Teste de desempenho',
+                   100 + n, 'Palmas - TO'
+            FROM generate_series(1, 200) AS n
+            """
+        )
+
+    durations = []
+    for _ in range(3):
+        started = perf_counter()
+        response = client.get(
+            "/api/servicos",
+            params={"categoria": "Carga", "limit": 100},
+        )
+        durations.append(perf_counter() - started)
+        assert response.status_code == 200
+        assert len(response.json()) == 100
+
+    second_page = client.get(
+        "/api/servicos",
+        params={"categoria": "Carga", "limit": 100, "offset": 100},
+    )
+    assert second_page.status_code == 200
+    assert len(second_page.json()) == 100
+    assert max(durations) < 3.0
+
+
+def test_file_upload_rejects_mime_mismatch_and_oversized_content(
+    client: TestClient,
+    test_settings: Settings,
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(test_settings, "local_dos_arquivos", tmp_path)
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    headers = {"Authorization": f"Bearer {provider_token}"}
+    service = client.post(
+        "/api/servicos",
+        headers=headers,
+        json={
+            "nome": "Servico para anexos invalidos",
+            "categoria": "Teste",
+            "preco": "50",
+            "localizacao": "Palmas - TO",
+        },
+    )
+    assert service.status_code == 201
+    service_id = service.json()["id_servico"]
+
+    wrong_mime = client.post(
+        f"/api/servicos/{service_id}/arquivos",
+        headers=headers,
+        files={"file": ("imagem.png", b"%PDF-1.7\n", "image/png")},
+    )
+    assert wrong_mime.status_code == 415
+
+    oversized = client.post(
+        f"/api/servicos/{service_id}/arquivos",
+        headers=headers,
+        files={
+            "file": (
+                "grande.pdf",
+                b"%PDF-1.7\n" + b"x" * 10_000_000,
+                "application/pdf",
+            )
+        },
+    )
+    assert oversized.status_code == 413
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_login_rejects_invalid_credentials(client: TestClient) -> None:

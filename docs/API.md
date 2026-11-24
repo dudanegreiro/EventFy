@@ -46,6 +46,8 @@ Respostas principais:
 | `403` | Papel ou propriedade nao autorizados |
 | `404` | Recurso inexistente ou nao visivel |
 | `409` | Estado invalido, reserva expirada ou conflito de agenda |
+| `413` | Arquivo acima de 10.000.000 bytes |
+| `415` | Conteudo ou MIME de anexo nao permitido |
 | `422` | Corpo invalido ou regra de periodo/justificativa nao atendida |
 
 ## Operacoes implementadas
@@ -56,8 +58,18 @@ Respostas principais:
 | `POST` | `/api/auth/register` | Publico | Cria conta de organizador ou prestador |
 | `POST` | `/api/auth/login` | Publico | Emite token Bearer |
 | `POST` | `/api/auth/logout` | Autenticado | Revoga a sessao do token enviado |
-| `GET` | `/api/servicos` | Publico | Lista servicos ativos; suporta `categoria`, `preco_minimo`, `preco_maximo`, `limit` e `offset` |
+| `GET` | `/api/servicos` | Publico | Busca servicos ativos por `termo`, `categoria`, `preco_minimo`, `preco_maximo`, `localizacao` e periodo (`data_inicio` + `data_fim`); suporta paginacao `limit`/`offset` |
 | `GET` | `/api/servicos/{id}` | Publico | Consulta um servico ativo |
+| `POST` | `/api/servicos` | Prestador | Cadastra servico proprio com preco e localizacao |
+| `GET` | `/api/prestador/servicos` | Prestador | Lista servicos proprios ativos e inativos |
+| `PATCH` | `/api/servicos/{id}` | Prestador titular | Atualiza dados descritivos; preco/localizacao ficam protegidos por reserva ativa |
+| `DELETE` | `/api/servicos/{id}` | Prestador titular | Desativa logicamente o servico se nao houver reserva ativa |
+| `POST` | `/api/servicos/{id}/disponibilidades` | Prestador titular | Adiciona periodo disponivel ou bloqueio manual |
+| `GET` | `/api/servicos/{id}/disponibilidades` | Prestador titular | Lista periodos de disponibilidade e bloqueios proprios |
+| `DELETE` | `/api/servicos/{id}/disponibilidades/{availability_id}` | Prestador titular | Desativa periodo de disponibilidade |
+| `POST` | `/api/servicos/{id}/arquivos` | Prestador titular | Armazena JPEG/PNG/WebP/PDF/DOCX de ate 10.000.000 bytes |
+| `GET` | `/api/arquivos/{uuid}` | Publico | Baixa anexo ativo de servico ativo |
+| `DELETE` | `/api/servicos/{id}/arquivos/{file_id}` | Prestador titular | Desativa logicamente anexo proprio |
 | `POST` | `/api/eventos` | Organizador | Cria evento proprio |
 | `GET` | `/api/eventos` | Organizador | Lista eventos proprios |
 | `POST` | `/api/reservas` | Organizador | Solicita reserva em periodo disponivel e registra auditoria |
@@ -70,6 +82,10 @@ Respostas principais:
 
 O servidor valida papel, titularidade, periodo do evento, disponibilidade, estado atual, justificativa, prazo e conflitos. As mutacoes e os respectivos registros de historico usam a mesma transacao PostgreSQL. A restricao de exclusao de `reserva` protege tambem contra requisicoes concorrentes.
 
+Filtros de data devem ser enviados juntos e incluir fuso horario. Quando usados, o servico precisa ter um intervalo `DISPONIVEL` que cubra todo o periodo, sem bloqueio manual ou reserva ativa conflitante. A ordenacao por identificador e a paginacao limitada a 100 resultados permitem percorrer catalogos maiores.
+
+Uploads verificam limite de bytes, extensao, assinatura do conteudo e MIME declarado. Em desenvolvimento, os binarios ficam em `LOCAL_DOS_ARQUIVOS` (padrao `./uploads`) e o banco armazena somente os metadados e URL. A rota de download consulta novamente o estado logico do anexo e do servico antes de entregar o arquivo.
+
 ## Testes
 
 Prepare um banco isolado com as migracoes aplicadas e aponte `TEST_DATABASE_URL` para ele; nao use uma base com dados importantes. Execute:
@@ -79,6 +95,6 @@ $env:TEST_DATABASE_URL = 'postgresql://postgres:SENHA_LOCAL@localhost:5432/event
 pytest
 ```
 
-Os testes de integracao cobrem login, cadastro e hash de senha, logout e revogacao de token, usuarios inativos, catalogo, matriz de papeis e titularidade, filtros e protecao de servicos, fluxo de solicitacao ate confirmacao, cancelamento e liberacao de agenda, expiracao em cada etapa, historico, recusa sem motivo suficiente, controle de acesso, conflito de agenda e confirmacoes concorrentes.
+Os testes de integracao cobrem cadastro e hash de senha, login/logout e revogacao de token, usuarios inativos, matriz de papeis e titularidade, filtros de catalogo, 200 servicos dentro do limite de 3 segundos, protecao de servico com reserva ativa, disponibilidade, validacao e ciclo de vida de anexos, fluxo de solicitacao ate confirmacao, cancelamento e liberacao de agenda, expiracao em cada etapa, historico, recusa sem motivo suficiente, controle de acesso, conflito de agenda e confirmacoes concorrentes.
 
 Ao iniciar e ao terminar uma execucao, a fixture de testes recria completamente o schema do banco apontado por `TEST_DATABASE_URL` a partir das migracoes. Use exclusivamente um banco descartavel de testes: executar `pytest` duas vezes seguidas deve produzir o mesmo conjunto de dados sem conflitos residuais.
