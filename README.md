@@ -126,6 +126,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 |---|---|---|
 | Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
 | Validação com usuário externo | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro, registro de observações, rastreabilidade e retorno ao backlog |
+| Review parcial executável | [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md) | Baseline, roteiro por tela e critério, limitações e plano de falha |
 | Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas e dados fictícios de demonstração |
 | API REST | [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato dos endpoints |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
@@ -171,6 +172,8 @@ No Windows, você também pode preparar o esquema e os dados de demonstração c
 .\scripts\db-setup.ps1 -Username eventfy_dev
 ```
 
+Para restaurar os dados isolados da review parcial, execute `.\scripts\restore-demo-data.ps1 -Confirm`. O roteiro e o plano de falha estão em [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md).
+
 Consulte [Banco de dados local](./docs/DATABASE.md) para os pré-requisitos e detalhes do script.
 
 Na raiz do projeto, prepare o ambiente conforme seu sistema.
@@ -209,6 +212,7 @@ Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar 
 | Documento | Descrição |
 |---|---|
 | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro e relatório de validação do fluxo principal com usuário externo |
+| [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md) | Baseline e roteiro da demonstração parcial com plano de falha |
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
 | [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato da API REST |
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
