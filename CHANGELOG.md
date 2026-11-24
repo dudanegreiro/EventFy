@@ -11,10 +11,13 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 
 ### Adicionado
+- Esquema PostgreSQL 17, migrações versionadas, dados fictícios e script PowerShell para preparar o banco local.
+- Documentação de configuração e acesso ao banco pelo pgAdmin em `docs/DATABASE.md`.
 - Governança do processo, rastreabilidade de Issues/PRs e orientações de configuração do repositório entregues pela Pessoa 1.
 - Fluxo navegável do protótipo para solicitação, análise, aprovação, recusa, confirmação, histórico e cancelamento justificado.
 
 ### Alterado
+- README e documentação do projeto para registrar a escolha do PostgreSQL no escopo da issue #22.
 - Documentação institucional, tema e papéis da equipe; arquivos de ambiente e instruções de Git.
 - Guia de navegação do protótipo e documentação das limitações da demonstração estática.
 
