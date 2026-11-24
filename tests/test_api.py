@@ -1100,3 +1100,57 @@ def test_reservation_queue_and_detail_align_expiration_before_job(
         requested_id: 1,
         approved_id: 1,
     }
+
+
+
+def test_profile_view_and_edit_prevents_role_escalation(
+    client: TestClient,
+) -> None:
+    unique_email = f"perfil.{uuid4().hex}@example.test"
+    reg = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Usuario Perfil",
+            "email": unique_email,
+            "senha": "SenhaSegura12345!",
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert reg.status_code == 201
+    user_id = reg.json()["id_usuario"]
+    token = access_token(client, unique_email)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # GET /api/perfil retorna dados do usuario autenticado
+    profile = client.get("/api/perfil", headers=headers)
+    assert profile.status_code == 200
+    body = profile.json()
+    assert body["id_usuario"] == user_id
+    assert body["nome"] == "Usuario Perfil"
+    assert body["email"] == unique_email
+    assert body["tipo_usuario"] == "ORGANIZADOR"
+
+    # GET /api/perfil sem token retorna 401/403
+    assert client.get("/api/perfil").status_code in (401, 403)
+
+    # PATCH /api/perfil atualiza o nome
+    updated = client.patch(
+        "/api/perfil",
+        headers=headers,
+        json={"nome": "Nome Atualizado"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["nome"] == "Nome Atualizado"
+    assert updated.json()["tipo_usuario"] == "ORGANIZADOR"
+
+    # GET /api/perfil reflete a alteracao
+    after = client.get("/api/perfil", headers=headers)
+    assert after.json()["nome"] == "Nome Atualizado"
+
+    # PATCH /api/perfil sem body retorna 422
+    empty = client.patch("/api/perfil", headers=headers, json={})
+    assert empty.status_code == 422
+
+    # PATCH /api/perfil com nome em branco retorna 422
+    blank = client.patch("/api/perfil", headers=headers, json={"nome": "   "})
+    assert blank.status_code == 422
