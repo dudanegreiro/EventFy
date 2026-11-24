@@ -119,7 +119,7 @@ Pagamentos, gestão de convidados e chat interno estão fora do escopo descrito 
 |---|---|---|
 | Inclusão de administração e moderação no MVP | `RF20` está especificado em [`REQUISITOS.md`](./REQUISITOS.md), mas não consta na lista de escopo ativo da descoberta. | PO e Pessoas 2, 3 e 4 confirmam se o recurso integra o MVP e alinham os artefatos. |
 | Linha de base dos indicadores | E1, E2 e O1 documentam evidências qualitativas; não há medidas numéricas registradas. | Medir os indicadores com usuários e registrar método e resultados sem dados pessoais. |
-| Teste de usabilidade do protótipo | As entrevistas e a observação estão registradas; uma sessão de validação do protótipo não está documentada. | Realizar a sessão após o fluxo principal estar navegável e registrar os achados. |
+| Teste de usabilidade do protótipo | Roteiro e modelo de relatório preparados em [`VALIDACAO-USUARIO-EVT-24.md`](./VALIDACAO-USUARIO-EVT-24.md); a sessão ainda não foi realizada. | Conduzir a sessão com usuário externo conforme o roteiro e registrar os achados sem dados pessoais. |
 
 ---
 
@@ -144,7 +144,7 @@ Legenda: ✅ atende · 🟡 atende em parte · ❌ não atende
 
 | Critério | Situação | Ação mitigadora | Responsável | Prazo |
 |---|---|---|---|---|
-| Validação com usuário real | Entrevistas E1/E2 e observação O1 concluídas; teste do protótipo não documentado | Testar o fluxo navegável com organizador e prestador e registrar achados sem dados pessoais | Equipe | Após a conclusão do fluxo principal |
+| Validação com usuário real | Entrevistas E1/E2 e observação O1 concluídas; roteiro da sessão disponível em [`VALIDACAO-USUARIO-EVT-24.md`](./VALIDACAO-USUARIO-EVT-24.md); execução pendente | Conduzir o roteiro com usuário externo e registrar resultados sem dados pessoais | Equipe | Após a conclusão do fluxo principal |
 
 ### 3.3 Evidências disponíveis para citar
 
@@ -163,4 +163,4 @@ Para facilitar o preenchimento da coluna "Evidência", estes são os artefatos q
 | Interface | [`../prototipo/`](../prototipo) |
 | Conferência entre artefatos | [`CONFERENCIA_CRUZADA.md`](./CONFERENCIA_CRUZADA.md) |
 | Entrevistas e observação | E1, E2 e O1 em [`DESCOBERTA.md`](../DESCOBERTA.md) e na Seção 1.4 deste documento |
-| Teste de usabilidade do protótipo | Pendente; registrar o resultado após a sessão prevista na Seção 3.2 |
+| Teste de usabilidade do protótipo | Roteiro em [`VALIDACAO-USUARIO-EVT-24.md`](./VALIDACAO-USUARIO-EVT-24.md); resultados pendentes até a realização da sessão |
