@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from uuid import UUID
 
 import jwt
 import psycopg
@@ -14,12 +15,18 @@ from eventfy_api.errors import ApiError
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def create_access_token(user_id: int, role: str, settings: Settings) -> str:
+def create_access_token(
+    user_id: int,
+    role: str,
+    token_id: UUID,
+    settings: Settings,
+) -> str:
     now = datetime.now(timezone.utc)
     return jwt.encode(
         {
             "sub": str(user_id),
             "role": role,
+            "jti": str(token_id),
             "iat": now,
             "exp": now + timedelta(minutes=settings.duracao_token_minutos),
         },
@@ -47,22 +54,30 @@ def get_current_user(
             credentials.credentials,
             settings.chave_secreta_jwt.get_secret_value(),
             algorithms=["HS256"],
+            options={"require": ["sub", "jti", "iat", "exp"]},
         )
         user_id = int(claims["sub"])
-    except (InvalidTokenError, KeyError, TypeError, ValueError):
+        token_id = UUID(claims["jti"])
+    except (InvalidTokenError, KeyError, TypeError, ValueError, AttributeError):
         raise unauthorized from None
 
     user = connection.execute(
         """
-        SELECT id_usuario, nome, email, tipo_usuario
-        FROM public.usuario
-        WHERE id_usuario = %s AND ativo
+        SELECT u.id_usuario, u.nome, u.email, u.tipo_usuario
+        FROM public.usuario AS u
+        JOIN public.sessao_autenticacao AS s
+          ON s.id_usuario = u.id_usuario
+        WHERE u.id_usuario = %s
+          AND u.ativo
+          AND s.token_id = %s
+          AND s.expira_em > now()
+          AND s.revogada_em IS NULL
         """,
-        (user_id,),
+        (user_id, token_id),
     ).fetchone()
     if user is None:
         raise unauthorized
-    return user
+    return {**user, "_token_id": token_id}
 
 
 def require_role(*roles: str):

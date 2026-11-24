@@ -1,6 +1,10 @@
+from uuid import uuid4
+
+import jwt
 import pytest
 import psycopg
 from fastapi.testclient import TestClient
+from psycopg.rows import dict_row
 
 from conftest import (
     ADMIN_EMAIL,
@@ -32,6 +36,199 @@ def test_login_rejects_invalid_credentials(client: TestClient) -> None:
 
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "INVALID_CREDENTIALS"
+
+
+def test_registration_hashes_password_limits_public_roles_and_logout_revokes_token(
+    client: TestClient,
+    test_settings: Settings,
+) -> None:
+    email = f"new.{uuid4().hex}@example.test"
+    password = "SecureTestPassword123!"
+    registered = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Novo Organizador",
+            "email": email.upper(),
+            "senha": password,
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert registered.status_code == 201, registered.text
+    assert registered.json()["email"] == email
+    assert "senha" not in registered.json()
+    assert "senha_hash" not in registered.json()
+
+    with psycopg.connect(
+        test_settings.url_do_banco,
+        row_factory=dict_row,
+    ) as connection:
+        credential = connection.execute(
+            """
+            SELECT senha_hash, senha_hash = crypt(%s, senha_hash) AS matches
+            FROM public.usuario
+            WHERE id_usuario = %s
+            """,
+            (password, registered.json()["id_usuario"]),
+        ).fetchone()
+    assert credential["senha_hash"] != password
+    assert credential["senha_hash"].startswith("$2")
+    assert credential["matches"] is True
+
+    forbidden_role = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Tentativa de Administrador",
+            "email": f"admin.{uuid4().hex}@example.test",
+            "senha": password,
+            "tipo_usuario": "ADMINISTRADOR",
+        },
+    )
+    assert forbidden_role.status_code == 422
+
+    too_long_password = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Senha muito longa",
+            "email": f"long.{uuid4().hex}@example.test",
+            "senha": "a" * 73,
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert too_long_password.status_code == 422
+
+    login = client.post(
+        "/api/auth/login",
+        json={"email": email, "senha": password},
+    )
+    assert login.status_code == 200
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    another_login = client.post(
+        "/api/auth/login",
+        json={"email": email, "senha": password},
+    )
+    assert another_login.status_code == 200
+
+    logged_out = client.post("/api/auth/logout", headers=headers)
+    assert logged_out.status_code == 204
+    assert client.get("/api/eventos", headers=headers).status_code == 401
+    assert client.get(
+        "/api/eventos",
+        headers={
+            "Authorization": f"Bearer {another_login.json()['access_token']}"
+        },
+    ).status_code == 200
+
+
+def test_inactive_user_cannot_login_or_use_an_existing_token(
+    client: TestClient,
+    test_settings: Settings,
+) -> None:
+    token = access_token(client, ORGANIZER_EMAIL)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+        with psycopg.connect(test_settings.url_do_banco) as connection:
+            connection.execute(
+                "UPDATE public.usuario SET ativo = false WHERE email = %s",
+                (ORGANIZER_EMAIL,),
+            )
+
+        assert client.get("/api/eventos", headers=headers).status_code == 401
+        login = client.post(
+            "/api/auth/login",
+            json={"email": ORGANIZER_EMAIL, "senha": "EventFyDemo123!"},
+        )
+        assert login.status_code == 401
+    finally:
+        with psycopg.connect(test_settings.url_do_banco) as connection:
+            connection.execute(
+                "UPDATE public.usuario SET ativo = true WHERE email = %s",
+                (ORGANIZER_EMAIL,),
+            )
+
+
+def test_authorization_enforces_roles_and_ignores_role_claim(
+    client: TestClient,
+    test_settings: Settings,
+) -> None:
+    organizer_token = access_token(client, ORGANIZER_EMAIL)
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    admin_token = access_token(client, ADMIN_EMAIL)
+    event_payload = {
+        "nome": "Evento de autorizacao",
+        "data_inicio": "2032-01-10T17:00:00Z",
+        "data_fim": "2032-01-10T22:00:00Z",
+        "local": "Palmas - TO",
+    }
+
+    assert client.post("/api/eventos", json=event_payload).status_code == 401
+    assert client.post(
+        "/api/eventos",
+        headers={"Authorization": f"Bearer {provider_token}"},
+        json=event_payload,
+    ).status_code == 403
+    assert client.post(
+        "/api/eventos",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json=event_payload,
+    ).status_code == 403
+    assert client.post(
+        "/api/reservas/1001/analise",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    ).status_code == 403
+    assert client.post(
+        "/api/reservas/1001/decisao",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"decisao": "APROVADA"},
+    ).status_code == 403
+    assert client.post(
+        "/api/reservas/1001/confirmacao",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    ).status_code == 403
+    assert client.post(
+        "/api/reservas/1001/analise",
+        headers={"Authorization": f"Bearer {organizer_token}"},
+    ).status_code == 403
+    other_organizer = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Outro Organizador",
+            "email": f"other.{uuid4().hex}@example.test",
+            "senha": "SecureTestPassword123!",
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert other_organizer.status_code == 201
+    other_login = client.post(
+        "/api/auth/login",
+        json={
+            "email": other_organizer.json()["email"],
+            "senha": "SecureTestPassword123!",
+        },
+    )
+    assert other_login.status_code == 200
+    other_token = other_login.json()["access_token"]
+    assert client.get(
+        "/api/reservas/1001",
+        headers={"Authorization": f"Bearer {other_token}"},
+    ).status_code == 403
+
+    claims = jwt.decode(
+        provider_token,
+        test_settings.chave_secreta_jwt.get_secret_value(),
+        algorithms=["HS256"],
+    )
+    claims["role"] = "ORGANIZADOR"
+    forged_role_token = jwt.encode(
+        claims,
+        test_settings.chave_secreta_jwt.get_secret_value(),
+        algorithm="HS256",
+    )
+    assert client.post(
+        "/api/eventos",
+        headers={"Authorization": f"Bearer {forged_role_token}"},
+        json=event_payload,
+    ).status_code == 403
 
 
 def test_organizer_provider_flow_records_immutable_history(
