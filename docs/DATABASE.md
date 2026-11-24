@@ -37,6 +37,22 @@ $env:PGUSER = 'postgres'
 .\scripts\db-setup.ps1 -Database eventfy
 ```
 
+## Restaurar o banco de demonstração
+
+Para a review parcial, use o banco isolado `eventfy_demo`. O script de restauração prepara as migrações e substitui apenas as fixtures desse banco pela seed versionada. Ele pede confirmação e recusa outros nomes de banco; não use `-Confirm:$false` em uma execução manual.
+
+```powershell
+.\scripts\restore-demo-data.ps1 -Confirm
+```
+
+O banco de demonstração pertence ao usuário indicado por `PGUSER` (por padrão, `postgres`). Para verificar os dados restaurados:
+
+```powershell
+psql -d eventfy_demo -c "SELECT status, count(*) FROM public.reserva GROUP BY status ORDER BY status;"
+```
+
+O resultado esperado é uma reserva em cada estado `APROVADA`, `FINALIZADA` e `SOLICITADA`. O roteiro completo da apresentação está em [`REVIEW-PARCIAL-EVT-08.md`](./REVIEW-PARCIAL-EVT-08.md).
+
 ## Acessar pelo pgAdmin
 
 No pgAdmin, registre um servidor com:

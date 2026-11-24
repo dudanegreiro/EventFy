@@ -125,6 +125,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 | Artefato | Local | Descrição |
 |---|---|---|
 | Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
+| Review parcial executável | [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md) | Baseline, roteiro por tela e critério, limitações e plano de falha |
 | Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas e dados fictícios de demonstração |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
@@ -169,6 +170,8 @@ No Windows, você também pode preparar o esquema e os dados de demonstração c
 .\scripts\db-setup.ps1 -Username eventfy_dev
 ```
 
+Para restaurar os dados isolados da review parcial, execute `.\scripts\restore-demo-data.ps1 -Confirm`. O roteiro e o plano de falha estão em [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md).
+
 Consulte [Banco de dados local](./docs/DATABASE.md) para os pré-requisitos e detalhes do script.
 
 Na raiz do projeto, prepare o ambiente conforme seu sistema.
@@ -206,6 +209,7 @@ Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar 
 
 | Documento | Descrição |
 |---|---|
+| [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md) | Baseline e roteiro da demonstração parcial com plano de falha |
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
 | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos, backlog ordenado e critérios |
