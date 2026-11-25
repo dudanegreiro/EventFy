@@ -4,6 +4,10 @@ node_modules/
 build/
 dist/
 coverage/
+coverage.xml
+.coverage
+.coverage.*
+.ruff_cache/
 __pycache__/
 *.py[cod]
 .venv/

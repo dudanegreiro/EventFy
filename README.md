@@ -202,6 +202,28 @@ O health check da API fica em `http://127.0.0.1:8000/api/health`; a documentaç�
 
 Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar o PostgreSQL e repetir o comando do Uvicorn. O esquema, as migrações e as contas fictícias estão descritos em [Banco de dados local](./docs/DATABASE.md); as rotas e credenciais de demonstração estão em [API REST](./docs/API.md).
 
+### Verificação local de qualidade (formatador, lint, build e cobertura)
+
+As ferramentas de estilo e cobertura (`ruff` e `pytest-cov`) estão configuradas em [`pyproject.toml`](./pyproject.toml) e executam automaticamente no CI ([`.github/workflows/quality.yml`](./.github/workflows/quality.yml)). Para rodar a verificação completa localmente:
+
+**Windows (PowerShell)**
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\scripts\check.ps1
+```
+
+*(Para corrigir formatação e lint automaticamente, execute `.\scripts\check.ps1 -Fix`.)*
+
+**Linux ou macOS**
+
+```sh
+.venv/bin/python -m pip install -r requirements-dev.txt
+ruff format --check --diff . && ruff check . && python -m compileall -q api dev tests && PYTHONPATH=api pytest --cov=api/eventfy_api --cov-report=term-missing
+```
+
+A política de uso da cobertura e as áreas justificadamente sem cobertura constam em [`TESTES.md`](./TESTES.md#6-cobertura-de-código-e-justificativa-das-áreas-sem-cobertura-evt-27-47).
+
 ---
 
 ## 📚 Documentação
