@@ -9,6 +9,7 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+.pytest-run-*/
 .mypy_cache/
 
 # configuração local e segredos
