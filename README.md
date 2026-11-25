@@ -137,6 +137,8 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 | Modelagem | [`docs/diagrams/`](./docs/diagrams) | Domínio, dados, estados da reserva e sequência UML |
 | Protótipo | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
 | Conferência cruzada | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Registro da conferência entre os diferentes artefatos do projeto |
+| Entrega e operação | [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) | Baseline, reprodução local, operação e limites conhecidos |
+| Inspeção formal de requisitos | [`INSPECOES.md`](./INSPECOES.md) | Papéis, achados classificados, retrabalho, recheck e rastreabilidade da EVT-22 |
 | Contribuição | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Orientações de contribuição, revisão e critérios de qualidade |
 | Registro de Mudanças | [`CHANGELOG.md`](./CHANGELOG.md) | Histórico de versões e notas de lançamento (SemVer) |
 
@@ -219,6 +221,8 @@ Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar 
 | [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Processos de negócio e máquina de estados |
 | [`docs/diagrams/`](./docs/diagrams) | Diagramas conceituais, relacionais e comportamentais (.mmd) |
 | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Conferência cruzada formal entre artefatos |
+| [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) | Baseline operacional, reprodução local e limites da entrega |
+| [`INSPECOES.md`](./INSPECOES.md) | Inspeção formal de requisitos da EVT-22 |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Processo de contribuição e diretrizes de revisão |
 | [`CHANGELOG.md`](./CHANGELOG.md) | Registro de mudanças e versionamento semântico |
 | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |

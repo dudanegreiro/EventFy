@@ -18,6 +18,7 @@
 - [10. Validações Realizadas](#10-validações-realizadas)
 - [11. Lista de Verificação da Revisão (Checklist de Fagan)](#11-lista-de-verificação-da-revisão-checklist-de-fagan)
 - [12. Histórico de Revisão e Linha de Base do Marco 1](#12-histórico-de-revisão-e-linha-de-base-do-marco-1)
+- [13. Inspeção formal EVT-22](#13-inspeção-formal-evt-22)
 
 ---
 
@@ -423,7 +424,7 @@ A sessão de validação foi realizada com o protótipo navegável de baixa/méd
 
 ## 11. Lista de Verificação da Revisão (Checklist de Fagan)
 
-Inspeção formal de requisitos conduzida segundo a Listagem 5.7 do livro-texto:
+Checklist inicial do Marco 1, conduzida segundo a Listagem 5.7 do livro-texto. A inspeção formal da EVT-22 complementa esta revisão e registra os achados, o retrabalho e o recheck em [`INSPECOES.md`](../INSPECOES.md). Portanto, os itens marcados abaixo indicam a intenção/verificação inicial; não significam que todos os achados da inspeção formal estejam fechados.
 
 ### Para cada História / Requisito:
 - [x] Tem origem declarada, e a origem existe no `DESCOBERTA.md` (`N1..N5`).
@@ -449,3 +450,7 @@ Inspeção formal de requisitos conduzida segundo a Listagem 5.7 do livro-texto:
 - **2026-10-21:** Reconciliação dos RFs com a máquina de estados de 8 estados e inclusão da auditoria imutável.
 - **2026-10-28:** **Linha de Base do Marco 1 (Encontro 5):** Inclusão do Glossário formal, Backlog ordenado com MoSCoW e risco técnico, Histórias de Usuário INVEST com Dado-Quando-Então, Caso de Uso UC-01, RNFs em Planguage (ISO 25010), registro de validação V1 e checklist de Fagan.
 - **2026-10-28:** Fechamento das decisões DP01–DP08; especificação de anexos, permissões por papel, cancelamento e limites de alteração de eventos/serviços com reservas; revisão da avaliação e RNFs.
+
+## 13. Inspeção formal EVT-22
+
+Em **25/11/2026**, foi registrada a inspeção formal dos RF, RN, RNF e HU, com atribuição de autor, revisor, leitor e inspetor para cada item. Os achados `INS-01` a `INS-12`, suas classificações, gravidades, planos de retrabalho, recheck e vínculos de rastreabilidade estão em [`INSPECOES.md`](../INSPECOES.md). A inspeção permanece aberta até o acompanhamento do moderador.
