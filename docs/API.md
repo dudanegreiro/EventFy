@@ -45,7 +45,7 @@ Respostas principais:
 | `401` | Credenciais ou token ausentes/invalidos |
 | `403` | Papel ou propriedade nao autorizados |
 | `404` | Recurso inexistente ou nao visivel |
-| `409` | Estado invalido, reserva expirada ou conflito de agenda |
+| `409` | Recurso duplicado (por exemplo, e-mail ja cadastrado), estado invalido, reserva expirada ou conflito de agenda |
 | `413` | Arquivo acima de 10.000.000 bytes |
 | `415` | Conteudo ou MIME de anexo nao permitido |
 | `422` | Corpo invalido ou regra de periodo/justificativa nao atendida |
@@ -58,6 +58,8 @@ Respostas principais:
 | `POST` | `/api/auth/register` | Publico | Cria conta de organizador ou prestador |
 | `POST` | `/api/auth/login` | Publico | Emite token Bearer |
 | `POST` | `/api/auth/logout` | Autenticado | Revoga a sessao do token enviado |
+| `GET` | `/api/perfil` | Autenticado | Consulta dados do perfil do usuario autenticado |
+| `PATCH` | `/api/perfil` | Autenticado | Atualiza nome do perfil; nao permite alteracao de papel |
 | `GET` | `/api/servicos` | Publico | Busca servicos ativos por `termo`, `categoria`, `preco_minimo`, `preco_maximo`, `localizacao` e periodo (`data_inicio` + `data_fim`); suporta paginacao `limit`/`offset` |
 | `GET` | `/api/servicos/{id}` | Publico | Consulta um servico ativo |
 | `POST` | `/api/servicos` | Prestador | Cadastra servico proprio com preco e localizacao |

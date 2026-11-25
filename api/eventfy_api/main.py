@@ -23,6 +23,7 @@ from eventfy_api.schemas import (
     EventResponse,
     ExpirationResponse,
     LoginRequest,
+    ProfileUpdate,
     PublicService,
     ReservationCreate,
     ReservationCancellation,
@@ -161,6 +162,34 @@ def register(
         ),
     ).fetchone()
     return user
+
+
+@app.get("/api/perfil", response_model=UserResponse)
+def get_profile(
+    user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
+    return user
+
+
+@app.patch("/api/perfil", response_model=UserResponse)
+def update_profile(
+    request: ProfileUpdate,
+    user: dict[str, Any] = Depends(get_current_user),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> dict[str, Any]:
+    changes = request.model_dump(exclude_unset=True)
+    assignments = ", ".join(f"{field} = %s" for field in changes)
+    values = list(changes.values()) + [user["id_usuario"]]
+    updated = connection.execute(
+        f"""
+        UPDATE public.usuario
+        SET {assignments}, atualizado_em = now()
+        WHERE id_usuario = %s
+        RETURNING id_usuario, nome, email, tipo_usuario
+        """,
+        values,
+    ).fetchone()
+    return updated
 
 
 @app.post("/api/auth/logout", status_code=204)
