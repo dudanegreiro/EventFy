@@ -17,6 +17,8 @@ uvicorn eventfy_api.main:app --app-dir api --reload
 
 O health check fica em `http://127.0.0.1:8000/api/health`. As contas ficticias e suas credenciais locais estao descritas em [`DATABASE.md`](./DATABASE.md).
 
+Para desenvolvimento local, a API aceita chamadas do frontend servido em `localhost` ou `127.0.0.1`, nas portas `5500` (servidor estatico) e `5173` (Vite). Se o frontend usar outra origem, ajuste a lista `allow_origins` do `CORSMiddleware` em `api/eventfy_api/main.py` antes de iniciar a API.
+
 ## Autenticacao e erros
 
 `POST /api/auth/register` recebe `nome`, `email`, `senha` (12 a 72 bytes em UTF-8) e `tipo_usuario` (`ORGANIZADOR` ou `PRESTADOR`). O papel `ADMINISTRADOR` nao pode ser escolhido no cadastro publico. Senhas sao armazenadas como hashes bcrypt com fator 12 usando `pgcrypto`.

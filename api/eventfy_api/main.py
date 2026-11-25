@@ -9,6 +9,7 @@ import zipfile
 import psycopg
 from fastapi import Depends, FastAPI, File, Query, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from psycopg.errors import ExclusionViolation, ForeignKeyViolation, UniqueViolation
 
@@ -43,6 +44,18 @@ app = FastAPI(
     title="EventFy API",
     version="0.1.0",
     description="API REST para catalogo, eventos e fluxo principal de reservas.",
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 MAX_ATTACHMENT_BYTES = 10_000_000
