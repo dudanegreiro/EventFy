@@ -78,7 +78,7 @@ Respostas principais:
 | `POST` | `/api/reservas/{id}/analise` | Prestador titular | Transita de `SOLICITADA` para `EM_ANALISE` |
 | `POST` | `/api/reservas/{id}/decisao` | Prestador titular | Aprova ou recusa; recusa exige justificativa com 10 caracteres ou mais |
 | `POST` | `/api/reservas/{id}/confirmacao` | Organizador titular | Confirma aprovacao em ate 48 horas, sob bloqueio transacional da reserva |
-| `POST` | `/api/reservas/{id}/cancelamento` | Organizador titular ou prestador titular | Cancela com justificativa antes do inicio do evento; prestador somente cancela reservas confirmadas |
+| `POST` | `/api/reservas/{id}/cancelamento` | Organizador titular ou prestador titular | Cancela com justificativa de pelo menos 10 caracteres antes do inicio do evento; prestador somente cancela reservas confirmadas |
 | `POST` | `/api/jobs/reservas/expiracoes` | Administrador | Expira reservas sem resposta ha 48 horas; destinado a uma rotina agendada |
 | `GET` | `/api/reservas/{id}/historico` | Participante | Consulta transicoes em ordem cronologica |
 
