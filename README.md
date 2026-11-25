@@ -208,6 +208,7 @@ Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar 
 
 | Documento | Descrição |
 |---|---|
+| [`docs/SEGURANCA-SEGREDOS.md`](./docs/SEGURANCA-SEGREDOS.md) | Política de proteção de segredos, auditoria do histórico e plano de resposta a vazamento |
 | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro e relatório de validação do fluxo principal com usuário externo |
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
 | [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato da API REST |

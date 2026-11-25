@@ -11,6 +11,7 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 
 ### Adicionado
+- EVT-28 (#48) — Política de proteção de segredos, evidência de auditoria do histórico Git e plano de resposta a vazamento em `docs/SEGURANCA-SEGREDOS.md`, além da verificação automatizada `.github/workflows/secrets-check.yml`.
 - EVT-23 (#43) — `TESTES.md` com a estratégia de testes em quatro níveis, 31 casos nas seis áreas críticas (agenda, autenticação, autorização, estados, anexos e auditoria), omissões deliberadas e dúvidas em aberto.
 - EVT-24 (#44) — Roteiro de validação externa com tarefas neutras, registro de observações, rastreabilidade, retorno ao backlog e testes automatizados da estrutura documental.
 - EVT-01 (#21) — Quatro vistas arquiteturais, decisões de banco, anexos e autenticação e ambiente local com verificação da conexão ao PostgreSQL.
