@@ -125,6 +125,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 | Artefato | Local | Descrição |
 |---|---|---|
 | Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
+| Validação com usuário externo | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro, registro de observações, rastreabilidade e retorno ao backlog |
 | Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas e dados fictícios de demonstração |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
@@ -206,6 +207,7 @@ Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar 
 
 | Documento | Descrição |
 |---|---|
+| [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro e relatório de validação do fluxo principal com usuário externo |
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
 | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos, backlog ordenado e critérios |
