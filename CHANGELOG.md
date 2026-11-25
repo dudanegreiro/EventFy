@@ -8,6 +8,8 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ## [Unreleased]
 
+Baseline desta atualizacao: `5e15fa1`, merge da PR #94, com API FastAPI, autenticacao, migracoes V1 a V5, contrato em `docs/API.md` e testes PostgreSQL.
+
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 
 ### Adicionado
@@ -26,6 +28,7 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - `ITERACOES.md` com o replanejamento até 03/12, o plano da Iteração 2 e a retrospectiva da Iteração 1, com a fonte de cada dado (EVT-11, #31, parcial).
 
 ### Alterado
+- EVT-12 (#32) - README, guia de entrega, changelog e conferencia cruzada atualizados com pre-requisitos, instalacao, migracao, testes, execucao, operacao, variaveis sem segredos e limites da baseline pos-PR94.
 - README e documentação do projeto para registrar a escolha do PostgreSQL no escopo da issue #22.
 - README, arquivo de ambiente e documentação para registrar a API FastAPI e seus comandos locais.
 - Documentação institucional, tema e papéis da equipe; arquivos de ambiente e instruções de Git.

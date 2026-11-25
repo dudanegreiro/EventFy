@@ -11,6 +11,16 @@
 
 </div>
 
+## Baseline e operacao pos-PR94
+
+A baseline documental desta entrega e o commit `5e15fa1`, merge da PR #94. Ela inclui a API FastAPI, autenticacao, migracoes V1 a V5, contrato em [`docs/API.md`](./docs/API.md), testes PostgreSQL e o prototipo estatico.
+
+Pre-requisitos: Git 2.x, Python 3.14, PostgreSQL 17.x, `psql` e `createdb` no `PATH`. Instale as dependencias com `python -m pip install -r requirements-dev.txt`, copie `.env.example` para `.env` e configure somente valores locais para `URL_DO_BANCO`, `CHAVE_SECRETA_JWT` e `LOCAL_DOS_ARQUIVOS`. O repositorio nao deve conter segredos ou dados pessoais reais.
+
+Aplique as migracoes com `scripts/db-setup.ps1 -Username eventfy_dev`; o script registra checksums e aplica V1 a V5 em ordem. Execute `pytest -q` duas vezes contra o banco de testes; a baseline espera `18 passed` em cada rodada. Inicie a API com `uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` e confira `/api/health` e `/docs`.
+
+A operacao, os limites e a conferencia cruzada estao em [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) e [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md).
+
 ---
 
 ## 📑 Sumário
