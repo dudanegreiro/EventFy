@@ -45,7 +45,7 @@ Respostas principais:
 | `401` | Credenciais ou token ausentes/invalidos |
 | `403` | Papel ou propriedade nao autorizados |
 | `404` | Recurso inexistente ou nao visivel |
-| `409` | Estado invalido, reserva expirada ou conflito de agenda |
+| `409` | Recurso duplicado (por exemplo, e-mail ja cadastrado), estado invalido, reserva expirada ou conflito de agenda |
 | `413` | Arquivo acima de 10.000.000 bytes |
 | `415` | Conteudo ou MIME de anexo nao permitido |
 | `422` | Corpo invalido ou regra de periodo/justificativa nao atendida |

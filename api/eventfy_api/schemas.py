@@ -62,6 +62,8 @@ class UserResponse(BaseModel):
 
 
 class ProfileUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nome: str | None = Field(default=None, min_length=1, max_length=120)
 
     @field_validator("nome")
@@ -78,6 +80,8 @@ class ProfileUpdate(BaseModel):
     def validate_changes(self) -> "ProfileUpdate":
         if not self.model_fields_set:
             raise ValueError("Informe ao menos um campo para atualizar.")
+        if "nome" in self.model_fields_set and self.nome is None:
+            raise ValueError("O campo nome nao pode ser nulo.")
         return self
 
 

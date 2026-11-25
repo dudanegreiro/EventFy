@@ -178,12 +178,6 @@ def update_profile(
     connection: psycopg.Connection = Depends(get_connection),
 ) -> dict[str, Any]:
     changes = request.model_dump(exclude_unset=True)
-    if "tipo_usuario" in changes:
-        raise ApiError(
-            403,
-            "FORBIDDEN",
-            "Nao e permitido alterar o papel pelo perfil.",
-        )
     assignments = ", ".join(f"{field} = %s" for field in changes)
     values = list(changes.values()) + [user["id_usuario"]]
     updated = connection.execute(

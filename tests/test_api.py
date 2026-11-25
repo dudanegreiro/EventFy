@@ -12,6 +12,7 @@ from psycopg.rows import dict_row
 
 from conftest import (
     ADMIN_EMAIL,
+    DEMO_PASSWORD,
     ORGANIZER_EMAIL,
     PROVIDER_EMAIL,
     access_token,
@@ -339,6 +340,18 @@ def test_registration_hashes_password_limits_public_roles_and_logout_revokes_tok
     assert "senha" not in registered.json()
     assert "senha_hash" not in registered.json()
 
+    duplicate_email = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Conta duplicada",
+            "email": email.upper(),
+            "senha": password,
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert duplicate_email.status_code == 409
+    assert duplicate_email.json()["error"]["code"] == "DUPLICATE_RESOURCE"
+
     with psycopg.connect(
         test_settings.url_do_banco,
         row_factory=dict_row,
@@ -365,6 +378,39 @@ def test_registration_hashes_password_limits_public_roles_and_logout_revokes_tok
         },
     )
     assert forbidden_role.status_code == 422
+
+    blank_name = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "   ",
+            "email": f"blank.{uuid4().hex}@example.test",
+            "senha": password,
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert blank_name.status_code == 422
+
+    invalid_email = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "E-mail invalido",
+            "email": "email-invalido",
+            "senha": password,
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert invalid_email.status_code == 422
+
+    short_password = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Senha curta",
+            "email": f"short.{uuid4().hex}@example.test",
+            "senha": "curta",
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert short_password.status_code == 422
 
     too_long_password = client.post(
         "/api/auth/register",
@@ -1112,7 +1158,7 @@ def test_profile_view_and_edit_prevents_role_escalation(
         json={
             "nome": "Usuario Perfil",
             "email": unique_email,
-            "senha": "SenhaSegura12345!",
+            "senha": DEMO_PASSWORD,
             "tipo_usuario": "ORGANIZADOR",
         },
     )
@@ -1132,6 +1178,10 @@ def test_profile_view_and_edit_prevents_role_escalation(
 
     # GET /api/perfil sem token retorna 401/403
     assert client.get("/api/perfil").status_code in (401, 403)
+    assert client.patch(
+        "/api/perfil",
+        json={"nome": "Nao autenticado"},
+    ).status_code in (401, 403)
 
     # PATCH /api/perfil atualiza o nome
     updated = client.patch(
@@ -1154,3 +1204,22 @@ def test_profile_view_and_edit_prevents_role_escalation(
     # PATCH /api/perfil com nome em branco retorna 422
     blank = client.patch("/api/perfil", headers=headers, json={"nome": "   "})
     assert blank.status_code == 422
+
+    # PATCH /api/perfil rejeita nomes nulos e alteracoes de papel
+    null_name = client.patch(
+        "/api/perfil",
+        headers=headers,
+        json={"nome": None},
+    )
+    assert null_name.status_code == 422
+
+    role_change = client.patch(
+        "/api/perfil",
+        headers=headers,
+        json={"nome": "Nome indevido", "tipo_usuario": "ADMINISTRADOR"},
+    )
+    assert role_change.status_code == 422
+
+    unchanged = client.get("/api/perfil", headers=headers)
+    assert unchanged.json()["nome"] == "Nome Atualizado"
+    assert unchanged.json()["tipo_usuario"] == "ORGANIZADOR"
