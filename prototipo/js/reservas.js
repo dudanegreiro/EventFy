@@ -229,6 +229,9 @@
       byId('refusal-reason').textContent = reservation.motivo_recusa || '';
       startButton.hidden = !(isProvider && reservation.status === 'SOLICITADA');
       form.hidden = !(isProvider && reservation.status === 'EM_ANALISE');
+      const cancel = byId('cancel-link');
+      cancel.href = `cancelar.html?reserva=${encodeURIComponent(reservation.id_reserva)}`;
+      cancel.hidden = !api.canCancel(session.role, reservation);
       byId('history-link').href = `historico.html?reserva=${encodeURIComponent(reservation.id_reserva)}`;
     }
 
@@ -376,6 +379,27 @@
         || 'O fornecedor não informou um motivo.';
     }
 
+    const cancel = byId('cancel-link');
+    if (cancel) {
+      cancel.href = `cancelar.html?reserva=${encodeURIComponent(reservation.id_reserva)}`;
+      cancel.hidden = !api.canCancel(session.role, reservation);
+    }
+
+    // Na tela de cancelamento, quem cancelou e a justificativa vêm do histórico.
+    if (byId('cancellation-box')) {
+      const summaryText = byId('cancellation-summary');
+      try {
+        const entries = await api.apiFetch(`/api/reservas/${reservationId}/historico`);
+        const entry = entries.filter(item => item.status_novo === 'CANCELADA').pop();
+        summaryText.textContent = entry
+          ? `Cancelada por ${entry.autor_nome}${entry.autor_perfil ? ` (${api.roleLabel(entry.autor_perfil)})` : ''}. `
+            + `Justificativa: ${entry.motivo || 'não informada'}.`
+          : 'O registro do cancelamento não foi encontrado no histórico.';
+      } catch (failure) {
+        summaryText.textContent = failure.message;
+      }
+    }
+
     const confirm = byId('confirm-button');
     if (confirm) {
       confirm.hidden = session.role !== 'ORGANIZADOR';
@@ -399,9 +423,168 @@
     view.hidden = false;
   }
 
+  /* ---------- cancelar.html: cancelamento justificado ---------- */
+
+  async function initializeCancellationPage() {
+    const form = byId('cancellation-form');
+    if (!form) {
+      return;
+    }
+    const loading = byId('cancellation-loading');
+    const error = byId('cancellation-error');
+    const reason = byId('cancellation-reason');
+    const submit = byId('cancellation-submit');
+
+    function showProblem(text) {
+      loading.hidden = true;
+      form.hidden = true;
+      showMessage(error, text);
+    }
+
+    const reservationId = reservationIdFromUrl();
+    if (!reservationId) {
+      showProblem('Abra esta tela pela reserva que deseja cancelar.');
+      return;
+    }
+    const session = api.requireSession(['ORGANIZADOR', 'PRESTADOR']);
+    if (!session) {
+      return;
+    }
+    if (session.forbidden) {
+      showProblem('Somente organizadores e prestadores podem cancelar reservas.');
+      return;
+    }
+    byId('history-link').href = `historico.html?reserva=${encodeURIComponent(reservationId)}`;
+
+    let reservation;
+    try {
+      reservation = await api.apiFetch(`/api/reservas/${reservationId}`);
+      const service = await api.apiFetch(`/api/servicos/${reservation.id_servico}`, { auth: false });
+      byId('cancellation-context').textContent =
+        `${service.nome} · ${reservation.status} · ${api.roleLabel(session.role)}`;
+    } catch (failure) {
+      showProblem(failure.status === 404
+        ? 'Esta reserva não existe ou não está ligada à sua conta.'
+        : failure.message);
+      return;
+    }
+
+    if (!api.canCancel(session.role, reservation)) {
+      showProblem('Este papel não pode cancelar a reserva no estado atual, ou o período já começou.');
+      return;
+    }
+
+    loading.hidden = true;
+    form.hidden = false;
+    reason.addEventListener('input', () => reason.setCustomValidity(''));
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      error.hidden = true;
+      const justification = reason.value.trim();
+      if (!justification) {
+        reason.setCustomValidity('Informe a justificativa para cancelar a reserva.');
+        reason.reportValidity();
+        return;
+      }
+      submit.disabled = true;
+      submit.textContent = 'Cancelando...';
+      try {
+        await api.apiFetch(`/api/reservas/${reservationId}/cancelamento`, {
+          method: 'POST',
+          body: { motivo: justification }
+        });
+        window.location.href = `cancelada.html?reserva=${encodeURIComponent(reservationId)}`;
+      } catch (failure) {
+        showMessage(error, failure.message);
+        submit.disabled = false;
+        submit.textContent = 'Confirmar cancelamento';
+      }
+    });
+  }
+
+  /* ---------- historico.html: trilha de auditoria ---------- */
+
+  function buildHistoryEntry(entry) {
+    const item = document.createElement('li');
+    item.className = 'history-entry';
+
+    const title = document.createElement('h2');
+    title.textContent = entry.status_anterior
+      ? `${entry.status_anterior} → ${entry.status_novo}`
+      : `Início → ${entry.status_novo}`;
+    item.appendChild(title);
+
+    const details = document.createElement('p');
+    const profile = entry.autor_perfil ? api.roleLabel(entry.autor_perfil) : null;
+    details.textContent = `${dateTime.format(new Date(entry.data_hora))} · Responsável: ${entry.autor_nome}`
+      + (profile ? ` (${profile})` : '');
+    item.appendChild(details);
+
+    if (entry.motivo) {
+      const reason = document.createElement('p');
+      reason.textContent = `Justificativa: ${entry.motivo}`;
+      item.appendChild(reason);
+    }
+    if (entry.observacao) {
+      const note = document.createElement('p');
+      note.textContent = `Observação: ${entry.observacao}`;
+      item.appendChild(note);
+    }
+    return item;
+  }
+
+  async function initializeHistoryPage() {
+    const view = byId('history-view');
+    if (!view) {
+      return;
+    }
+    const loading = byId('history-loading');
+    const problem = byId('history-error');
+
+    function showProblem(text) {
+      loading.hidden = true;
+      view.hidden = true;
+      byId('history-error-message').textContent = text;
+      problem.hidden = false;
+    }
+
+    const reservationId = reservationIdFromUrl();
+    if (!reservationId) {
+      showProblem('Abra o histórico pela lista de reservas.');
+      return;
+    }
+    const session = api.requireSession();
+    if (!session) {
+      return;
+    }
+
+    try {
+      const [reservation, entries] = await Promise.all([
+        api.apiFetch(`/api/reservas/${reservationId}`),
+        api.apiFetch(`/api/reservas/${reservationId}/historico`)
+      ]);
+      const service = await api.apiFetch(`/api/servicos/${reservation.id_servico}`, { auth: false });
+
+      byId('history-context').textContent = `${service.nome} · Estado atual: ${reservation.status}`;
+      byId('history-list').replaceChildren(...entries.map(buildHistoryEntry));
+      const page = STATUS_PAGES[reservation.status];
+      byId('history-back').href = page
+        ? `${page}?reserva=${encodeURIComponent(reservation.id_reserva)}`
+        : 'reservas.html';
+      loading.hidden = true;
+      view.hidden = false;
+    } catch (failure) {
+      showProblem(failure.status === 404
+        ? 'Esta reserva não existe ou não está ligada à sua conta.'
+        : failure.message);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     initializeReservationList();
     initializeAnalysisPage();
     initializeStatePage();
+    initializeCancellationPage();
+    initializeHistoryPage();
   });
 })();
