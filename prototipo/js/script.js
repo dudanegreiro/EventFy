@@ -195,115 +195,11 @@ function showFlowError(message, errorId) {
   error.hidden = false;
 }
 
-function localDateTimeValue(date) {
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return localDate.toISOString().slice(0, 16);
-}
-
-function initializeRequestForm() {
-  const form = document.getElementById('request-form');
-  const error = document.getElementById('request-error');
-  if (!form || !error) {
-    return;
-  }
-
-  const service = selectedService();
-  if (!service) {
-    error.hidden = false;
-    return;
-  }
-
-  const serviceLabel = document.getElementById('selected-service');
-  const serviceBack = document.getElementById('service-back');
-  const serviceId = new URLSearchParams(window.location.search).get('servico');
-  const start = document.getElementById('starts-at');
-  const end = document.getElementById('ends-at');
-  const currentLocalTime = localDateTimeValue(new Date());
-  serviceLabel.textContent = `Serviço selecionado: ${service.name}`;
-  serviceBack.href = `servico.html?servico=${encodeURIComponent(serviceId)}`;
-  start.min = currentLocalTime;
-  end.min = currentLocalTime;
-  form.hidden = false;
-
-  start.addEventListener('change', () => {
-    end.min = start.value || currentLocalTime;
-    end.setCustomValidity('');
-  });
-  end.addEventListener('input', () => end.setCustomValidity(''));
-
-  form.addEventListener('submit', event => {
-    event.preventDefault();
-    if (start.value >= end.value) {
-      end.setCustomValidity('O fim do período deve ser posterior ao início.');
-      end.reportValidity();
-      return;
-    }
-
-    const parameters = new URLSearchParams({
-      servico: new URLSearchParams(window.location.search).get('servico'),
-      evento: document.getElementById('event').value,
-      inicio: start.value,
-      fim: end.value,
-      observacao: document.getElementById('observation').value.trim()
-    });
-    const initialHistory = [{
-      previousStatus: '',
-      newStatus: 'SOLICITADA',
-      changedAt: new Date().toISOString(),
-      actor: 'Organizador',
-      justification: ''
-    }];
-    parameters.set('status', 'SOLICITADA');
-    parameters.set('historico', JSON.stringify(initialHistory));
-    window.location.href = `solicitada.html?${parameters.toString()}`;
-  });
-}
-
 function formatDateTime(value) {
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short'
   }).format(new Date(value));
-}
-
-function initializeRequestSummary() {
-  const summary = document.getElementById('request-summary');
-  const invalidRequest = document.getElementById('invalid-request');
-  if (!summary || !invalidRequest) {
-    return;
-  }
-
-  const parameters = new URLSearchParams(window.location.search);
-  const validationError = validateStateContext(parameters, 'SOLICITADA');
-  const service = selectedService();
-  const eventName = selectedEvent(parameters.get('evento'));
-  const start = parameters.get('inicio');
-  const end = parameters.get('fim');
-  const status = parameters.get('status');
-  const history = readHistory(parameters);
-  if (validationError || !service || !eventName || !start || !end) {
-    document.getElementById('request-error-message').textContent =
-      validationError || 'Os dados da solicitação estão ausentes ou inválidos.';
-    invalidRequest.hidden = false;
-    return;
-  }
-
-  document.getElementById('summary-service').textContent = service.name;
-  document.getElementById('summary-event').textContent = eventName;
-  document.getElementById('summary-start').textContent = formatDateTime(start);
-  document.getElementById('summary-end').textContent = formatDateTime(end);
-  document.getElementById('summary-observation').textContent = parameters.get('observacao') || 'Nenhuma';
-  document.getElementById('summary-status').textContent = status || 'SOLICITADA';
-  summary.hidden = false;
-  invalidRequest.hidden = true;
-
-  const actions = document.getElementById('request-actions');
-  if (actions && status === 'SOLICITADA' && history.entries
-      && history.entries[history.entries.length - 1].newStatus === status) {
-    actions.hidden = false;
-  } else if (actions) {
-    showFlowError(history.error || 'A solicitação não está no estado SOLICITADA.', 'flow-error');
-  }
 }
 
 function initializeTransitionLinks() {
@@ -559,8 +455,6 @@ function initializeOutcomePages() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initializeRequestForm();
-  initializeRequestSummary();
   initializeTransitionLinks();
   initializeProviderDecisionForm();
   initializeHistoryPage();

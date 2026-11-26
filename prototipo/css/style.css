@@ -39,5 +39,6 @@ form select{width:100%;padding:14px;border:1px solid #dfe3ea;border-radius:10px;
 .session-role{padding:6px 10px;border-radius:999px;background:#eeeaff;color:var(--primary);font-size:12px;font-weight:900;letter-spacing:.06em}
 .session-exit{font:inherit;font-weight:700;color:var(--primary);background:none;border:0;padding:6px;cursor:pointer;min-height:44px}
 .session-exit:disabled{opacity:.6;cursor:default}
+.new-event{border:1px solid #dfe3ea;border-radius:12px;background:var(--bg);padding:16px 16px 0;margin-bottom:18px}
 code{background:#eeeaff;padding:2px 6px;border-radius:6px;font-size:13px}
 @media(max-width:520px){header{height:auto;min-height:72px;padding:10px 4%}.brand{font-size:22px}}

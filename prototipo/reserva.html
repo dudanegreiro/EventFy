@@ -10,25 +10,37 @@
   <p class="eyebrow">NOVA SOLICITAÇÃO</p>
   <h1>Solicitar reserva</h1>
   <p id="selected-service" class="selected-service"></p>
-  <p id="request-error" class="form-error" role="alert" hidden>Selecione um serviço válido no catálogo antes de continuar.</p>
+  <p id="availability-hint" class="muted"></p>
+  <p id="request-error" class="form-error" role="alert" hidden></p>
   <form id="request-form" hidden>
-    <label for="event">Evento existente</label>
+    <label for="event">Evento</label>
     <select id="event" name="event" required>
       <option value="">Selecione um evento</option>
-      <option value="aniversario">Festa de aniversário</option>
-      <option value="casamento">Casamento</option>
-      <option value="confraternizacao">Confraternização</option>
     </select>
+    <div id="new-event-fields" class="new-event" role="group" aria-labelledby="new-event-title" hidden>
+      <p id="new-event-title" class="eyebrow">NOVO EVENTO</p>
+      <label for="new-event-name">Nome do evento</label>
+      <input id="new-event-name" type="text" maxlength="160">
+      <label for="new-event-location">Local</label>
+      <input id="new-event-location" type="text" maxlength="200">
+      <label for="new-event-start">Início do evento</label>
+      <input id="new-event-start" type="datetime-local">
+      <label for="new-event-end">Fim do evento</label>
+      <input id="new-event-end" type="datetime-local">
+      <label for="new-event-description">Descrição <span class="muted">(opcional)</span></label>
+      <textarea id="new-event-description"></textarea>
+    </div>
     <label for="starts-at">Início do período</label>
     <input id="starts-at" name="starts-at" type="datetime-local" required>
     <label for="ends-at">Fim do período</label>
     <input id="ends-at" name="ends-at" type="datetime-local" required>
     <label for="observation">Observação <span class="muted">(opcional)</span></label>
     <textarea id="observation" name="observation" placeholder="Conte algum detalhe importante"></textarea>
-    <button class="button" type="submit">Enviar solicitação</button>
+    <button id="request-submit" class="button" type="submit">Enviar solicitação</button>
   </form>
-  <p class="muted">O protótipo valida o período e demonstra o estado inicial da solicitação; não salva dados em um servidor.</p>
 </main>
-<script src="js/script.js"></script>
+<script src="js/api.js"></script>
+<script src="js/sessao.js"></script>
+<script src="js/solicitacao.js"></script>
 </body>
 </html>
