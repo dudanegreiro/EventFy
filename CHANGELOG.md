@@ -28,6 +28,8 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 ### Alterado
 - README e documentação do projeto para registrar a escolha do PostgreSQL no escopo da issue #22.
 - README, arquivo de ambiente e documentação para registrar a API FastAPI e seus comandos locais.
+- README, guia de entrega, changelog e conferência cruzada atualizados para documentar pré-requisitos, instalação, migração, testes, execução, operação e limites da baseline implementada.
+- EVT-22 (#42) — Registro da inspeção formal dos requisitos, com papéis, achados classificados, retrabalho, recheck e rastreabilidade.
 - Documentação institucional, tema e papéis da equipe; arquivos de ambiente e instruções de Git.
 - Guia de navegação do protótipo e documentação das limitações da demonstração estática.
 
