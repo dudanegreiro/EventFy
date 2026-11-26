@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFy — Reservas</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
+<main class="container narrow">
+  <p class="eyebrow" id="list-eyebrow">RESERVAS</p>
+  <h1 id="list-title">Reservas</h1>
+  <a class="button" id="new-reservation" href="catalogo.html" hidden>Nova reserva</a>
+  <p class="muted" id="list-loading" role="status">Carregando reservas...</p>
+  <p class="form-error" id="list-error" role="alert" hidden></p>
+  <ul class="history-list" id="reservation-list"></ul>
+  <p class="empty-state" id="list-empty" role="status" hidden>Nenhuma reserva por aqui ainda. Para criar uma, escolha um serviço no catálogo.</p>
+</main>
+<script src="js/api.js"></script>
+<script src="js/sessao.js"></script>
+<script src="js/reservas.js"></script>
+</body>
+</html>
