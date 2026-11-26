@@ -3,19 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EventFy — Protótipo</title>
+  <title>EventFy — Início</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <main class="hero">
-    <div class="brand">Event<span>Fy</span></div>
-    <p class="tag">Protótipo navegável — Entrega Incremental 6.14</p>
+  <header class="home-header"><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
+  <main class="hero hero-center">
     <h1>Encontre tudo para o seu evento em um só lugar.</h1>
     <p>Explore serviços e estruturas, solicite uma reserva e acompanhe sua contratação.</p>
+    <form class="search-bar" action="catalogo.html" method="get" role="search">
+      <label class="search-field grow">
+        <span class="field-label">Serviço</span>
+        <input name="termo" type="search" placeholder="O que você procura?" maxlength="160">
+      </label>
+      <label class="search-field">
+        <span class="field-label">De</span>
+        <input name="de" type="date">
+      </label>
+      <label class="search-field">
+        <span class="field-label">Até</span>
+        <input name="ate" type="date">
+      </label>
+      <button class="button search-button" type="submit">Pesquisar</button>
+    </form>
+    <p class="muted home-hint">Informe as duas datas para ver só os serviços livres no período.</p>
     <div class="flow-actions">
-      <a class="button" href="catalogo.html">Entrar no catálogo</a>
+      <a class="button secondary" href="catalogo.html">Ver todo o catálogo</a>
       <a class="button secondary" href="entrar.html">Entrar na conta</a>
     </div>
   </main>
+  <script src="js/api.js"></script>
+  <script src="js/sessao.js"></script>
 </body>
 </html>
