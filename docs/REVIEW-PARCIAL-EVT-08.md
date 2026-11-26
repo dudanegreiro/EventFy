@@ -1,6 +1,6 @@
 # EVT-08 - Review parcial executavel
 
-Issue: #28. Baseline: commit `5e15fa1`, merge da PR #94. A tag final deve apontar para o commit deste ajuste depois do merge, e o SHA deve ser registrado antes da demonstracao.
+Issue: #28. Baseline: commit `5e15fa1`, merge da PR #94. A tag `review-parcial-evt08-v2` aponta para o commit desta correcao; registre o SHA antes da demonstracao.
 
 ## Preparacao
 
