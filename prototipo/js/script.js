@@ -195,69 +195,6 @@ function showFlowError(message, errorId) {
   error.hidden = false;
 }
 
-function filterCards() {
-  const search = document.getElementById('search');
-  const category = document.getElementById('category');
-  const cards = document.querySelectorAll('.card');
-  const emptyState = document.getElementById('empty-state');
-
-  if (!search || !category || !emptyState) {
-    return;
-  }
-
-  const query = search.value.trim().toLocaleLowerCase('pt-BR');
-  let visibleCount = 0;
-
-  cards.forEach(card => {
-    const nameMatches = card.dataset.name.toLocaleLowerCase('pt-BR').includes(query);
-    const categoryMatches = !category.value || card.dataset.category === category.value;
-    card.hidden = !(nameMatches && categoryMatches);
-    if (!card.hidden) {
-      visibleCount += 1;
-    }
-  });
-
-  emptyState.hidden = visibleCount > 0;
-}
-
-function initializeCatalog() {
-  const search = document.getElementById('search');
-  const category = document.getElementById('category');
-
-  if (!search || !category) {
-    return;
-  }
-
-  search.addEventListener('input', filterCards);
-  category.addEventListener('change', filterCards);
-  filterCards();
-}
-
-function initializeServiceDetails() {
-  const detail = document.getElementById('service-detail');
-  const notFound = document.getElementById('service-not-found');
-  if (!detail || !notFound) {
-    return;
-  }
-
-  const service = selectedService();
-  if (!service) {
-    notFound.hidden = false;
-    return;
-  }
-
-  document.getElementById('service-image').textContent = service.image;
-  document.getElementById('service-category').textContent = service.category;
-  document.getElementById('service-name').textContent = service.name;
-  document.getElementById('service-description').textContent = service.description;
-  document.getElementById('service-price').textContent = service.price;
-  document.getElementById('service-provider').textContent = service.provider;
-  const serviceId = new URLSearchParams(window.location.search).get('servico');
-  document.getElementById('request-link').href = `reserva.html?servico=${encodeURIComponent(serviceId)}`;
-  detail.hidden = false;
-  notFound.hidden = true;
-}
-
 function localDateTimeValue(date) {
   const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return localDate.toISOString().slice(0, 16);
@@ -622,8 +559,6 @@ function initializeOutcomePages() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initializeCatalog();
-  initializeServiceDetails();
   initializeRequestForm();
   initializeRequestSummary();
   initializeTransitionLinks();
