@@ -6,7 +6,7 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ---
 
-## [Unreleased]
+## - EVT-07 (#27) — Login, sessão e catálogo de serviços da interface lidos da API (`prototipo/js/api.js`, `entrar.html`, `catalogo.html`).
 
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 

@@ -6,6 +6,9 @@
 </head>
 <body>
 <header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">← Catálogo</a></header>
+<main class="container narrow" id="service-loading">
+  <p class="muted" role="status">Carregando serviço...</p>
+</main>
 <main class="container detail" id="service-detail" hidden>
   <div class="big-thumb" id="service-image" aria-hidden="true"></div>
   <section>
@@ -14,17 +17,19 @@
     <p id="service-description"></p>
     <div class="price"><span id="service-price"></span> <small>/ evento</small></div>
     <div class="info-grid">
-      <div><b>Disponibilidade</b><br>Consultar data na solicitação</div>
-      <div><b>Fornecedor</b><br><span id="service-provider"></span></div>
+      <div><b>Disponibilidade</b><br><span id="service-availability"></span></div>
+      <div><b>Localização</b><br><span id="service-location"></span></div>
     </div>
     <a class="button" id="request-link" href="reserva.html">Solicitar reserva</a>
   </section>
 </main>
-<main class="container narrow" id="service-not-found">
+<main class="container narrow" id="service-not-found" hidden>
   <h1>Serviço não encontrado</h1>
-  <p>Volte ao catálogo e escolha um serviço para consultar os detalhes.</p>
+  <p id="service-error-message">Volte ao catálogo e escolha um serviço para consultar os detalhes.</p>
   <a class="button" href="catalogo.html">Voltar ao catálogo</a>
 </main>
-<script src="js/script.js"></script>
+<script src="js/api.js"></script>
+<script src="js/sessao.js"></script>
+<script src="js/catalogo.js"></script>
 </body>
 </html>
