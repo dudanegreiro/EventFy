@@ -23,6 +23,13 @@
     const session = api.getSession();
 
     if (session) {
+      if (session.role === 'ORGANIZADOR' || session.role === 'PRESTADOR') {
+        const reservations = document.createElement('a');
+        reservations.href = 'reservas.html';
+        reservations.textContent = session.role === 'PRESTADOR' ? 'Solicitações' : 'Minhas reservas';
+        links.appendChild(reservations);
+      }
+
       const who = document.createElement('span');
       who.className = 'session-role';
       who.textContent = api.roleLabel(session.role);

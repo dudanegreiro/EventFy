@@ -225,61 +225,6 @@ function initializeTransitionLinks() {
   });
 }
 
-function initializeProviderDecisionForm() {
-  const form = document.getElementById('provider-decision-form');
-  if (!form) {
-    return;
-  }
-
-  const parameters = new URLSearchParams(window.location.search);
-  const history = readHistory(parameters);
-  if (validateStateContext(parameters, 'EM_ANALISE') || !history.entries) {
-    return;
-  }
-
-  form.hidden = false;
-  const reason = document.getElementById('refusal-reason-input');
-  reason.addEventListener('input', () => reason.setCustomValidity(''));
-  form.querySelectorAll('[data-decision]').forEach(button => {
-    button.addEventListener('click', () => {
-      form.dataset.decision = button.dataset.decision;
-    });
-  });
-
-  form.addEventListener('submit', event => {
-    event.preventDefault();
-    const decision = form.dataset.decision;
-    const justification = reason.value.trim();
-    if (!decision) {
-      showFlowError('Escolha aprovar ou recusar a solicitação.');
-      return;
-    }
-    if (decision === 'RECUSADA' && !justification) {
-      reason.setCustomValidity('Informe a justificativa para recusar a solicitação.');
-      reason.reportValidity();
-      return;
-    }
-
-    const nextParameters = new URLSearchParams(window.location.search);
-    const transitionError = appendTransition(
-      nextParameters,
-      decision,
-      'Prestador',
-      decision === 'RECUSADA' ? justification : ''
-    );
-    if (transitionError) {
-      showFlowError(transitionError);
-      return;
-    }
-    if (decision === 'RECUSADA') {
-      nextParameters.set('justificativa', justification);
-    }
-
-    const targetPage = decision === 'APROVADA' ? 'aprovada.html' : 'recusada.html';
-    window.location.href = `${targetPage}?${nextParameters.toString()}`;
-  });
-}
-
 function initializeHistoryPage() {
   const historyView = document.getElementById('history-view');
   if (!historyView) {
@@ -456,7 +401,6 @@ function initializeOutcomePages() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initializeTransitionLinks();
-  initializeProviderDecisionForm();
   initializeHistoryPage();
   initializeContextLinks();
   initializeCancellationForm();
