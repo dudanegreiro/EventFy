@@ -12,9 +12,22 @@
     <div class="section-title">
       <div><p class="eyebrow">CATÁLOGO</p><h1>Serviços para seu evento</h1></div>
     </div>
+    <form class="search-bar search-bar-page" id="catalog-search" role="search">
+      <label class="search-field grow">
+        <span class="field-label">Serviço</span>
+        <input id="search" type="search" placeholder="O que você procura?" maxlength="160">
+      </label>
+      <label class="search-field">
+        <span class="field-label">De</span>
+        <input id="date-start" type="date">
+      </label>
+      <label class="search-field">
+        <span class="field-label">Até</span>
+        <input id="date-end" type="date">
+      </label>
+      <button class="button search-button" type="submit">Pesquisar</button>
+    </form>
     <div class="filters">
-      <label class="visually-hidden" for="search">Buscar serviço</label>
-      <input id="search" type="search" placeholder="Buscar serviço..." aria-label="Buscar serviço">
       <label class="visually-hidden" for="category">Filtrar por categoria</label>
       <select id="category">
         <option value="">Todas as categorias</option>
@@ -25,10 +38,6 @@
       <input id="price-max" type="number" min="0" step="0.01" placeholder="Preço máximo">
       <label class="visually-hidden" for="location">Localização</label>
       <input id="location" type="search" placeholder="Cidade ou região">
-      <label class="visually-hidden" for="date-start">Disponível a partir de</label>
-      <input id="date-start" type="date" aria-label="Disponível a partir de">
-      <label class="visually-hidden" for="date-end">Disponível até</label>
-      <input id="date-end" type="date" aria-label="Disponível até">
     </div>
     <p class="form-error" id="filter-error" role="alert" hidden></p>
     <p class="form-error" id="catalog-error" role="alert" hidden></p>

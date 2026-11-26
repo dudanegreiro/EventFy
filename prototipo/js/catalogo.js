@@ -10,6 +10,9 @@
 (function () {
   const api = window.EventFyApi;
   const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  const currencyShort = new Intl.NumberFormat('pt-BR', {
+    style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 2
+  });
   const dateTime = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   const ICONS = [
     ['som', '🔊'], ['ilumin', '🔊'], ['espaco', '🏛️'],
@@ -42,42 +45,59 @@
 
   /* ---------- Catálogo ---------- */
 
+  /* Preço do cartão sem os centavos quando o valor é inteiro (R$ 2.500). */
+  function formatPriceTag(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? currencyShort.format(number) : 'A consultar';
+  }
+
   function buildCard(service) {
     const card = document.createElement('article');
-    card.className = 'card';
+    card.className = 'card card-service';
 
+    // Faixa superior: categoria à esquerda e preço em destaque à direita.
     const thumb = document.createElement('div');
     thumb.className = 'thumb';
-    thumb.textContent = iconFor(service.categoria);
+    const icon = document.createElement('span');
+    icon.className = 'thumb-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = iconFor(service.categoria);
+    thumb.appendChild(icon);
+
+    const pill = document.createElement('span');
+    pill.className = 'pill thumb-pill';
+    pill.textContent = service.categoria;
+    thumb.appendChild(pill);
+
+    const tag = document.createElement('div');
+    tag.className = 'price-tag';
+    const amount = document.createElement('strong');
+    amount.textContent = formatPriceTag(service.preco);
+    const unit = document.createElement('small');
+    unit.textContent = '/evento';
+    tag.append(amount, unit);
+    thumb.appendChild(tag);
     card.appendChild(thumb);
 
     const body = document.createElement('div');
     body.className = 'card-body';
 
-    const pill = document.createElement('span');
-    pill.className = 'pill';
-    pill.textContent = service.categoria;
-    body.appendChild(pill);
-
     const title = document.createElement('h2');
     title.textContent = service.nome;
     body.appendChild(title);
 
-    const description = document.createElement('p');
-    description.textContent = service.descricao || 'Sem descrição informada.';
-    body.appendChild(description);
-
     const place = document.createElement('p');
-    place.className = 'muted';
+    place.className = 'muted card-place';
     place.textContent = service.localizacao || 'Local não informado';
     body.appendChild(place);
 
-    const price = document.createElement('strong');
-    price.textContent = `${formatPrice(service.preco)} / evento`;
-    body.appendChild(price);
+    const description = document.createElement('p');
+    description.className = 'card-description';
+    description.textContent = service.descricao || 'Sem descrição informada.';
+    body.appendChild(description);
 
     const link = document.createElement('a');
-    link.className = 'button small';
+    link.className = 'button small secondary';
     link.href = `servico.html?servico=${encodeURIComponent(service.id_servico)}`;
     link.textContent = 'Ver detalhes';
     body.appendChild(link);
@@ -198,6 +218,24 @@
     ['category', 'date-start', 'date-end'].forEach(id => {
       byId(id).addEventListener('change', loadServices);
     });
+
+    // A barra de busca grande é um formulário; Enter ou "Pesquisar" busca sem recarregar a página.
+    byId('catalog-search').addEventListener('submit', event => {
+      event.preventDefault();
+      window.clearTimeout(timer);
+      loadServices();
+    });
+
+    // A página inicial envia a busca por endereço: catalogo.html?termo=...&de=AAAA-MM-DD&ate=AAAA-MM-DD
+    const params = new URLSearchParams(window.location.search);
+    const isDay = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '');
+    byId('search').value = (params.get('termo') || '').slice(0, 160);
+    if (isDay(params.get('de'))) {
+      byId('date-start').value = params.get('de');
+    }
+    if (isDay(params.get('ate'))) {
+      byId('date-end').value = params.get('ate');
+    }
 
     loadCategories();
     loadServices();
