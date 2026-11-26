@@ -9,19 +9,26 @@
 <body>
 <header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
 <main class="container narrow">
+  <p class="muted" id="history-loading" role="status">Carregando o histórico...</p>
   <section id="history-view" hidden>
     <p class="eyebrow">TRILHA DA SOLICITAÇÃO</p>
     <h1>Histórico de alterações</h1>
     <p id="history-context" class="selected-service"></p>
     <ol class="history-list" id="history-list"></ol>
-    <p class="muted">Demonstração local: os registros desta trilha são transportados pela URL e não constituem auditoria persistida.</p>
+    <p class="muted">Cada mudança de estado é registrada pelo servidor, com data, hora e responsável, e os registros não podem ser alterados nem apagados.</p>
+    <nav class="flow-actions">
+      <a class="text-link" id="history-back" href="reservas.html">Voltar à reserva</a>
+      <a class="text-link" href="reservas.html">Todas as reservas</a>
+    </nav>
   </section>
-  <section id="history-error" class="form-error" role="alert">
+  <section id="history-error" role="alert" hidden>
     <h1>Histórico indisponível</h1>
-    <p id="history-error-message">Abra o histórico pelo fluxo de uma solicitação para carregar seus dados.</p>
+    <p id="history-error-message"></p>
+    <a class="button" href="reservas.html">Voltar às reservas</a>
   </section>
-  <a class="button" href="catalogo.html">Voltar ao catálogo</a>
 </main>
-<script src="js/script.js"></script>
+<script src="js/api.js"></script>
+<script src="js/sessao.js"></script>
+<script src="js/reservas.js"></script>
 </body>
 </html>

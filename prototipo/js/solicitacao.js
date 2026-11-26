@@ -281,6 +281,9 @@
       byId('summary-observation').textContent = reservation.observacao || 'Nenhuma';
       byId('summary-status').textContent = reservation.status;
       byId('history-link').href = `historico.html?reserva=${encodeURIComponent(reservation.id_reserva)}`;
+      const cancel = byId('cancel-link');
+      cancel.href = `cancelar.html?reserva=${encodeURIComponent(reservation.id_reserva)}`;
+      cancel.hidden = !api.canCancel(session.role, reservation);
       byId('summary-loading').hidden = true;
       summary.hidden = false;
       invalid.hidden = true;

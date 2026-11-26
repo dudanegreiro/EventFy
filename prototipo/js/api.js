@@ -227,8 +227,26 @@
     return session;
   }
 
+  /*
+   * Estados em que cada papel pode cancelar (RF14 e RN09). O servidor aplica a
+   * regra de verdade, inclusive a janela antes do início do evento; aqui ela só
+   * decide se o botão "Cancelar reserva" deve aparecer.
+   */
+  const CANCELLABLE_STATES = {
+    ORGANIZADOR: ['SOLICITADA', 'EM_ANALISE', 'APROVADA', 'CONFIRMADA'],
+    PRESTADOR: ['CONFIRMADA']
+  };
+
+  function canCancel(role, reservation) {
+    const states = CANCELLABLE_STATES[role];
+    return Boolean(states)
+      && states.includes(reservation.status)
+      && new Date(reservation.data_inicio) > new Date();
+  }
+
   window.EventFyApi = {
     API_BASE,
+    canCancel,
     ApiError,
     apiFetch,
     login,
