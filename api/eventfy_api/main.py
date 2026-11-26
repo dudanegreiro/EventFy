@@ -502,7 +502,7 @@ def update_service(
     user: dict[str, Any] = Depends(require_role("PRESTADOR")),
     connection: psycopg.Connection = Depends(get_connection),
 ) -> dict[str, Any]:
-    service = _owned_service(connection, service_id, user)
+    _owned_service(connection, service_id, user)
     changes = request.model_dump(exclude_unset=True)
     if (
         {"preco", "localizacao"}.intersection(changes)
