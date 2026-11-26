@@ -15,7 +15,7 @@ pip install -r requirements-dev.txt
 uvicorn eventfy_api.main:app --app-dir api --reload
 ```
 
-O health check fica em `http://127.0.0.1:8000/api/health`. As contas ficticias e suas credenciais locais estao descritas em [`DATABASE.md`](./DATABASE.md).
+O health check fica em `http://127.0.0.1:8000/api/health` e retorna situação da aplicação, versão (`VERSAO_APP`), ambiente (`AMBIENTE`) e conectividade real com o PostgreSQL (`200` com `status: "ok"` ou `503` com `status: "degraded"`). Todas as respostas incluem o cabeçalho `X-Request-ID`, e os logs da aplicação são emitidos em JSON estruturado (`timestamp`, `component`, `level`, `request_id`, `message`) sem senhas, tokens ou dados pessoais, marcando erros críticos com `"alert": true`. As contas ficticias e suas credenciais locais estao descritas em [`DATABASE.md`](./DATABASE.md).
 
 Para desenvolvimento local, a API aceita chamadas do frontend servido em `localhost` ou `127.0.0.1`, nas portas `5500` (servidor estatico) e `5173` (Vite). Se o frontend usar outra origem, ajuste a lista `allow_origins` do `CORSMiddleware` em `api/eventfy_api/main.py` antes de iniciar a API.
 
