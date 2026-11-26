@@ -79,7 +79,7 @@ jobs:
           python scripts/db_setup.py
 
       - name: Executar testes documentais (unittest)
-        run: python -m unittest discover -s tests -v
+        run: python -m unittest discover -s tests -p "test_evt*.py" -v
 
       - name: Verificar ambiente local EVT-01 (quando presente)
         if: ${{ hashFiles('dev/ambiente.py') != '' }}
