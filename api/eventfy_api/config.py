@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     chave_secreta_jwt: SecretStr
     duracao_token_minutos: int = 30
     local_dos_arquivos: Path = Path("./uploads")
+    versao_app: str = "0.2.0"
+    ambiente: str = "desenvolvimento"
+    nivel_log: str = "INFO"
 
     model_config = SettingsConfigDict(
         env_file=".env",

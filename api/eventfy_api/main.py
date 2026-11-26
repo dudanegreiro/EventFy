@@ -1,7 +1,9 @@
 import io
+import logging
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 from uuid import UUID, uuid4
 import zipfile
@@ -16,6 +18,12 @@ from psycopg.errors import ExclusionViolation, ForeignKeyViolation, UniqueViolat
 from eventfy_api.config import Settings, get_settings
 from eventfy_api.database import get_connection
 from eventfy_api.errors import ApiError, error_response
+from eventfy_api.observability import (
+    REQUEST_ID_CTX,
+    configure_logging,
+    log_critical_alert,
+    normalize_request_id,
+)
 from eventfy_api.schemas import (
     AvailabilityCreate,
     CancellationResponse,
@@ -40,9 +48,13 @@ from eventfy_api.schemas import (
 )
 from eventfy_api.security import create_access_token, get_current_user, require_role
 
+configure_logging()
+http_logger = logging.getLogger("eventfy.http")
+health_logger = logging.getLogger("eventfy.health")
+
 app = FastAPI(
     title="EventFy API",
-    version="0.1.0",
+    version="0.2.0",
     description="API REST para catalogo, eventos e fluxo principal de reservas.",
 )
 app.add_middleware(
@@ -57,6 +69,47 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def observability_middleware(request: Request, call_next):
+    request_id = normalize_request_id(
+        request.headers.get("X-Request-ID"), uuid4().hex
+    )
+    token = REQUEST_ID_CTX.set(request_id)
+    started = perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        log_critical_alert(
+            http_logger,
+            event="unhandled_exception",
+            message=f"Erro critico em {request.method} {request.url.path}.",
+            error_type=type(exc).__name__,
+            error_code="INTERNAL_ERROR",
+        )
+        raise
+    finally:
+        REQUEST_ID_CTX.reset(token)
+
+    duration_ms = round((perf_counter() - started) * 1000, 2)
+    response.headers["X-Request-ID"] = request_id
+    extra = {
+        "event": "http_request",
+        "request_id": request_id,
+        "method": request.method,
+        "path": request.url.path,
+        "status_code": response.status_code,
+        "duration_ms": duration_ms,
+    }
+    if response.status_code >= 500:
+        extra["alert"] = True
+        http_logger.error("Requisicao finalizada com erro de servidor.", extra=extra)
+    elif response.status_code >= 400:
+        http_logger.warning("Requisicao recusada ou invalida.", extra=extra)
+    else:
+        http_logger.info("Requisicao processada.", extra=extra)
+    return response
 
 MAX_ATTACHMENT_BYTES = 10_000_000
 ATTACHMENT_TYPES = {
@@ -103,9 +156,60 @@ async def handle_validation_error(
     )
 
 
+@app.exception_handler(Exception)
+async def handle_unexpected_error(
+    request: Request,
+    exception: Exception,
+) -> JSONResponse:
+    log_critical_alert(
+        http_logger,
+        event="unhandled_exception",
+        message=f"Erro interno nao tratado em {request.method} {request.url.path}.",
+        error_type=type(exception).__name__,
+        error_code="INTERNAL_ERROR",
+    )
+    return JSONResponse(
+        status_code=500,
+        content=error_response(
+            "INTERNAL_ERROR",
+            "Erro interno inesperado.",
+        ),
+    )
+
+
 @app.get("/api/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health(
+    settings: Settings = Depends(get_settings),
+) -> JSONResponse:
+    try:
+        with psycopg.connect(settings.url_do_banco, connect_timeout=3) as conn:
+            conn.execute("SELECT 1").fetchone()
+    except psycopg.Error as exc:
+        log_critical_alert(
+            health_logger,
+            event="database_unavailable",
+            message="Falha de conectividade com o PostgreSQL no health check.",
+            error_type=type(exc).__name__,
+            error_code="DATABASE_UNAVAILABLE",
+        )
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "degraded",
+                "version": settings.versao_app,
+                "environment": settings.ambiente,
+                "database": "unavailable",
+            },
+        )
+    return JSONResponse(
+        status_code=200,
+        content={
+            "status": "ok",
+            "version": settings.versao_app,
+            "environment": settings.ambiente,
+            "database": "ok",
+        },
+    )
 
 
 @app.post("/api/auth/login", response_model=TokenResponse)

@@ -21,7 +21,13 @@ from eventfy_api.config import Settings
 
 
 def test_health_and_public_catalog(client: TestClient) -> None:
-    assert client.get("/api/health").json() == {"status": "ok"}
+    health = client.get("/api/health")
+    assert health.status_code == 200
+    health_body = health.json()
+    assert health_body["status"] == "ok"
+    assert health_body["database"] == "ok"
+    assert health_body["version"]
+    assert health.headers["X-Request-ID"]
 
     response = client.get("/api/servicos", params={"categoria": "alimentacao"})
 
