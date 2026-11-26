@@ -131,3 +131,11 @@ O ambiente local precisa apenas de Python e PostgreSQL. Na topologia de implanta
 **Decisão.** A API emite JWT Bearer assinado com HS256, com validade inicial de 30 minutos. O segredo vem de `CHAVE_SECRETA_JWT`. O identificador do token corresponde a uma sessão revogável no banco. Em rotas protegidas, a API valida assinatura e prazo, consulta a sessão e o usuário ativo e confere papel e propriedade do recurso. Senhas usam bcrypt com salt e custo 12 via pgcrypto (RNF-01 e RNF-07).
 
 **Motivo e consequência.** Um token aceito apenas pela assinatura continuaria válido após o logout até expirar. A consulta da sessão permite revogação imediata ao custo de uma leitura por requisição protegida. Um provedor de identidade externo acrescentaria configuração e dependência de rede à demonstração acadêmica. A equipe fica responsável por proteger o segredo e transportar as credenciais por HTTPS na implantação.
+
+### ADR-05 · Plataforma de implantação PaaS (Render)
+
+**Decisão.** Implantar o EventFy no provedor PaaS **Render** (`https://render.com`), utilizando Web Service (FastAPI/Uvicorn), PostgreSQL 17 gerenciado em rede privada (com `btree_gist` e `pgcrypto`), Persistent Disk para `LOCAL_DOS_ARQUIVOS`, Cron Jobs para rotinas agendadas (`EVT-21`/`EVT-38`) e grupos de variáveis isolados por ambiente (`homologacao` e `producao`). URLs convencionadas: `https://eventfy-api.onrender.com` (produção) e `https://eventfy-homolog.onrender.com` (homologação), detalhadas em [`docs/PLATAFORMA-IMPLANTACAO.md`](./docs/PLATAFORMA-IMPLANTACAO.md).
+
+**Alternativas descartadas.** VPS/IaaS manual (custo alto de manutenção de SO, Nginx, TLS e backup para equipe de 5 pessoas), Serverless puro/Vercel (sem disco persistente e atrito com conexões transacionais PostgreSQL), Fly.io (maior complexidade operacional do banco) e Railway (cobrança variável por uso contínuo e menor padronização para disco + cron).
+
+**Motivo e consequência.** O PaaS reduz esforço de operação sem introduzir código proprietário na aplicação. Como consequências aceitas, o uso de disco persistente limita o serviço a uma instância (suficiente para o escopo atual; escalabilidade futura exigirá Object Storage S3-compatível) e planos gratuitos possuem hibernação por inatividade (mitigada por plano contínuo ou aquecimento prévio via `/api/health` na demonstração).

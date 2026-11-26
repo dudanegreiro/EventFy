@@ -13,6 +13,7 @@ Baseline desta atualizacao: `5e15fa1`, merge da PR #94, com API FastAPI, autenti
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 
 ### Adicionado
+- EVT-34 (#54) — Escolha da plataforma de implantação PaaS (Render), matriz comparativa de alternativas descartadas, cobertura de banco/storage/jobs/variáveis, URLs e `ADR-05` registrados em `docs/PLATAFORMA-IMPLANTACAO.md` e `ARQUITETURA.md`.
 - EVT-23 (#43) — `TESTES.md` com a estratégia de testes em quatro níveis, 31 casos nas seis áreas críticas (agenda, autenticação, autorização, estados, anexos e auditoria), omissões deliberadas e dúvidas em aberto.
 - EVT-24 (#44) — Roteiro de validação externa com tarefas neutras, registro de observações, rastreabilidade, retorno ao backlog e testes automatizados da estrutura documental.
 - EVT-08 (#28) — Script para restaurar fixtures isoladas e roteiro rastreável da review parcial, com baseline anotada e plano de falha.
