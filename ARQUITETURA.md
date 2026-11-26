@@ -104,7 +104,7 @@ flowchart LR
     end
 ```
 
-O ambiente local precisa apenas de Python e PostgreSQL. Na topologia de implantação, a interface e a API compartilham uma origem pública e o banco recebe conexões internas. O agendador executa o código de domínio do backend. A escolha do provedor e a configuração de backup ficam para as entregas de operação. [Ambientes · EVT-33](https://github.com/dudanegreiro/EventFy/issues/53) · [Plataforma · EVT-34](https://github.com/dudanegreiro/EventFy/issues/54)
+O ambiente local precisa apenas de Python e PostgreSQL. Na topologia de implantação, a interface e a API compartilham uma origem pública e o banco recebe conexões internas. O agendador executa o código de domínio do backend. A separação entre desenvolvimento, homologação e produção está documentada em [`docs/AMBIENTES.md`](./docs/AMBIENTES.md); a escolha do provedor e a configuração de backup ficam nas entregas correspondentes. [Ambientes · EVT-33](./docs/AMBIENTES.md) · [Plataforma · EVT-34](https://github.com/dudanegreiro/EventFy/issues/54)
 
 ## Registro das decisões arquiteturais
 
