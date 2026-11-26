@@ -45,6 +45,7 @@ erDiagram
         varchar categoria
         text descricao
         decimal preco
+        varchar localizacao
         boolean ativo
         datetime criado_em
         datetime atualizado_em

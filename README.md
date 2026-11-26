@@ -127,6 +127,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 | Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
 | Validação com usuário externo | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro, registro de observações, rastreabilidade e retorno ao backlog |
 | Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas e dados fictícios de demonstração |
+| API REST | [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato dos endpoints |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
 | Tema | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e alinhamento com a disciplina |
@@ -149,7 +150,7 @@ O frontend usa uma API REST/JSON. O backend segue um monólito modular para que 
 
 ## 🛠️ Tecnologias
 
-O ambiente local usa HTML, CSS e JavaScript nativos, Python 3.14, FastAPI, Uvicorn, Psycopg 3 e PostgreSQL 17. As versões das dependências do ambiente estão em [dev/requirements.txt](./dev/requirements.txt). As escolhas para autenticação e testes constam na [arquitetura](./ARQUITETURA.md).
+O ambiente local usa HTML, CSS e JavaScript nativos, Python 3.14, FastAPI, Uvicorn, Psycopg 3 e PostgreSQL 17. As versões das dependências do ambiente estão em [requirements-dev.txt](./requirements-dev.txt). As escolhas para autenticação e testes constam na [arquitetura](./ARQUITETURA.md).
 
 ---
 
@@ -178,7 +179,7 @@ Na raiz do projeto, prepare o ambiente conforme seu sistema.
 
 ```powershell
 py -3.14 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r dev/requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 Copy-Item .env.example .env
 ```
 
@@ -186,20 +187,20 @@ Copy-Item .env.example .env
 
 ```sh
 python3.14 -m venv .venv
-.venv/bin/python -m pip install -r dev/requirements.txt
+.venv/bin/python -m pip install -r requirements-dev.txt
 cp .env.example .env
 ```
 
-Em `.env`, substitua `SUBSTITUA_LOCALMENTE` pela senha de `eventfy_dev` em `URL_DO_BANCO`. Codifique caracteres reservados da senha na URL (por exemplo, `@` vira `%40`). Guarde o arquivo apenas na sua máquina.
+Em `.env`, substitua `SUBSTITUA_LOCALMENTE` pela senha de `eventfy_dev` em `URL_DO_BANCO`, gere um segredo aleatório com pelo menos 32 caracteres para `CHAVE_SECRETA_JWT` e configure `LOCAL_DOS_ARQUIVOS` se necessário. Codifique caracteres reservados da senha na URL (por exemplo, `@` vira `%40`). Guarde o arquivo apenas na sua máquina.
 
 | Sistema | Comando para iniciar na raiz do projeto |
 |---|---|
-| Windows | `.\.venv\Scripts\python.exe -m uvicorn ambiente:app --app-dir dev --env-file .env` |
-| Linux ou macOS | `.venv/bin/python -m uvicorn ambiente:app --app-dir dev --env-file .env` |
+| Windows | `.\.venv\Scripts\python.exe -m uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` |
+| Linux ou macOS | `.venv/bin/python -m uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` |
 
-Abra o [protótipo](http://127.0.0.1:8000/) e clique em **Entrar no catálogo**. Para verificar a conexão real da API com o banco, abra a [verificação do ambiente](http://127.0.0.1:8000/api/ambiente). A resposta deve conter `"aplicacao": "EventFy"` e a versão `17.x` do PostgreSQL. Um HTTP 503 nessa rota indica que a configuração ou o banco precisa de atenção.
+O health check da API fica em `http://127.0.0.1:8000/api/health`; a documentação interativa fica em `http://127.0.0.1:8000/docs`. Para percorrer o protótipo estático, siga [`prototipo/README.md`](./prototipo/README.md) e abra `prototipo/index.html` em um navegador.
 
-Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar o PostgreSQL e repetir o comando do Uvicorn. As telas demonstram o fluxo com dados do protótipo. O esquema e os dados de demonstração estão descritos em [Banco de dados local](./docs/DATABASE.md); as rotas de reserva são entregas da EVT-03.
+Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar o PostgreSQL e repetir o comando do Uvicorn. O esquema, as migrações e as contas fictícias estão descritos em [Banco de dados local](./docs/DATABASE.md); as rotas e credenciais de demonstração estão em [API REST](./docs/API.md).
 
 ---
 
@@ -209,6 +210,7 @@ Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar 
 |---|---|
 | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro e relatório de validação do fluxo principal com usuário externo |
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
+| [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato da API REST |
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
 | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos, backlog ordenado e critérios |
 | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e verificação |

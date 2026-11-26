@@ -16,12 +16,18 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - EVT-01 (#21) — Quatro vistas arquiteturais, decisões de banco, anexos e autenticação e ambiente local com verificação da conexão ao PostgreSQL.
 - Esquema PostgreSQL 17, migrações versionadas, dados fictícios e script PowerShell para preparar o banco local.
 - Documentação de configuração e acesso ao banco pelo pgAdmin em `docs/DATABASE.md`.
+- API REST do fluxo principal com FastAPI, Psycopg 3, autenticação Bearer, catálogo, eventos, reservas e histórico auditável.
+- Cadastro de organizadores e prestadores, hash bcrypt de senhas e sessões JWT revogáveis com autorização por papel e titularidade.
+- Catálogo de serviços com filtros, gerenciamento do prestador, disponibilidade e anexos validados.
+- Cancelamento justificado, expiração de reservas em 48 horas, liberação vinculada de agenda e proteção transacional contra confirmações concorrentes.
+- Contrato da API e testes de integração PostgreSQL em `docs/API.md` e `tests/`.
 - Governança do processo, rastreabilidade de Issues/PRs e orientações de configuração do repositório entregues pela Pessoa 1.
 - Fluxo navegável do protótipo para solicitação, análise, aprovação, recusa, confirmação, histórico e cancelamento justificado.
 - `ITERACOES.md` com o replanejamento até 03/12, o plano da Iteração 2 e a retrospectiva da Iteração 1, com a fonte de cada dado (EVT-11, #31, parcial).
 
 ### Alterado
 - README e documentação do projeto para registrar a escolha do PostgreSQL no escopo da issue #22.
+- README, arquivo de ambiente e documentação para registrar a API FastAPI e seus comandos locais.
 - Documentação institucional, tema e papéis da equipe; arquivos de ambiente e instruções de Git.
 - Guia de navegação do protótipo e documentação das limitações da demonstração estática.
 
