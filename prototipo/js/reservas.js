@@ -1,13 +1,15 @@
 'use strict';
 
 /*
- * Lista de reservas e análise pelo prestador.
+ * Lista de reservas, análise pelo prestador e páginas de estado.
  *
  * reservas.html: o organizador vê as próprias reservas e o prestador vê as
  * solicitações recebidas. em-analise.html: o prestador inicia a análise e
- * aprova ou recusa. O servidor decide o que cada papel pode fazer e em quais
- * estados; a página só oferece os botões coerentes com o estado e o papel e
- * mostra a mensagem de erro da API quando a operação é recusada.
+ * aprova ou recusa. aprovada.html, confirmada.html e recusada.html: mostram a
+ * reserva naquele estado; na aprovada, o organizador confirma a contratação.
+ * O servidor decide o que cada papel pode fazer e em quais estados; a página
+ * só oferece os botões coerentes com o estado e o papel e mostra a mensagem
+ * de erro da API quando a operação é recusada.
  */
 (function () {
   const api = window.EventFyApi;
@@ -51,6 +53,25 @@
       }
     }));
     return services;
+  }
+
+  /*
+   * Nome do evento. Só o organizador pode listar eventos na API; para o
+   * prestador, a reserva traz apenas o número do evento.
+   */
+  async function eventLabel(reservation, role) {
+    if (role === 'ORGANIZADOR') {
+      try {
+        const events = await api.apiFetch('/api/eventos');
+        const event = events.find(item => item.id_evento === reservation.id_evento);
+        if (event) {
+          return event.nome;
+        }
+      } catch (error) {
+        // Cai no número do evento.
+      }
+    }
+    return `Evento ${reservation.id_evento}`;
   }
 
   /* ---------- reservas.html: lista ---------- */
@@ -194,9 +215,11 @@
     const result = byId('decision-result');
     const isProvider = session.role === 'PRESTADOR';
 
+    let eventName = '';
+
     function showReservation(reservation, service) {
       byId('summary-service').textContent = service ? service.nome : `Serviço ${reservation.id_servico}`;
-      byId('summary-event').textContent = `Evento ${reservation.id_evento}`;
+      byId('summary-event').textContent = eventName;
       byId('summary-start').textContent = dateTime.format(new Date(reservation.data_inicio));
       byId('summary-end').textContent = dateTime.format(new Date(reservation.data_fim));
       byId('summary-observation').textContent = reservation.observacao || 'Nenhuma';
@@ -214,6 +237,7 @@
     try {
       reservation = await api.apiFetch(`/api/reservas/${reservationId}`);
       service = await api.apiFetch(`/api/servicos/${reservation.id_servico}`, { auth: false });
+      eventName = await eventLabel(reservation, session.role);
     } catch (failure) {
       showProblem(failure.status === 404
         ? 'Esta reserva não existe ou não está ligada à sua conta.'
@@ -289,8 +313,95 @@
     });
   }
 
+  /* ---------- aprovada.html, confirmada.html, recusada.html ---------- */
+
+  async function initializeStatePage() {
+    const view = byId('state-view');
+    if (!view) {
+      return;
+    }
+    const expected = document.body.dataset.expectedStatus;
+    const loading = byId('state-loading');
+    const problem = byId('state-error');
+
+    function showProblem(text) {
+      loading.hidden = true;
+      view.hidden = true;
+      byId('state-error-message').textContent = text;
+      problem.hidden = false;
+    }
+
+    const reservationId = reservationIdFromUrl();
+    if (!reservationId) {
+      showProblem('Abra esta tela pela lista de reservas.');
+      return;
+    }
+    const session = api.requireSession();
+    if (!session) {
+      return;
+    }
+
+    let reservation;
+    let service;
+    let eventName;
+    try {
+      reservation = await api.apiFetch(`/api/reservas/${reservationId}`);
+      service = await api.apiFetch(`/api/servicos/${reservation.id_servico}`, { auth: false });
+      eventName = await eventLabel(reservation, session.role);
+    } catch (failure) {
+      showProblem(failure.status === 404
+        ? 'Esta reserva não existe ou não está ligada à sua conta.'
+        : failure.message);
+      return;
+    }
+
+    if (reservation.status !== expected) {
+      const page = STATUS_PAGES[reservation.status];
+      showProblem(`Esta reserva está no estado ${reservation.status}, e não em ${expected}. `
+        + (page ? 'Abra-a pela lista de reservas para ver a tela do estado atual.' : ''));
+      return;
+    }
+
+    byId('summary-service').textContent = service.nome;
+    byId('summary-event').textContent = eventName;
+    byId('summary-start').textContent = dateTime.format(new Date(reservation.data_inicio));
+    byId('summary-end').textContent = dateTime.format(new Date(reservation.data_fim));
+    byId('summary-observation').textContent = reservation.observacao || 'Nenhuma';
+    byId('summary-status').textContent = reservation.status;
+    byId('history-link').href = `historico.html?reserva=${encodeURIComponent(reservation.id_reserva)}`;
+
+    const refusalBox = byId('refusal-box');
+    if (refusalBox) {
+      byId('refusal-reason').textContent = reservation.motivo_recusa
+        || 'O fornecedor não informou um motivo.';
+    }
+
+    const confirm = byId('confirm-button');
+    if (confirm) {
+      confirm.hidden = session.role !== 'ORGANIZADOR';
+      confirm.addEventListener('click', async () => {
+        const flowError = byId('flow-error');
+        flowError.hidden = true;
+        confirm.disabled = true;
+        confirm.textContent = 'Confirmando...';
+        try {
+          await api.apiFetch(`/api/reservas/${reservationId}/confirmacao`, { method: 'POST' });
+          window.location.href = `confirmada.html?reserva=${encodeURIComponent(reservationId)}`;
+        } catch (failure) {
+          showMessage(flowError, failure.message);
+          confirm.disabled = false;
+          confirm.textContent = 'Confirmar reserva';
+        }
+      });
+    }
+
+    loading.hidden = true;
+    view.hidden = false;
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     initializeReservationList();
     initializeAnalysisPage();
+    initializeStatePage();
   });
 })();

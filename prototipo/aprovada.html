@@ -4,26 +4,39 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EventFy — Aprovada</title><link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-expected-status="APROVADA">
 <header><div class="brand">Event<span>Fy</span></div><a href="catalogo.html">Catálogo</a></header>
-<main class="status-page success" id="approved-view" hidden>
-  <div class="status-icon">✓</div><p class="eyebrow">SOLICITAÇÃO APROVADA</p>
-  <h1>Seu pedido foi aceito!</h1>
-  <p>O fornecedor aprovou a solicitação. Confirme a contratação para finalizar o agendamento.</p>
-  <nav class="flow-actions">
-    <a class="button" href="confirmada.html" data-transition="CONFIRMADA" data-actor="Organizador">Confirmar reserva</a>
-    <a class="button secondary" href="cancelar.html" data-cancel-link data-actor="organizador">Cancelar reserva</a>
-    <a class="text-link" href="historico.html" data-history-link>Ver histórico</a>
-  </nav>
-  <p class="form-error" id="flow-error" role="alert" hidden></p>
-  <a class="text-link" href="catalogo.html">Voltar ao catálogo</a>
+<main class="container narrow">
+  <p class="muted" id="state-loading" role="status">Carregando a reserva...</p>
+  <section class="request-summary" id="state-view" hidden>
+    <div class="status-icon">✓</div>
+    <p class="eyebrow">SOLICITAÇÃO APROVADA</p>
+    <h1>O pedido foi aceito!</h1>
+    <p id="state-text">O fornecedor aprovou a solicitação. O organizador deve confirmar a contratação para finalizar o agendamento.</p>
+    <p><span class="status-pill" id="summary-status"></span></p>
+    <dl class="request-details">
+      <div><dt>Serviço</dt><dd id="summary-service"></dd></div>
+      <div><dt>Evento</dt><dd id="summary-event"></dd></div>
+      <div><dt>Início</dt><dd id="summary-start"></dd></div>
+      <div><dt>Fim</dt><dd id="summary-end"></dd></div>
+      <div><dt>Observação</dt><dd id="summary-observation"></dd></div>
+    </dl>
+    <p class="muted">A confirmação precisa ser feita em até 48 horas depois da aprovação; depois disso a reserva expira.</p>
+    <button class="button" type="button" id="confirm-button" hidden>Confirmar reserva</button>
+    <p class="form-error" id="flow-error" role="alert" hidden></p>
+    <nav class="flow-actions">
+      <a class="text-link" id="history-link" href="historico.html">Ver histórico</a>
+      <a class="text-link" href="reservas.html">Voltar às reservas</a>
+    </nav>
+  </section>
+  <section id="state-error" role="alert" hidden>
+    <h1>Não foi possível exibir esta reserva</h1>
+    <p id="state-error-message"></p>
+    <a class="button" href="reservas.html">Voltar às reservas</a>
+  </section>
 </main>
-<main class="status-page" id="approved-error">
-  <p class="eyebrow">FLUXO INDISPONÍVEL</p>
-  <h1>Não foi possível exibir esta aprovação.</h1>
-  <p id="approved-error-message">Abra a tela pelo fluxo de uma solicitação válida.</p>
-  <a class="button" href="catalogo.html">Voltar ao catálogo</a>
-</main>
-<script src="js/script.js"></script>
+<script src="js/api.js"></script>
+<script src="js/sessao.js"></script>
+<script src="js/reservas.js"></script>
 </body>
 </html>
