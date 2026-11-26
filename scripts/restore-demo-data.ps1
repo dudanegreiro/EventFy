@@ -34,6 +34,7 @@ $seedSql = Get-Content -LiteralPath $seedFile -Raw
 $restoreSql = @"
 BEGIN;
 TRUNCATE TABLE
+    public.sessao_autenticacao,
     public.avaliacao,
     public.historico_reserva,
     public.reserva,
@@ -42,8 +43,19 @@ TRUNCATE TABLE
     public.servico,
     public.evento,
     public.usuario
-RESTART IDENTITY;
+RESTART IDENTITY CASCADE;
 $seedSql
+UPDATE public.disponibilidade_servico AS d
+SET id_reserva = r.id_reserva
+FROM public.reserva AS r
+WHERE d.tipo = 'RESERVA'
+  AND d.id_reserva IS NULL
+  AND d.ativo
+  AND r.ativo
+  AND r.status IN ('SOLICITADA', 'EM_ANALISE', 'APROVADA', 'CONFIRMADA')
+  AND d.id_servico = r.id_servico
+  AND d.data_inicio = r.data_inicio
+  AND d.data_fim = r.data_fim;
 COMMIT;
 "@
 
