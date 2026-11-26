@@ -109,7 +109,9 @@ class ReservationDecision(BaseModel):
     @model_validator(mode="after")
     def validate_rejection_reason(self) -> "ReservationDecision":
         if self.decisao == "RECUSADA" and len((self.motivo or "").strip()) < 10:
-            raise ValueError("A justificativa de recusa deve ter pelo menos 10 caracteres.")
+            raise ValueError(
+                "A justificativa de recusa deve ter pelo menos 10 caracteres."
+            )
         return self
 
 

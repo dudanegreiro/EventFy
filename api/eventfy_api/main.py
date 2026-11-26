@@ -273,9 +273,7 @@ def _detect_attachment_type(filename: str, content: bytes) -> str | None:
     elif content.startswith(b"\x89PNG\r\n\x1a\n"):
         detected = "image/png"
     elif (
-        len(content) >= 12
-        and content.startswith(b"RIFF")
-        and content[8:12] == b"WEBP"
+        len(content) >= 12 and content.startswith(b"RIFF") and content[8:12] == b"WEBP"
     ):
         detected = "image/webp"
     elif content.startswith(b"%PDF-"):
@@ -287,9 +285,7 @@ def _detect_attachment_type(filename: str, content: bytes) -> str | None:
         except zipfile.BadZipFile:
             return None
         if {"[Content_Types].xml", "word/document.xml"}.issubset(names):
-            detected = (
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
+            detected = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         else:
             return None
     else:
@@ -504,10 +500,9 @@ def update_service(
 ) -> dict[str, Any]:
     _owned_service(connection, service_id, user)
     changes = request.model_dump(exclude_unset=True)
-    if (
-        {"preco", "localizacao"}.intersection(changes)
-        and _service_has_active_reservations(connection, service_id)
-    ):
+    if {"preco", "localizacao"}.intersection(
+        changes
+    ) and _service_has_active_reservations(connection, service_id):
         raise ApiError(
             409,
             "SERVICE_HAS_ACTIVE_RESERVATIONS",

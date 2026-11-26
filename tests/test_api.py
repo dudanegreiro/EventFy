@@ -392,12 +392,13 @@ def test_registration_hashes_password_limits_public_roles_and_logout_revokes_tok
     logged_out = client.post("/api/auth/logout", headers=headers)
     assert logged_out.status_code == 204
     assert client.get("/api/eventos", headers=headers).status_code == 401
-    assert client.get(
-        "/api/eventos",
-        headers={
-            "Authorization": f"Bearer {another_login.json()['access_token']}"
-        },
-    ).status_code == 200
+    assert (
+        client.get(
+            "/api/eventos",
+            headers={"Authorization": f"Bearer {another_login.json()['access_token']}"},
+        ).status_code
+        == 200
+    )
 
 
 def test_inactive_user_cannot_login_or_use_an_existing_token(
@@ -443,33 +444,51 @@ def test_authorization_enforces_roles_and_ignores_role_claim(
     }
 
     assert client.post("/api/eventos", json=event_payload).status_code == 401
-    assert client.post(
-        "/api/eventos",
-        headers={"Authorization": f"Bearer {provider_token}"},
-        json=event_payload,
-    ).status_code == 403
-    assert client.post(
-        "/api/eventos",
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json=event_payload,
-    ).status_code == 403
-    assert client.post(
-        "/api/reservas/1001/analise",
-        headers={"Authorization": f"Bearer {admin_token}"},
-    ).status_code == 403
-    assert client.post(
-        "/api/reservas/1001/decisao",
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json={"decisao": "APROVADA"},
-    ).status_code == 403
-    assert client.post(
-        "/api/reservas/1001/confirmacao",
-        headers={"Authorization": f"Bearer {admin_token}"},
-    ).status_code == 403
-    assert client.post(
-        "/api/reservas/1001/analise",
-        headers={"Authorization": f"Bearer {organizer_token}"},
-    ).status_code == 403
+    assert (
+        client.post(
+            "/api/eventos",
+            headers={"Authorization": f"Bearer {provider_token}"},
+            json=event_payload,
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            "/api/eventos",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json=event_payload,
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            "/api/reservas/1001/analise",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            "/api/reservas/1001/decisao",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={"decisao": "APROVADA"},
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            "/api/reservas/1001/confirmacao",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            "/api/reservas/1001/analise",
+            headers={"Authorization": f"Bearer {organizer_token}"},
+        ).status_code
+        == 403
+    )
     other_organizer = client.post(
         "/api/auth/register",
         json={
@@ -489,10 +508,13 @@ def test_authorization_enforces_roles_and_ignores_role_claim(
     )
     assert other_login.status_code == 200
     other_token = other_login.json()["access_token"]
-    assert client.get(
-        "/api/reservas/1001",
-        headers={"Authorization": f"Bearer {other_token}"},
-    ).status_code == 403
+    assert (
+        client.get(
+            "/api/reservas/1001",
+            headers={"Authorization": f"Bearer {other_token}"},
+        ).status_code
+        == 403
+    )
 
     claims = jwt.decode(
         provider_token,
@@ -505,11 +527,14 @@ def test_authorization_enforces_roles_and_ignores_role_claim(
         test_settings.chave_secreta_jwt.get_secret_value(),
         algorithm="HS256",
     )
-    assert client.post(
-        "/api/eventos",
-        headers={"Authorization": f"Bearer {forged_role_token}"},
-        json=event_payload,
-    ).status_code == 403
+    assert (
+        client.post(
+            "/api/eventos",
+            headers={"Authorization": f"Bearer {forged_role_token}"},
+            json=event_payload,
+        ).status_code
+        == 403
+    )
 
 
 def test_organizer_provider_flow_records_immutable_history(
@@ -770,9 +795,7 @@ def test_expiration_job_expires_each_unanswered_stage(
                 == 200
             )
 
-    admin_headers = {
-        "Authorization": f"Bearer {access_token(client, ADMIN_EMAIL)}"
-    }
+    admin_headers = {"Authorization": f"Bearer {access_token(client, ADMIN_EMAIL)}"}
     real_datetime = datetime
 
     class FutureDateTime(real_datetime):
@@ -1072,9 +1095,7 @@ def test_reservation_queue_and_detail_align_expiration_before_job(
     assert blocked_confirmation.status_code == 409
     assert blocked_confirmation.json()["error"]["code"] == "RESERVATION_EXPIRED"
 
-    admin_headers = {
-        "Authorization": f"Bearer {access_token(client, ADMIN_EMAIL)}"
-    }
+    admin_headers = {"Authorization": f"Bearer {access_token(client, ADMIN_EMAIL)}"}
     job_response = client.post(
         "/api/jobs/reservas/expiracoes",
         headers=admin_headers,

@@ -27,7 +27,9 @@ def reset_test_database(database_url: str) -> None:
 
     migration_files.sort(key=lambda item: item[0])
     if not migration_files:
-        raise RuntimeError("Nenhuma migracao encontrada para preparar o banco de testes.")
+        raise RuntimeError(
+            "Nenhuma migracao encontrada para preparar o banco de testes."
+        )
 
     with psycopg.connect(database_url) as connection:
         connection.execute("DROP SCHEMA public CASCADE")
