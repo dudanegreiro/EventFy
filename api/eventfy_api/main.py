@@ -565,7 +565,9 @@ def add_service_availability(
 ) -> dict[str, Any]:
     service = _owned_service(connection, service_id, user)
     if not service["ativo"]:
-        raise ApiError(409, "SERVICE_INACTIVE", "Nao e possivel editar servico inativo.")
+        raise ApiError(
+            409, "SERVICE_INACTIVE", "Nao e possivel editar servico inativo."
+        )
     if _service_has_active_reservations(connection, service_id):
         raise ApiError(
             409,
@@ -659,7 +661,9 @@ def upload_service_file(
 ) -> dict[str, Any]:
     service = _owned_service(connection, service_id, user)
     if not service["ativo"]:
-        raise ApiError(409, "SERVICE_INACTIVE", "Nao e possivel editar servico inativo.")
+        raise ApiError(
+            409, "SERVICE_INACTIVE", "Nao e possivel editar servico inativo."
+        )
     if _service_has_active_reservations(connection, service_id):
         raise ApiError(
             409,

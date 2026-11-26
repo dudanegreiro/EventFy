@@ -60,11 +60,11 @@ jobs:
           fi
           pip install "ruff>=0.11,<1" "pytest-cov>=6,<7"
 
-      - name: Formatador (Ruff format --check)
-        run: ruff format --check --diff .
-
       - name: Linter critico (Ruff check)
         run: ruff check .
+
+      - name: Formatador (Ruff format --check)
+        run: ruff format --check --diff .
 
       - name: Build reproduzivel (compilacao Python)
         run: |

@@ -811,7 +811,9 @@ def test_expiration_job_expires_each_unanswered_stage(
         assert history.status_code == 200
         assert history.json()[-1]["status_novo"] == "EXPIRADA"
         assert history.json()[-1]["id_usuario"] is None
-    with psycopg.connect(test_settings.url_do_banco, row_factory=dict_row) as connection:
+    with psycopg.connect(
+        test_settings.url_do_banco, row_factory=dict_row
+    ) as connection:
         schedule_block = connection.execute(
             """
             SELECT ativo
@@ -976,7 +978,9 @@ def test_reservation_queue_and_detail_align_expiration_before_job(
     organizer_headers = {"Authorization": f"Bearer {organizer_token}"}
     provider_headers = {"Authorization": f"Bearer {provider_token}"}
 
-    requested_event = create_event(client, organizer_token, "Fila vencida solicitada", day=24)
+    requested_event = create_event(
+        client, organizer_token, "Fila vencida solicitada", day=24
+    )
     requested = client.post(
         "/api/reservas",
         headers=organizer_headers,
@@ -990,7 +994,9 @@ def test_reservation_queue_and_detail_align_expiration_before_job(
     assert requested.status_code == 201, requested.text
     requested_id = requested.json()["id_reserva"]
 
-    approved_event = create_event(client, organizer_token, "Fila vencida aprovada", day=25)
+    approved_event = create_event(
+        client, organizer_token, "Fila vencida aprovada", day=25
+    )
     approved = client.post(
         "/api/reservas",
         headers=organizer_headers,
@@ -1077,7 +1083,9 @@ def test_reservation_queue_and_detail_align_expiration_before_job(
     assert requested_id not in job_response.json()["reservas_expiradas"]
     assert approved_id not in job_response.json()["reservas_expiradas"]
 
-    with psycopg.connect(test_settings.url_do_banco, row_factory=dict_row) as connection:
+    with psycopg.connect(
+        test_settings.url_do_banco, row_factory=dict_row
+    ) as connection:
         schedule_block = connection.execute(
             """
             SELECT ativo

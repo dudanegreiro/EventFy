@@ -5,8 +5,8 @@ description = "Plataforma web para centralizacao de servicos e estruturas para g
 requires-python = ">=3.12"
 
 [tool.ruff]
-target-version = "py314"
-line-length = 100
+target-version = "py312"
+line-length = 88
 exclude = [
     ".git",
     ".venv",
