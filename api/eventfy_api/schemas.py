@@ -61,30 +61,6 @@ class UserResponse(BaseModel):
     tipo_usuario: Literal["ORGANIZADOR", "PRESTADOR", "ADMINISTRADOR"]
 
 
-class ProfileUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    nome: str | None = Field(default=None, min_length=1, max_length=120)
-
-    @field_validator("nome")
-    @classmethod
-    def validate_name(cls, value: str | None) -> str | None:
-        if value is None:
-            return value
-        normalized = value.strip()
-        if not normalized:
-            raise ValueError("O nome nao pode ficar vazio.")
-        return normalized
-
-    @model_validator(mode="after")
-    def validate_changes(self) -> "ProfileUpdate":
-        if not self.model_fields_set:
-            raise ValueError("Informe ao menos um campo para atualizar.")
-        if "nome" in self.model_fields_set and self.nome is None:
-            raise ValueError("O campo nome nao pode ser nulo.")
-        return self
-
-
 class TokenResponse(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"
