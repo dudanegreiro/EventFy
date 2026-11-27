@@ -15,7 +15,9 @@ Os casos são apresentados em tabelas com as seguintes colunas:
 | **Entrada** | Ação ou dado submetido ao sistema. |
 | **Resultado esperado** | Comportamento exigido do sistema. Resposta diferente caracteriza falha do teste. |
 
-Esta é uma primeira versão. Os casos devem ser conferidos pelo responsável pelo backend, quanto à viabilidade, e pela responsável pelos requisitos, quanto aos critérios de aceitação, antes de serem automatizados.
+Os testes unitários das regras puras estão em [`tests/test_domain_rules.py`](./tests/test_domain_rules.py); eles não abrem conexão com banco nem fazem chamadas de rede. Os testes de API e persistência ficam em [`tests/test_api.py`](./tests/test_api.py). O relógio dos testes unitários é passado como argumento às regras temporais, permitindo verificar limites sem espera real.
+
+Os cenários automatizados derivam dos critérios de [`docs/REQUISITOS.md`](./docs/REQUISITOS.md). A regra de avaliação é exercitada como política de domínio; sua rota de API pertence à implementação da EVT-18.
 
 ## 2. Estratégia
 

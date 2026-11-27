@@ -102,6 +102,10 @@ class ReservationCreate(PeriodModel):
     observacao: str | None = None
 
 
+class ServiceEvaluationCreate(BaseModel):
+    nota: int = Field(strict=True, ge=1, le=5)
+
+
 class ReservationDecision(BaseModel):
     decisao: Literal["APROVADA", "RECUSADA"]
     motivo: str | None = Field(default=None, max_length=2000)

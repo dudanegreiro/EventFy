@@ -15,6 +15,14 @@ from psycopg.errors import ExclusionViolation, ForeignKeyViolation, UniqueViolat
 
 from eventfy_api.config import Settings, get_settings
 from eventfy_api.database import get_connection
+from eventfy_api.domain import (
+    RESERVATION_RESPONSE_SLA,
+    can_cancel_reservation,
+    can_transition,
+    cancellation_window_is_open,
+    reservation_expiration_due,
+    service_period_is_available,
+)
 from eventfy_api.errors import ApiError, error_response
 from eventfy_api.schemas import (
     AvailabilityCreate,
@@ -952,8 +960,12 @@ def _expire_if_overdue(
 ) -> bool:
     if reservation["status"] not in {"SOLICITADA", "EM_ANALISE", "APROVADA"}:
         return False
-    deadline = _expiration_started_at(connection, reservation) + timedelta(hours=48)
-    if datetime.now(timezone.utc) < deadline:
+    state_entered_at = _expiration_started_at(connection, reservation)
+    if not reservation_expiration_due(
+        reservation["status"],
+        state_entered_at,
+        datetime.now(timezone.utc),
+    ):
         return False
     _transition_to_expired(connection, reservation)
     return True
@@ -999,12 +1011,12 @@ def _expire_overdue_reservations(
         ) AS sla
         WHERE r.ativo
           AND r.status IN ('SOLICITADA', 'EM_ANALISE', 'APROVADA')
-          AND sla.estado_desde <= %s - interval '48 hours'
+          AND sla.estado_desde <= %s
           {extra_filter}
         ORDER BY sla.estado_desde, r.id_reserva
         {lock_clause}
         """,
-        (now, *scope_params),
+        (now - RESERVATION_RESPONSE_SLA, *scope_params),
     ).fetchall()
     for reservation in expired:
         _transition_to_expired(connection, reservation)
@@ -1058,37 +1070,38 @@ def create_reservation(
     if service is None:
         raise ApiError(404, "SERVICE_NOT_FOUND", "Servico nao encontrado.")
 
-    availability = connection.execute(
+    service_periods = connection.execute(
         """
-        SELECT
-            EXISTS (
-                SELECT 1
-                FROM public.disponibilidade_servico AS d
-                WHERE d.id_servico = %s
-                  AND d.ativo
-                  AND d.tipo = 'DISPONIVEL'
-                  AND tstzrange(d.data_inicio, d.data_fim, '[)')
-                      @> tstzrange(%s, %s, '[)')
-            )
-            AND NOT EXISTS (
-                SELECT 1
-                FROM public.disponibilidade_servico AS d
-                WHERE d.id_servico = %s
-                  AND d.ativo
-                  AND d.tipo = 'BLOQUEIO_MANUAL'
-                  AND tstzrange(d.data_inicio, d.data_fim, '[)')
-                      && tstzrange(%s, %s, '[)')
-            ) AS disponivel
+        SELECT data_inicio, data_fim, tipo
+        FROM public.disponibilidade_servico
+        WHERE id_servico = %s
+          AND ativo
+          AND tipo IN ('DISPONIVEL', 'BLOQUEIO_MANUAL')
+          AND data_inicio < %s
+          AND data_fim > %s
         """,
         (
             request.id_servico,
-            request.data_inicio,
             request.data_fim,
-            request.id_servico,
             request.data_inicio,
-            request.data_fim,
         ),
-    ).fetchone()["disponivel"]
+    ).fetchall()
+    available_periods = [
+        (period["data_inicio"], period["data_fim"])
+        for period in service_periods
+        if period["tipo"] == "DISPONIVEL"
+    ]
+    blocking_periods = [
+        (period["data_inicio"], period["data_fim"])
+        for period in service_periods
+        if period["tipo"] == "BLOQUEIO_MANUAL"
+    ]
+    availability = service_period_is_available(
+        request.data_inicio,
+        request.data_fim,
+        available_periods,
+        blocking_periods,
+    )
     if not availability:
         raise ApiError(
             409,
@@ -1188,7 +1201,7 @@ def begin_analysis(
 ) -> dict[str, Any]:
     reservation = _reservation_for_user(connection, reservation_id, user)
     _raise_if_expired(reservation)
-    if reservation["status"] != "SOLICITADA":
+    if not can_transition(reservation["status"], "EM_ANALISE"):
         raise ApiError(
             409,
             "INVALID_RESERVATION_STATE",
@@ -1226,7 +1239,7 @@ def decide_reservation(
 ) -> dict[str, Any]:
     reservation = _reservation_for_user(connection, reservation_id, user)
     _raise_if_expired(reservation)
-    if reservation["status"] != "EM_ANALISE":
+    if not can_transition(reservation["status"], request.decisao):
         raise ApiError(
             409,
             "INVALID_RESERVATION_STATE",
@@ -1299,20 +1312,16 @@ def cancel_reservation(
     reservation = _reservation_for_user(connection, reservation_id, user)
     _raise_if_expired(reservation)
     status = reservation["status"]
-    organizer_can_cancel = user["tipo_usuario"] == "ORGANIZADOR" and status in {
-        "SOLICITADA",
-        "EM_ANALISE",
-        "APROVADA",
-        "CONFIRMADA",
-    }
-    provider_can_cancel = user["tipo_usuario"] == "PRESTADOR" and status == "CONFIRMADA"
-    if not (organizer_can_cancel or provider_can_cancel):
+    if not can_cancel_reservation(user["tipo_usuario"], status):
         raise ApiError(
             409,
             "INVALID_RESERVATION_STATE",
             "Seu papel nao pode cancelar a reserva neste estado.",
         )
-    if datetime.now(timezone.utc) >= reservation["evento_data_inicio"]:
+    if not cancellation_window_is_open(
+        reservation["evento_data_inicio"],
+        datetime.now(timezone.utc),
+    ):
         raise ApiError(
             409,
             "CANCELLATION_WINDOW_CLOSED",
@@ -1362,7 +1371,7 @@ def confirm_reservation(
 ) -> dict[str, Any]:
     reservation = _reservation_for_user(connection, reservation_id, user)
     _raise_if_expired(reservation)
-    if reservation["status"] != "APROVADA":
+    if not can_transition(reservation["status"], "CONFIRMADA"):
         raise ApiError(
             409,
             "INVALID_RESERVATION_STATE",
