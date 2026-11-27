@@ -61,6 +61,66 @@ class UserResponse(BaseModel):
     tipo_usuario: Literal["ORGANIZADOR", "PRESTADOR", "ADMINISTRADOR"]
 
 
+class AdminUserResponse(UserResponse):
+    ativo: bool
+    criado_em: datetime
+
+
+class AdminServiceResponse(BaseModel):
+    id_servico: int
+    id_prestador: int
+    nome_prestador: str
+    nome: str
+    categoria: str
+    descricao: str | None
+    preco: Decimal
+    localizacao: str | None
+    ativo: bool
+    visivel_catalogo: bool
+    criado_em: datetime
+
+
+class ModerationChangeRequest(BaseModel):
+    ativo: bool | None = None
+    visivel_catalogo: bool | None = None
+    motivo: str = Field(min_length=1, max_length=500)
+
+    @field_validator("motivo")
+    @classmethod
+    def validate_reason(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Informe o motivo da acao administrativa.")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_single_action(self) -> "ModerationChangeRequest":
+        if (self.ativo is None) == (self.visivel_catalogo is None):
+            raise ValueError("Informe ativo ou visivel_catalogo, mas nao ambos.")
+        return self
+
+
+class ModerationActionResponse(BaseModel):
+    id_historico_moderacao: int
+    acao: Literal[
+        "CONTA_DESATIVADA",
+        "CONTA_REATIVADA",
+        "SERVICO_OCULTADO",
+        "SERVICO_RESTAURADO",
+    ]
+    id_usuario_alvo: int | None
+    id_servico_alvo: int | None
+    motivo: str
+    data_hora: datetime
+
+
+class ModerationAuditEntry(ModerationActionResponse):
+    id_administrador: int
+    nome_administrador: str
+    nome_usuario_alvo: str | None = None
+    nome_servico_alvo: str | None = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"
@@ -138,6 +198,7 @@ class PublicService(BaseModel):
     id_prestador: int
     localizacao: str | None = None
     ativo: bool = True
+    visivel_catalogo: bool = True
     arquivos: list["ServiceFile"] = Field(default_factory=list)
     disponibilidades: list["AvailablePeriod"] = Field(default_factory=list)
 

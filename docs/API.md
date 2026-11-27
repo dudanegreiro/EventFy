@@ -47,7 +47,7 @@ Respostas principais:
 | `401` | Credenciais ou token ausentes/invalidos |
 | `403` | Papel ou propriedade nao autorizados |
 | `404` | Recurso inexistente ou nao visivel |
-| `409` | Estado invalido, reserva expirada ou conflito de agenda |
+| `409` | Estado invalido, reserva expirada, conflito de agenda ou acao administrativa sem efeito |
 | `413` | Arquivo acima de 10.000.000 bytes |
 | `415` | Conteudo ou MIME de anexo nao permitido |
 | `422` | Corpo invalido ou regra de periodo/justificativa nao atendida |
@@ -60,8 +60,13 @@ Respostas principais:
 | `POST` | `/api/auth/register` | Publico | Cria conta de organizador ou prestador |
 | `POST` | `/api/auth/login` | Publico | Emite token Bearer |
 | `POST` | `/api/auth/logout` | Autenticado | Revoga a sessao do token enviado |
-| `GET` | `/api/servicos` | Publico | Busca servicos ativos por `termo`, `categoria`, `preco_minimo`, `preco_maximo`, `localizacao` e periodo (`data_inicio` + `data_fim`); suporta paginacao `limit`/`offset` |
-| `GET` | `/api/servicos/{id}` | Publico | Consulta um servico ativo |
+| `GET` | `/api/admin/usuarios` | Administrador | Lista contas para gerenciamento, com paginacao |
+| `PATCH` | `/api/admin/usuarios/{id}/status` | Administrador | Desativa ou reativa uma conta; exige `ativo` e `motivo` |
+| `GET` | `/api/admin/servicos` | Administrador | Lista publicacoes incluindo estado ativo e visibilidade |
+| `PATCH` | `/api/admin/servicos/{id}/visibilidade` | Administrador | Oculta ou restaura a publicacao; exige `visivel_catalogo` e `motivo` |
+| `GET` | `/api/admin/moderacoes` | Administrador | Consulta o registro imutavel de acoes de moderacao, com paginacao |
+| `GET` | `/api/servicos` | Publico | Busca servicos ativos e visiveis por `termo`, `categoria`, `preco_minimo`, `preco_maximo`, `localizacao` e periodo (`data_inicio` + `data_fim`); suporta paginacao `limit`/`offset` |
+| `GET` | `/api/servicos/{id}` | Publico | Consulta um servico ativo e visivel |
 | `POST` | `/api/servicos` | Prestador | Cadastra servico proprio com preco e localizacao |
 | `GET` | `/api/prestador/servicos` | Prestador | Lista servicos proprios ativos e inativos |
 | `PATCH` | `/api/servicos/{id}` | Prestador titular | Atualiza dados descritivos; preco/localizacao ficam protegidos por reserva ativa |
@@ -70,7 +75,7 @@ Respostas principais:
 | `GET` | `/api/servicos/{id}/disponibilidades` | Prestador titular | Lista periodos de disponibilidade e bloqueios proprios |
 | `DELETE` | `/api/servicos/{id}/disponibilidades/{availability_id}` | Prestador titular | Desativa periodo de disponibilidade |
 | `POST` | `/api/servicos/{id}/arquivos` | Prestador titular | Armazena JPEG/PNG/WebP/PDF/DOCX de ate 10.000.000 bytes |
-| `GET` | `/api/arquivos/{uuid}` | Publico | Baixa anexo ativo de servico ativo |
+| `GET` | `/api/arquivos/{uuid}` | Publico | Baixa anexo ativo de servico ativo e visivel |
 | `DELETE` | `/api/servicos/{id}/arquivos/{file_id}` | Prestador titular | Desativa logicamente anexo proprio |
 | `POST` | `/api/eventos` | Organizador | Cria evento proprio |
 | `GET` | `/api/eventos` | Organizador | Lista eventos proprios |
@@ -85,6 +90,8 @@ Respostas principais:
 | `GET` | `/api/reservas/{id}/historico` | Participante | Consulta transicoes em ordem cronologica |
 
 O servidor valida papel, titularidade, periodo do evento, disponibilidade, estado atual, justificativa, prazo e conflitos. A expiracao tambem e verificada ao consultar ou tentar alterar uma reserva. As mutacoes e os respectivos registros de historico usam a mesma transacao PostgreSQL; o pre-bloqueio de agenda referencia diretamente a reserva e e liberado ao cancelar ou expirar. A restricao de exclusao de `reserva` e os bloqueios de linha protegem contra conflitos e requisicoes concorrentes.
+
+As rotas administrativas requerem papel `ADMINISTRADOR`; os demais papeis recebem `403`. Acoes exigem motivo e gravam ator, alvo, operacao, instante e motivo em `historico_moderacao`, cuja trilha e imutavel. Desativar uma conta revoga suas sessoes. A ultima conta administradora ativa e a propria conta do administrador autenticado nao podem ser desativadas. Ocultar uma publicacao altera `visivel_catalogo`, separado do estado ativo do prestador; a publicacao deixa de aparecer no catalogo, detalhe, downloads e novas reservas. Nenhuma dessas operacoes altera ou cancela reservas existentes.
 
 Filtros de data devem ser enviados juntos e incluir fuso horario. Quando usados, o servico precisa ter um intervalo `DISPONIVEL` que cubra todo o periodo, sem bloqueio manual ou reserva ativa conflitante. A ordenacao por identificador e a paginacao limitada a 100 resultados permitem percorrer catalogos maiores.
 

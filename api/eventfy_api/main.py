@@ -17,6 +17,8 @@ from eventfy_api.config import Settings, get_settings
 from eventfy_api.database import get_connection
 from eventfy_api.errors import ApiError, error_response
 from eventfy_api.schemas import (
+    AdminServiceResponse,
+    AdminUserResponse,
     AvailabilityCreate,
     CancellationResponse,
     DecisionResponse,
@@ -24,6 +26,9 @@ from eventfy_api.schemas import (
     EventResponse,
     ExpirationResponse,
     LoginRequest,
+    ModerationActionResponse,
+    ModerationAuditEntry,
+    ModerationChangeRequest,
     PublicService,
     ReservationCreate,
     ReservationCancellation,
@@ -191,6 +196,254 @@ def logout(
     )
 
 
+def _lock_active_administrator(
+    connection: psycopg.Connection,
+    administrator_id: int,
+) -> None:
+    connection.execute("SELECT pg_advisory_xact_lock(40, 1)")
+    active_administrator = connection.execute(
+        """
+        SELECT id_usuario
+        FROM public.usuario
+        WHERE id_usuario = %s
+          AND tipo_usuario = 'ADMINISTRADOR'
+          AND ativo
+        FOR SHARE
+        """,
+        (administrator_id,),
+    ).fetchone()
+    if active_administrator is None:
+        raise ApiError(
+            401,
+            "UNAUTHENTICATED",
+            "A sessao administrativa nao esta mais ativa.",
+            {"WWW-Authenticate": "Bearer"},
+        )
+
+
+@app.get("/api/admin/usuarios", response_model=list[AdminUserResponse])
+def list_users_for_moderation(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    _: dict[str, Any] = Depends(require_role("ADMINISTRADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> list[dict[str, Any]]:
+    return connection.execute(
+        """
+        SELECT id_usuario, nome, email, tipo_usuario, ativo, criado_em
+        FROM public.usuario
+        ORDER BY id_usuario
+        LIMIT %s OFFSET %s
+        """,
+        (limit, offset),
+    ).fetchall()
+
+
+@app.patch(
+    "/api/admin/usuarios/{user_id}/status",
+    response_model=ModerationActionResponse,
+)
+def moderate_user_status(
+    user_id: int,
+    request: ModerationChangeRequest,
+    administrator: dict[str, Any] = Depends(require_role("ADMINISTRADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> dict[str, Any]:
+    if request.ativo is None:
+        raise ApiError(
+            422,
+            "INVALID_MODERATION_ACTION",
+            "Esta rota aceita somente alteracoes do estado da conta.",
+        )
+    if user_id == administrator["id_usuario"] and not request.ativo:
+        raise ApiError(
+            409,
+            "CANNOT_DEACTIVATE_SELF",
+            "O administrador autenticado nao pode desativar a propria conta.",
+        )
+
+    _lock_active_administrator(connection, administrator["id_usuario"])
+    target = connection.execute(
+        """
+        SELECT id_usuario, ativo, tipo_usuario
+        FROM public.usuario
+        WHERE id_usuario = %s
+        FOR UPDATE
+        """,
+        (user_id,),
+    ).fetchone()
+    if target is None:
+        raise ApiError(404, "USER_NOT_FOUND", "Conta nao encontrada.")
+    if target["ativo"] == request.ativo:
+        raise ApiError(
+            409,
+            "ACCOUNT_STATUS_UNCHANGED",
+            "A conta ja esta no estado solicitado.",
+        )
+    if (
+        target["tipo_usuario"] == "ADMINISTRADOR"
+        and target["ativo"]
+        and not request.ativo
+    ):
+        active_admins = connection.execute(
+            """
+            SELECT count(*) AS quantidade
+            FROM public.usuario
+            WHERE tipo_usuario = 'ADMINISTRADOR' AND ativo
+            """
+        ).fetchone()["quantidade"]
+        if active_admins <= 1:
+            raise ApiError(
+                409,
+                "LAST_ACTIVE_ADMIN",
+                "A ultima conta administradora ativa nao pode ser desativada.",
+            )
+
+    updated = connection.execute(
+        """
+        UPDATE public.usuario
+        SET ativo = %s, atualizado_em = now()
+        WHERE id_usuario = %s
+        RETURNING id_usuario
+        """,
+        (request.ativo, user_id),
+    ).fetchone()
+    if not request.ativo:
+        connection.execute(
+            """
+            UPDATE public.sessao_autenticacao
+            SET revogada_em = now()
+            WHERE id_usuario = %s AND revogada_em IS NULL
+            """,
+            (user_id,),
+        )
+
+    action = "CONTA_REATIVADA" if request.ativo else "CONTA_DESATIVADA"
+    return connection.execute(
+        """
+        INSERT INTO public.historico_moderacao (
+            id_administrador, id_usuario_alvo, acao, motivo
+        )
+        VALUES (%s, %s, %s, %s)
+        RETURNING id_historico_moderacao, acao, id_usuario_alvo,
+                  id_servico_alvo, motivo, data_hora
+        """,
+        (administrator["id_usuario"], updated["id_usuario"], action, request.motivo),
+    ).fetchone()
+
+
+@app.get("/api/admin/servicos", response_model=list[AdminServiceResponse])
+def list_services_for_moderation(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    _: dict[str, Any] = Depends(require_role("ADMINISTRADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> list[dict[str, Any]]:
+    return connection.execute(
+        """
+        SELECT s.id_servico, s.id_prestador, u.nome AS nome_prestador,
+               s.nome, s.categoria, s.descricao, s.preco, s.localizacao,
+               s.ativo, s.visivel_catalogo, s.criado_em
+        FROM public.servico AS s
+        JOIN public.usuario AS u ON u.id_usuario = s.id_prestador
+        ORDER BY s.id_servico
+        LIMIT %s OFFSET %s
+        """,
+        (limit, offset),
+    ).fetchall()
+
+
+@app.patch(
+    "/api/admin/servicos/{service_id}/visibilidade",
+    response_model=ModerationActionResponse,
+)
+def moderate_service_visibility(
+    service_id: int,
+    request: ModerationChangeRequest,
+    administrator: dict[str, Any] = Depends(require_role("ADMINISTRADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> dict[str, Any]:
+    if request.visivel_catalogo is None:
+        raise ApiError(
+            422,
+            "INVALID_MODERATION_ACTION",
+            "Esta rota aceita somente alteracoes de visibilidade da publicacao.",
+        )
+    _lock_active_administrator(connection, administrator["id_usuario"])
+    service = connection.execute(
+        """
+        SELECT id_servico, visivel_catalogo
+        FROM public.servico
+        WHERE id_servico = %s
+        FOR UPDATE
+        """,
+        (service_id,),
+    ).fetchone()
+    if service is None:
+        raise ApiError(404, "SERVICE_NOT_FOUND", "Servico nao encontrado.")
+    if service["visivel_catalogo"] == request.visivel_catalogo:
+        raise ApiError(
+            409,
+            "SERVICE_VISIBILITY_UNCHANGED",
+            "A publicacao ja esta no estado de visibilidade solicitado.",
+        )
+
+    updated = connection.execute(
+        """
+        UPDATE public.servico
+        SET visivel_catalogo = %s, atualizado_em = now()
+        WHERE id_servico = %s
+        RETURNING id_servico
+        """,
+        (request.visivel_catalogo, service_id),
+    ).fetchone()
+    action = "SERVICO_RESTAURADO" if request.visivel_catalogo else "SERVICO_OCULTADO"
+    return connection.execute(
+        """
+        INSERT INTO public.historico_moderacao (
+            id_administrador, id_servico_alvo, acao, motivo
+        )
+        VALUES (%s, %s, %s, %s)
+        RETURNING id_historico_moderacao, acao, id_usuario_alvo,
+                  id_servico_alvo, motivo, data_hora
+        """,
+        (
+            administrator["id_usuario"],
+            updated["id_servico"],
+            action,
+            request.motivo,
+        ),
+    ).fetchone()
+
+
+@app.get("/api/admin/moderacoes", response_model=list[ModerationAuditEntry])
+def list_moderation_history(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    _: dict[str, Any] = Depends(require_role("ADMINISTRADOR")),
+    connection: psycopg.Connection = Depends(get_connection),
+) -> list[dict[str, Any]]:
+    return connection.execute(
+        """
+        SELECT h.id_historico_moderacao, h.id_administrador,
+               admin.nome AS nome_administrador, h.id_usuario_alvo,
+               target_user.nome AS nome_usuario_alvo, h.id_servico_alvo,
+               target_service.nome AS nome_servico_alvo, h.acao, h.motivo,
+               h.data_hora
+        FROM public.historico_moderacao AS h
+        JOIN public.usuario AS admin
+          ON admin.id_usuario = h.id_administrador
+        LEFT JOIN public.usuario AS target_user
+          ON target_user.id_usuario = h.id_usuario_alvo
+        LEFT JOIN public.servico AS target_service
+          ON target_service.id_servico = h.id_servico_alvo
+        ORDER BY h.data_hora DESC, h.id_historico_moderacao DESC
+        LIMIT %s OFFSET %s
+        """,
+        (limit, offset),
+    ).fetchall()
+
+
 def _validate_catalog_period(
     data_inicio: datetime | None,
     data_fim: datetime | None,
@@ -333,9 +586,10 @@ def list_services(
     rows = connection.execute(
         """
         SELECT s.id_servico, s.nome, s.categoria, s.descricao,
-               s.preco, s.id_prestador, s.localizacao, s.ativo
+               s.preco, s.id_prestador, s.localizacao, s.ativo,
+               s.visivel_catalogo
         FROM public.servico AS s
-        WHERE s.ativo
+        WHERE s.ativo AND s.visivel_catalogo
           AND (%s::text IS NULL OR lower(s.categoria) = lower(%s))
           AND (
               %s::text IS NULL
@@ -419,9 +673,9 @@ def get_service(
     service = connection.execute(
         """
         SELECT id_servico, nome, categoria, descricao, preco, id_prestador,
-               localizacao, ativo
+               localizacao, ativo, visivel_catalogo
         FROM public.servico
-        WHERE id_servico = %s AND ativo
+        WHERE id_servico = %s AND ativo AND visivel_catalogo
         """,
         (service_id,),
     ).fetchone()
@@ -465,7 +719,7 @@ def create_service(
         )
         VALUES (%s, %s, %s, %s, %s, %s)
         RETURNING id_servico, id_prestador, nome, categoria, descricao,
-                  preco, localizacao, ativo
+                  preco, localizacao, ativo, visivel_catalogo
         """,
         (
             user["id_usuario"],
@@ -486,7 +740,7 @@ def list_provider_services(
     return connection.execute(
         """
         SELECT id_servico, id_prestador, nome, categoria, descricao,
-               preco, localizacao, ativo
+               preco, localizacao, ativo, visivel_catalogo
         FROM public.servico
         WHERE id_prestador = %s
         ORDER BY id_servico
@@ -521,7 +775,7 @@ def update_service(
         SET {assignments}, atualizado_em = now()
         WHERE id_servico = %s
         RETURNING id_servico, id_prestador, nome, categoria, descricao,
-                  preco, localizacao, ativo
+                  preco, localizacao, ativo, visivel_catalogo
         """,
         values,
     ).fetchone()
@@ -738,7 +992,7 @@ def download_service_file(
         SELECT f.nome_original, f.tipo_mime, f.url
         FROM public.arquivo AS f
         JOIN public.servico AS s ON s.id_servico = f.id_servico
-        WHERE f.url = %s AND f.ativo AND s.ativo
+        WHERE f.url = %s AND f.ativo AND s.ativo AND s.visivel_catalogo
         """,
         (f"/api/arquivos/{file_key}",),
     ).fetchone()
@@ -1050,7 +1304,7 @@ def create_reservation(
         """
         SELECT id_servico
         FROM public.servico
-        WHERE id_servico = %s AND ativo
+        WHERE id_servico = %s AND ativo AND visivel_catalogo
         FOR UPDATE
         """,
         (request.id_servico,),
