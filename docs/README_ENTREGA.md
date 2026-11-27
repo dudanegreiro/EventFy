@@ -4,6 +4,8 @@
 
 Esta entrega usa como baseline o commit `5e15fa1`, merge da PR #94. A baseline executavel inclui a API FastAPI/Uvicorn, autenticacao Bearer, catalogo, eventos, reservas, historico, migracoes V1 a V5, PostgreSQL 17 e prototipo estatico. O contrato das rotas esta em [`API.md`](./API.md).
 
+A evolucao EVT-20 adiciona a migracao V6 para moderacao administrativa, as rotas protegidas de gerenciamento de contas e publicacoes e o historico imutavel de moderacao. A visibilidade de uma publicacao e independente do estado ativo do servico e nao modifica reservas existentes.
+
 ## Pre-requisitos e instalacao
 
 Instale Git 2.x, Python 3.14, PostgreSQL 17.x e coloque `psql` e `createdb` no `PATH`. Na raiz do repositorio:

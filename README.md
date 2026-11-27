@@ -13,11 +13,11 @@
 
 ## Baseline e operacao pos-PR94
 
-A baseline documental desta entrega e o commit `5e15fa1`, merge da PR #94. Ela inclui a API FastAPI, autenticacao, migracoes V1 a V5, contrato em [`docs/API.md`](./docs/API.md), testes PostgreSQL e o prototipo estatico.
+A baseline de partida desta entrega e o commit `5e15fa1`, merge da PR #94. Ela inclui a API FastAPI, autenticacao, migracoes V1 a V5, contrato em [`docs/API.md`](./docs/API.md), testes PostgreSQL e o prototipo estatico. A EVT-20 acrescenta a migracao V6 e as rotas administrativas descritas no contrato.
 
 Pre-requisitos: Git 2.x, Python 3.14, PostgreSQL 17.x, `psql` e `createdb` no `PATH`. Instale as dependencias com `python -m pip install -r requirements-dev.txt`, copie `.env.example` para `.env` e configure somente valores locais para `URL_DO_BANCO`, `CHAVE_SECRETA_JWT` e `LOCAL_DOS_ARQUIVOS`. O repositorio nao deve conter segredos ou dados pessoais reais.
 
-Aplique as migracoes com `scripts/db-setup.ps1 -Username eventfy_dev`; o script registra checksums e aplica V1 a V5 em ordem. Execute `pytest -q` duas vezes contra o banco de testes; a baseline espera `18 passed` em cada rodada. Inicie a API com `uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` e confira `/api/health` e `/docs`.
+Aplique as migracoes com `scripts/db-setup.ps1 -Username eventfy_dev`; o script registra checksums e aplica V1 a V6 em ordem. Execute `pytest -q` duas vezes contra o banco de testes; a baseline original espera `18 passed` em cada rodada. Inicie a API com `uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` e confira `/api/health` e `/docs`.
 
 A operacao, os limites e a conferencia cruzada estao em [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) e [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md).
 
@@ -102,9 +102,9 @@ O sistema considera diferentes papéis envolvidos no processo de organização d
 |---|---|
 | 🧑‍💼 **Organizador** | Usuário responsável por criar e gerenciar eventos e solicitar serviços para esses eventos. |
 | 🏢 **Prestador ou fornecedor** | Usuário responsável por disponibilizar serviços ou estruturas e analisar solicitações de reserva. |
-| 🛡️ **Administrador** | O requisito RF20 especifica gerenciamento de contas e moderação de publicações. A inclusão dessa funcionalidade no MVP depende da decisão registrada em “Decisões que dependem da equipe”. |
+| 🛡️ **Administrador** | Gerencia contas e modera publicações conforme RF20; as rotas implementadas estão em [`docs/API.md`](./docs/API.md). |
 
-As permissões dos papéis estão especificadas em [`docs/REQUISITOS.md`](./docs/REQUISITOS.md). A decisão pendente refere-se à inclusão da administração e moderação no escopo do MVP, não à existência do papel nos requisitos.
+As permissões dos papéis estão especificadas em [`docs/REQUISITOS.md`](./docs/REQUISITOS.md). A administração e moderação estão implementadas no backend conforme a EVT-20.
 
 ---
 
@@ -260,7 +260,6 @@ Projeto desenvolvido para a disciplina de **Engenharia de Software** da Universi
 ### Decisões que dependem da equipe
 
 - Confirmar a correspondência entre “Duda Negreiro” e “Eduarda Negreiro”, a atribuição de Product Owner e o mapeamento dos papéis Pessoa 1–5 para os integrantes. O plano de divisão de tarefas disponível não identifica os nomes por pessoa.
-- Decidir se administração e moderação (RF20) integram o MVP. O requisito está especificado, mas não consta no escopo ativo de [`DESCOBERTA.md`](./DESCOBERTA.md).
 - Aprovar a licença de distribuição antes de criar um arquivo `LICENSE`.
 - Revisar as decisões da [EVT-01](./ARQUITETURA.md) no pull request da entrega.
 - Realizar e registrar a validação de usabilidade do protótipo e a linha de base quantitativa descrita em [`docs/TEMA.md`](./docs/TEMA.md).
