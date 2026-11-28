@@ -22,25 +22,41 @@
         <option value="Espaço">Espaço</option>
         <option value="Equipe">Equipe</option>
       </select>
+      <label class="visually-hidden" for="price-min">Preço mínimo</label>
+      <input id="price-min" type="number" min="0" step="0.01" placeholder="Preço mínimo">
+      <label class="visually-hidden" for="price-max">Preço máximo</label>
+      <input id="price-max" type="number" min="0" step="0.01" placeholder="Preço máximo">
+      <label class="visually-hidden" for="location">Localização</label>
+      <input id="location" type="search" placeholder="Cidade ou região">
+      <label class="visually-hidden" for="date-start">Disponível a partir de</label>
+      <input id="date-start" type="date" aria-label="Disponível a partir de">
+      <label class="visually-hidden" for="date-end">Disponível até</label>
+      <input id="date-end" type="date" aria-label="Disponível até">
     </div>
-    <div class="grid" id="cards">
-      <article class="card" data-name="Som e iluminação profissional" data-category="Som e iluminação">
+    <p class="form-error" id="filter-error" role="alert" hidden></p>
+    <div class="grid" id="cards" aria-live="polite">
+      <article class="card" data-name="Som e iluminação profissional" data-category="Som e iluminação"
+        data-price="1800" data-location="Palmas - TO" data-available-start="2026-01-01" data-available-end="2027-12-31">
         <div class="thumb">🔊</div><div class="card-body"><span class="pill">Som e iluminação</span>
         <h2>Som e iluminação profissional</h2><p>Estrutura completa para eventos de médio e grande porte.</p>
         <strong>R$ 1.800 / evento</strong><a class="button small" href="servico.html?servico=som-iluminacao">Ver detalhes</a></div>
       </article>
-      <article class="card" data-name="Espaço para eventos" data-category="Espaço">
+      <article class="card" data-name="Espaço para eventos" data-category="Espaço"
+        data-price="2500" data-location="Palmas - TO" data-available-start="2026-06-01" data-available-end="2027-06-30">
         <div class="thumb">🏛️</div><div class="card-body"><span class="pill">Espaço</span>
         <h2>Espaço para eventos</h2><p>Ambiente para confraternizações, festas e eventos corporativos.</p>
         <strong>R$ 2.500 / evento</strong><a class="button small" href="servico.html?servico=espaco-eventos">Ver detalhes</a></div>
       </article>
-      <article class="card" data-name="Equipe de apoio" data-category="Equipe">
+      <article class="card" data-name="Equipe de apoio" data-category="Equipe"
+        data-price="900" data-location="Araguaína - TO" data-available-start="2026-01-01" data-available-end="2027-12-31">
         <div class="thumb">👥</div><div class="card-body"><span class="pill">Equipe</span>
         <h2>Equipe de apoio</h2><p>Profissionais para apoio operacional durante o evento.</p>
         <strong>R$ 900 / evento</strong><a class="button small" href="servico.html?servico=equipe-apoio">Ver detalhes</a></div>
       </article>
     </div>
-    <p class="empty-state" id="empty-state" role="status" hidden>Nenhum serviço encontrado. Tente outro termo ou categoria.</p>
+    <p class="empty-state" id="empty-state" role="status" aria-live="polite" hidden>
+      Nenhum serviço encontrado. Tente ajustar os filtros.
+    </p>
   </main>
   <script src="js/script.js"></script>
 </body>

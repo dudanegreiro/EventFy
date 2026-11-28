@@ -11,6 +11,16 @@
 
 </div>
 
+## Baseline e operacao pos-PR94
+
+A baseline documental desta entrega e o commit `5e15fa1`, merge da PR #94. Ela inclui a API FastAPI, autenticacao, migracoes V1 a V5, contrato em [`docs/API.md`](./docs/API.md), testes PostgreSQL e o prototipo estatico.
+
+Pre-requisitos: Git 2.x, Python 3.14, PostgreSQL 17.x, `psql` e `createdb` no `PATH`. Instale as dependencias com `python -m pip install -r requirements-dev.txt`, copie `.env.example` para `.env` e configure somente valores locais para `URL_DO_BANCO`, `CHAVE_SECRETA_JWT` e `LOCAL_DOS_ARQUIVOS`. O repositorio nao deve conter segredos ou dados pessoais reais.
+
+Aplique as migracoes com `scripts/db-setup.ps1 -Username eventfy_dev`; o script registra checksums e aplica V1 a V5 em ordem. Execute `pytest -q` duas vezes contra o banco de testes; a baseline espera `18 passed` em cada rodada. Inicie a API com `uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` e confira `/api/health` e `/docs`.
+
+A operacao, os limites e a conferencia cruzada estao em [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) e [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md).
+
 ---
 
 ## 📑 Sumário
@@ -126,7 +136,9 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 |---|---|---|
 | Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
 | Validação com usuário externo | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro, registro de observações, rastreabilidade e retorno ao backlog |
-| Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas, dados fictícios e restauração segura da demonstração |
+| Review parcial executável | [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md) | Baseline, roteiro por tela e critério, limitações e plano de falha |
+| Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas e dados fictícios de demonstração |
+| API REST | [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato dos endpoints |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
 | Projeto | [`docs/PROJETO.md`](./docs/PROJETO.md) | Informações do projeto, decisões, fichas CRC e critérios de Parnas |
 | Tema | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e alinhamento com a disciplina |
@@ -136,6 +148,8 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 | Modelagem | [`docs/diagrams/`](./docs/diagrams) | Domínio, dados, estados da reserva e sequência UML |
 | Protótipo | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
 | Conferência cruzada | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Registro da conferência entre os diferentes artefatos do projeto |
+| Entrega e operação | [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) | Baseline, reprodução local, operação e limites conhecidos |
+| Inspeção formal de requisitos | [`INSPECOES.md`](./INSPECOES.md) | Papéis, achados classificados, retrabalho, recheck e rastreabilidade da EVT-22 |
 | Contribuição | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Orientações de contribuição, revisão e critérios de qualidade |
 | Registro de Mudanças | [`CHANGELOG.md`](./CHANGELOG.md) | Histórico de versões e notas de lançamento (SemVer) |
 
@@ -149,7 +163,7 @@ O frontend usa uma API REST/JSON. O backend segue um monólito modular para que 
 
 ## 🛠️ Tecnologias
 
-O ambiente local usa HTML, CSS e JavaScript nativos, Python 3.14, FastAPI, Uvicorn, Psycopg 3 e PostgreSQL 17. As versões das dependências do ambiente estão em [dev/requirements.txt](./dev/requirements.txt). As escolhas para autenticação e testes constam na [arquitetura](./ARQUITETURA.md).
+O ambiente local usa HTML, CSS e JavaScript nativos, Python 3.14, FastAPI, Uvicorn, Psycopg 3 e PostgreSQL 17. As versões das dependências do ambiente estão em [requirements-dev.txt](./requirements-dev.txt). As escolhas para autenticação e testes constam na [arquitetura](./ARQUITETURA.md).
 
 ---
 
@@ -170,6 +184,8 @@ No Windows, você também pode preparar o esquema e os dados de demonstração c
 .\scripts\db-setup.ps1 -Username eventfy_dev
 ```
 
+Para restaurar os dados isolados da review parcial, execute `.\scripts\restore-demo-data.ps1 -Confirm`. O roteiro e o plano de falha estão em [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md).
+
 Consulte [Banco de dados local](./docs/DATABASE.md) para os pré-requisitos e detalhes do script.
 
 ### Baselines da review parcial
@@ -188,7 +204,7 @@ Na raiz do projeto, prepare o ambiente conforme seu sistema.
 
 ```powershell
 py -3.14 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r dev/requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 Copy-Item .env.example .env
 ```
 
@@ -196,20 +212,20 @@ Copy-Item .env.example .env
 
 ```sh
 python3.14 -m venv .venv
-.venv/bin/python -m pip install -r dev/requirements.txt
+.venv/bin/python -m pip install -r requirements-dev.txt
 cp .env.example .env
 ```
 
-Em `.env`, substitua `SUBSTITUA_LOCALMENTE` pela senha de `eventfy_dev` em `URL_DO_BANCO`. Codifique caracteres reservados da senha na URL (por exemplo, `@` vira `%40`). Guarde o arquivo apenas na sua máquina.
+Em `.env`, substitua `SUBSTITUA_LOCALMENTE` pela senha de `eventfy_dev` em `URL_DO_BANCO`, gere um segredo aleatório com pelo menos 32 caracteres para `CHAVE_SECRETA_JWT` e configure `LOCAL_DOS_ARQUIVOS` se necessário. Codifique caracteres reservados da senha na URL (por exemplo, `@` vira `%40`). Guarde o arquivo apenas na sua máquina.
 
 | Sistema | Comando para iniciar na raiz do projeto |
 |---|---|
-| Windows | `.\.venv\Scripts\python.exe -m uvicorn ambiente:app --app-dir dev --env-file .env` |
-| Linux ou macOS | `.venv/bin/python -m uvicorn ambiente:app --app-dir dev --env-file .env` |
+| Windows | `.\.venv\Scripts\python.exe -m uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` |
+| Linux ou macOS | `.venv/bin/python -m uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` |
 
-Abra o [protótipo](http://127.0.0.1:8000/) e clique em **Entrar no catálogo**. Para verificar a conexão real da API com o banco, abra a [verificação do ambiente](http://127.0.0.1:8000/api/ambiente). A resposta deve conter `"aplicacao": "EventFy"` e a versão `17.x` do PostgreSQL. Um HTTP 503 nessa rota indica que a configuração ou o banco precisa de atenção.
+O health check da API fica em `http://127.0.0.1:8000/api/health`; a documentação interativa fica em `http://127.0.0.1:8000/docs`. Para percorrer o protótipo estático, siga [`prototipo/README.md`](./prototipo/README.md) e abra `prototipo/index.html` em um navegador.
 
-Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar o PostgreSQL e repetir o comando do Uvicorn. As telas demonstram o fluxo com dados do protótipo. O esquema e os dados de demonstração estão descritos em [Banco de dados local](./docs/DATABASE.md); as rotas de reserva são entregas da EVT-03.
+Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar o PostgreSQL e repetir o comando do Uvicorn. O esquema, as migrações e as contas fictícias estão descritos em [Banco de dados local](./docs/DATABASE.md); as rotas e credenciais de demonstração estão em [API REST](./docs/API.md).
 
 ---
 
@@ -218,7 +234,9 @@ Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar 
 | Documento | Descrição |
 |---|---|
 | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro e relatório de validação do fluxo principal com usuário externo |
+| [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md) | Baseline e roteiro da demonstração parcial com plano de falha |
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
+| [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato da API REST |
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
 | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Especificação dos requisitos, backlog ordenado e critérios |
 | [`docs/TEMA.md`](./docs/TEMA.md) | Contextualização do tema, problemas, usuários e verificação |
@@ -227,6 +245,8 @@ Use `Ctrl+C` para encerrar o servidor. Nas próximas execuções, basta iniciar 
 | [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Processos de negócio e máquina de estados |
 | [`docs/diagrams/`](./docs/diagrams) | Diagramas conceituais, relacionais e comportamentais (.mmd) |
 | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Conferência cruzada formal entre artefatos |
+| [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) | Baseline operacional, reprodução local e limites da entrega |
+| [`INSPECOES.md`](./INSPECOES.md) | Inspeção formal de requisitos da EVT-22 |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Processo de contribuição e diretrizes de revisão |
 | [`CHANGELOG.md`](./CHANGELOG.md) | Registro de mudanças e versionamento semântico |
 | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |

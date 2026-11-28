@@ -18,6 +18,7 @@
 - [10. Validações Realizadas](#10-validações-realizadas)
 - [11. Lista de Verificação da Revisão (Checklist de Fagan)](#11-lista-de-verificação-da-revisão-checklist-de-fagan)
 - [12. Histórico de Revisão e Linha de Base do Marco 1](#12-histórico-de-revisão-e-linha-de-base-do-marco-1)
+- [13. Inspeção formal EVT-22](#13-inspeção-formal-evt-22)
 
 ---
 
@@ -254,7 +255,7 @@ Os 20 requisitos funcionais consolidados do EventFy são apresentados a seguir:
 - **RF11 — Visualização de solicitações:** O sistema deve apresentar ao prestador a fila de solicitações recebidas. `[Origem: N3, E2]`
 - **RF12 — Análise da solicitação:** O sistema deve permitir ao prestador aprovar (`APROVADA`) ou recusar (`RECUSADA` com justificativa obrigatória) solicitações. `[Origem: N3, E2]`
 - **RF13 — Confirmação de reserva:** O sistema deve permitir ao organizador confirmar reservas aprovadas, transitando para `CONFIRMADA` e bloqueando a agenda. `[Origem: N4, E1, E2, O1]`
-- **RF14 — Cancelamento de reserva:** O sistema deve permitir que o organizador cancele reservas em `SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`, e que o prestador cancele reservas `CONFIRMADA`, desde que o evento ainda não tenha começado. Em todos os casos, exige justificativa, registra o ator e o motivo em `HISTORICO_RESERVA`, muda a reserva para `CANCELADA` e libera a agenda. `[Origem: E1, E2, D1, DP03]`
+- **RF14 — Cancelamento de reserva:** O sistema deve permitir que o organizador cancele reservas em `SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`, e que o prestador cancele reservas `CONFIRMADA`, desde que o evento ainda não tenha começado. Em todos os casos, exige justificativa com pelo menos 10 caracteres, registra o ator e o motivo em `HISTORICO_RESERVA`, muda a reserva para `CANCELADA` e libera a agenda. `[Origem: E1, E2, D1, DP03]`
 - **RF15 — Gerenciamento de eventos:** O sistema deve permitir ao organizador listar e editar seus eventos. Enquanto houver reserva ativa (`SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`), deve impedir alteração de período ou local e impedir a exclusão/desativação do evento; outras alterações descritivas são permitidas. `[Origem: N2, E1, D1, DP07]`
 - **RF16 — Acompanhamento de reservas:** O sistema deve exibir o estado em tempo real de cada solicitação. `[Origem: N5, E1, E2]`
 - **RF17 — Avaliação de serviços:** O sistema deve permitir ao organizador titular avaliar cada reserva após `FINALIZADA`, uma única vez, atribuindo uma nota inteira de 1 a 5, sem campo de comentário. `[Origem: D1, DP05]`
@@ -366,7 +367,7 @@ As fontes identificam necessidades (`N`), entrevistas (`E`), observações (`O`)
 - **RN06 — Incompatibilidade de agenda:** Um serviço não pode ter duas reservas com períodos concorrentes no estado `CONFIRMADA`. `[Origem: E2, O1]`
 - **RN07 — Imutabilidade da auditoria:** O histórico de transições de uma reserva é permanente e imutável; nenhuma linha de histórico pode ser alterada ou apagada. `[Origem: D1]`
 - **RN08 — Períodos de disponibilidade:** O serviço só pode ser solicitado em períodos de atendimento sem bloqueio ou sobreposição com reservas ativas; a aprovação pré-bloqueia o intervalo e a confirmação o bloqueia definitivamente. `[Origem: D1, DP02]`
-- **RN09 — Cancelamento justificado:** O organizador pode cancelar em `SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`; o prestador pode cancelar em `CONFIRMADA`. O cancelamento exige justificativa, ocorre antes do início do evento e libera o bloqueio da agenda. `[Origem: D1, DP03]`
+- **RN09 — Cancelamento justificado:** O organizador pode cancelar em `SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`; o prestador pode cancelar em `CONFIRMADA`. O cancelamento exige justificativa com pelo menos 10 caracteres, ocorre antes do início do evento e libera o bloqueio da agenda. `[Origem: D1, DP03]`
 - **RN10 — Integridade de eventos com reservas:** Havendo reserva ativa (`SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`), o organizador pode editar dados descritivos, mas não pode alterar período ou local nem excluir/desativar o evento. `[Origem: D1, DP07]`
 - **RN11 — Integridade de serviços com reservas:** Havendo reserva ativa (`SOLICITADA`, `EM_ANALISE`, `APROVADA` ou `CONFIRMADA`), o prestador pode editar dados descritivos, mas não pode alterar preço, disponibilidade ou condições de atendimento nem desativar o serviço. `[Origem: D1, DP08]`
 - **RN12 — Avaliação de reserva:** Somente o organizador titular pode registrar uma nota inteira de 1 a 5, sem comentário, uma única vez após `FINALIZADA`. `[Origem: D1, DP05]`
@@ -423,7 +424,7 @@ A sessão de validação foi realizada com o protótipo navegável de baixa/méd
 
 ## 11. Lista de Verificação da Revisão (Checklist de Fagan)
 
-Inspeção formal de requisitos conduzida segundo a Listagem 5.7 do livro-texto:
+Checklist inicial do Marco 1, conduzida segundo a Listagem 5.7 do livro-texto. A inspeção formal da EVT-22 complementa esta revisão e registra os achados, o retrabalho e o recheck em [`INSPECOES.md`](../INSPECOES.md). Portanto, os itens marcados abaixo indicam a intenção/verificação inicial; não significam que todos os achados da inspeção formal estejam fechados.
 
 ### Para cada História / Requisito:
 - [x] Tem origem declarada, e a origem existe no `DESCOBERTA.md` (`N1..N5`).
@@ -449,3 +450,7 @@ Inspeção formal de requisitos conduzida segundo a Listagem 5.7 do livro-texto:
 - **2026-10-21:** Reconciliação dos RFs com a máquina de estados de 8 estados e inclusão da auditoria imutável.
 - **2026-10-28:** **Linha de Base do Marco 1 (Encontro 5):** Inclusão do Glossário formal, Backlog ordenado com MoSCoW e risco técnico, Histórias de Usuário INVEST com Dado-Quando-Então, Caso de Uso UC-01, RNFs em Planguage (ISO 25010), registro de validação V1 e checklist de Fagan.
 - **2026-10-28:** Fechamento das decisões DP01–DP08; especificação de anexos, permissões por papel, cancelamento e limites de alteração de eventos/serviços com reservas; revisão da avaliação e RNFs.
+
+## 13. Inspeção formal EVT-22
+
+Em **25/11/2026**, foi registrada a inspeção formal dos RF, RN, RNF e HU, com atribuição de autor, revisor, leitor e inspetor para cada item. Os achados `INS-01` a `INS-12`, suas classificações, gravidades, planos de retrabalho, recheck e vínculos de rastreabilidade estão em [`INSPECOES.md`](../INSPECOES.md). A inspeção permanece aberta até o acompanhamento do moderador.

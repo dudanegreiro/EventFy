@@ -8,14 +8,22 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ## [Unreleased]
 
+Baseline desta atualizacao: `5e15fa1`, merge da PR #94, com API FastAPI, autenticacao, migracoes V1 a V5, contrato em `docs/API.md` e testes PostgreSQL.
+
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 
 ### Adicionado
 - EVT-23 (#43) — `TESTES.md` com a estratégia de testes em quatro níveis, 31 casos nas seis áreas críticas (agenda, autenticação, autorização, estados, anexos e auditoria), omissões deliberadas e dúvidas em aberto.
 - EVT-24 (#44) — Roteiro de validação externa com tarefas neutras, registro de observações, rastreabilidade, retorno ao backlog e testes automatizados da estrutura documental.
+- EVT-08 (#28) — Script para restaurar fixtures isoladas e roteiro rastreável da review parcial, com baseline anotada e plano de falha.
 - EVT-01 (#21) — Quatro vistas arquiteturais, decisões de banco, anexos e autenticação e ambiente local com verificação da conexão ao PostgreSQL.
 - Esquema PostgreSQL 17, migrações versionadas, dados fictícios e script PowerShell para preparar o banco local.
 - Documentação de configuração e acesso ao banco pelo pgAdmin em `docs/DATABASE.md`.
+- API REST do fluxo principal com FastAPI, Psycopg 3, autenticação Bearer, catálogo, eventos, reservas e histórico auditável.
+- Cadastro de organizadores e prestadores, hash bcrypt de senhas e sessões JWT revogáveis com autorização por papel e titularidade.
+- Catálogo de serviços com filtros, gerenciamento do prestador, disponibilidade e anexos validados.
+- Cancelamento justificado, expiração de reservas em 48 horas, liberação vinculada de agenda e proteção transacional contra confirmações concorrentes.
+- Contrato da API e testes de integração PostgreSQL em `docs/API.md` e `tests/`.
 - Governança do processo, rastreabilidade de Issues/PRs e orientações de configuração do repositório entregues pela Pessoa 1.
 - Fluxo navegável do protótipo para solicitação, análise, aprovação, recusa, confirmação, histórico e cancelamento justificado.
 - `ITERACOES.md` com o replanejamento até 03/12, o plano da Iteração 2 e a retrospectiva da Iteração 1, com a fonte de cada dado (EVT-11, #31, parcial).
@@ -26,6 +34,7 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - Após a integração das migrações V3–V5, a restauração de dados demo deverá usar `scripts/restore-demo-data.ps1`, incluindo `public.sessao_autenticacao` no conjunto de tabelas dependentes e recompondo o vínculo `id_reserva` exigido pela V5. A execução isolada da V2 não é um procedimento válido para essa baseline.
 
 ### Alterado
+- EVT-12 (#32) - README, guia de entrega, changelog e conferencia cruzada atualizados com pre-requisitos, instalacao, migracao, testes, execucao, operacao, variaveis sem segredos e limites da baseline pos-PR94.
 - README e documentação do projeto para registrar a escolha do PostgreSQL no escopo da issue #22.
 - README e changelog alinhados às duas baselines da review parcial e ao procedimento de restauração compatível com a pilha de migrações V1–V5 da PR #94.
 - Documentação institucional, tema e papéis da equipe; arquivos de ambiente e instruções de Git.

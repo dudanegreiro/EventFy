@@ -1,8 +1,8 @@
 # Banco de dados local — EventFy
 
-O banco relacional de desenvolvimento desta entrega usa PostgreSQL 17. A decisao de SGBD cobre o trabalho da issue #22; a escolha do restante da stack ainda deve ser registrada pela equipe em `ARQUITETURA.md`.
+O banco relacional de desenvolvimento usa PostgreSQL 17. A API REST do fluxo principal usa FastAPI e Psycopg 3; sua configuracao, contrato e testes estao descritos em [`API.md`](./API.md).
 
-O modelo implementa as entidades descritas em [`diagrams/dados.mmd`](./diagrams/dados.mmd) e [`PROJETO.md`](./PROJETO.md). Datas e horas usam `timestamptz`; exclusoes logicas usam `ativo`; chaves estrangeiras impedem a remocao fisica de registros referenciados. Uma restricao de exclusao do PostgreSQL impede intervalos sobrepostos para reservas ativas do mesmo servico. O historico de reservas tem trigger que rejeita `UPDATE` e `DELETE`.
+O modelo implementa as entidades descritas em [`diagrams/dados.mmd`](./diagrams/dados.mmd) e [`PROJETO.md`](./PROJETO.md). Datas e horas usam `timestamptz`; exclusoes logicas usam `ativo`; chaves estrangeiras impedem a remocao fisica de registros referenciados. Uma restricao de exclusao do PostgreSQL impede intervalos sobrepostos para reservas ativas do mesmo servico. O historico de reservas tem trigger que rejeita `UPDATE` e `DELETE`. Migracoes incrementais adicionam sessao de autenticacao, localizacao aos servicos e referencia direta entre pre-bloqueios de agenda e reservas sem alterar migracoes ja aplicadas.
 
 ## Pre-requisitos
 
@@ -37,6 +37,22 @@ $env:PGUSER = 'postgres'
 .\scripts\db-setup.ps1 -Database eventfy
 ```
 
+## Restaurar o banco de demonstração
+
+Para a review parcial, use o banco isolado `eventfy_demo`. O script de restauração prepara as migrações e substitui apenas as fixtures desse banco pela seed versionada. Ele pede confirmação e recusa outros nomes de banco; não use `-Confirm:$false` em uma execução manual.
+
+```powershell
+.\scripts\restore-demo-data.ps1 -Confirm
+```
+
+O banco de demonstração pertence ao usuário indicado por `PGUSER` (por padrão, `postgres`). Para verificar os dados restaurados:
+
+```powershell
+psql -d eventfy_demo -c "SELECT status, count(*) FROM public.reserva GROUP BY status ORDER BY status;"
+```
+
+O resultado esperado é uma reserva em cada estado `APROVADA`, `FINALIZADA` e `SOLICITADA`. O roteiro completo da apresentação está em [`REVIEW-PARCIAL-EVT-08.md`](./REVIEW-PARCIAL-EVT-08.md).
+
 ## Acessar pelo pgAdmin
 
 No pgAdmin, registre um servidor com:
@@ -54,6 +70,8 @@ As tabelas ficam no schema `public`. O historico de aplicacao das migracoes fica
 ## Dados de demonstracao
 
 A segunda migracao inclui organizador, prestador, administrador, servico, evento, disponibilidade, anexo com URL ficticia, reservas em diferentes estados, historico e avaliacao.
+
+Novos servicos exigem localizacao. O campo foi adicionado pela migracao V4; servicos anteriores permanecem sem localizacao ate o titular atualizar seus dados. A migracao V5 adiciona `disponibilidade_servico.id_reserva`, associa os pre-bloqueios existentes pela reserva correspondente e impede mais de um bloqueio ativo por reserva.
 
 Contas locais:
 

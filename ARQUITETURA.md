@@ -2,7 +2,7 @@
 
 **EVT-01 · Proposta para revisão da equipe.** O EventFy conecta organizadores a prestadores de serviços. A decisão que mais pesa na arquitetura é a aprovação de uma reserva. Se duas solicitações disputarem o mesmo intervalo de um serviço, apenas uma poderá ocupá-lo. Agenda, reserva e histórico precisam registrar o mesmo resultado.
 
-O ambiente desta entrega serve o protótipo e expõe uma rota de diagnóstico que consulta o PostgreSQL. As vistas abaixo distinguem essa base executável dos módulos de negócio previstos nas próximas entregas. [Issue #21](https://github.com/dudanegreiro/EventFy/issues/21) · [Requisitos](./docs/REQUISITOS.md) · [Modelo de domínio](./docs/diagrams/modelo-dominio.md)
+O ambiente local inclui o protótipo e a API REST. A API implementa autenticação, catálogo e anexos, eventos e o fluxo de reservas com histórico e controle concorrente de agenda. As vistas abaixo descrevem a arquitetura e seus limites atuais; a situação das entregas é registrada no backlog e nas issues correspondentes. [Issue #21](https://github.com/dudanegreiro/EventFy/issues/21) · [Requisitos](./docs/REQUISITOS.md) · [Modelo de domínio](./docs/diagrams/modelo-dominio.md)
 
 ## Tecnologias e versões de referência
 
@@ -10,12 +10,12 @@ O ambiente desta entrega serve o protótipo e expõe uma rota de diagnóstico qu
 |---|---|---|
 | Frontend | HTML Living Standard, CSS com Grid/Flexbox e JavaScript ECMAScript 2022 | Reaproveitar o protótipo. O navegador consome JSON com Fetch. A interface dispensa compilação e pode ser servida como arquivos estáticos. |
 | API | Python 3.14, FastAPI 0.165.0 e Uvicorn 0.54.0 | Validar requisições, servir rotas HTTP e publicar o contrato OpenAPI. O ambiente local lê o arquivo de configuração com python-dotenv 1.2.4. |
-| Persistência | PostgreSQL 17 e Psycopg 3.3.9 | Executar SQL parametrizado e transações. As migrações versionadas e os dados fictícios estão em `db/migrations/` e `docs/DATABASE.md`; as rotas de negócio são entregas posteriores. |
+| Persistência | PostgreSQL 17 e Psycopg 3.3.9 | Executar SQL parametrizado e transações. As migrações versionadas e os dados fictícios estão em `db/migrations/` e `docs/DATABASE.md`; as rotas de negócio usam essa persistência transacional. |
 | Autenticação | JWT Bearer com HS256, PyJWT 2.x (a partir de 2.10) e bcrypt pelo pgcrypto do PostgreSQL 17 | A EVT-04 implementa login, expiração e revogação de sessão. |
 | Anexos | Sistema de arquivos em volume persistente, acessado por `pathlib` do Python 3.14 | Conservar os binários fora do banco e servir o conteúdo pela API. |
 | Testes | pytest 8.4.x, HTTPX 0.28.x e PostgreSQL 17 | Testes de unidade para regras de domínio e testes de integração da API com banco isolado. O uso do mesmo SGBD permite testar conflitos reais de agenda. |
 
-As dependências necessárias para iniciar a EVT-01 estão em [dev/requirements.txt](./dev/requirements.txt). As escolhas para banco, API e autenticação acompanham o trabalho das [EVT-02](https://github.com/dudanegreiro/EventFy/issues/22), [EVT-03](https://github.com/dudanegreiro/EventFy/issues/23) e [EVT-04](https://github.com/dudanegreiro/EventFy/issues/24).
+As dependências da API estão em [requirements.txt](./requirements.txt), e as ferramentas de desenvolvimento e teste em [requirements-dev.txt](./requirements-dev.txt). O runner diagnóstico inicial da EVT-01 mantém suas dependências em [dev/requirements.txt](./dev/requirements.txt). Banco, API e autenticação foram implementados nas [EVT-02](https://github.com/dudanegreiro/EventFy/issues/22), [EVT-03](https://github.com/dudanegreiro/EventFy/issues/23) e [EVT-04](https://github.com/dudanegreiro/EventFy/issues/24).
 
 ## 1. Vista lógica
 
@@ -37,27 +37,32 @@ Identidade fornece o usuário e o papel. Cada operação de escrita verifica a p
 
 ```mermaid
 flowchart TB
-    subgraph Base["Executável na EVT-01"]
-        Front["prototipo/ · HTML, CSS e JavaScript"]
-        Local["dev/ambiente.py · entrada local"]
-        Driver["Psycopg 3"]
-        Local -->|serve arquivos| Front
-        Local -->|consulta a versão do banco| Driver
+    subgraph Backend["API executável · api/eventfy_api"]
+        Rotas["main.py · rotas e regras"]
+        Auth["security.py · autenticação e autorização"]
+        Schemas["schemas.py · validação e respostas"]
+        Config["config.py · configuração"]
+        Dados["database.py · conexões PostgreSQL"]
+        Arquivos["filesystem configurável · anexos"]
+        Rotas --> Auth
+        Rotas --> Schemas
+        Rotas --> Dados
+        Rotas --> Arquivos
     end
-    subgraph Negocio["Organização prevista para as entregas de negócio"]
-        Rotas["api/eventfy_api · rotas e modelos JSON"] --> Dominio["Casos de uso e regras do domínio"]
-        Dominio --> Dados["Persistência PostgreSQL"]
-        Dominio --> Storage["Adaptador de arquivos"]
-        Testes["tests/ · pytest e HTTPX"] --> Rotas
-        Migracoes["db/migrations/ · evolução do esquema"] --> Dados
+    PostgreSQL["PostgreSQL 17"]
+    Migracoes["db/migrations/ · esquema e dados"] --> PostgreSQL
+    Dados --> PostgreSQL
+    Testes["tests/ · pytest e HTTPX"] --> Rotas
+    subgraph Prototipo["Protótipo demonstrativo"]
+        Front["prototipo/ · HTML, CSS e JavaScript"]
     end
 ```
 
-O contrato entre o navegador e o backend é HTTP sob `/api/`. Para o ambiente inicial, `GET /api/ambiente` retorna 200 com a versão lida do PostgreSQL ou 503 quando a conexão falha. O contrato está disponível em `/openapi.json`. As telas do protótipo continuam usando dados de demonstração até a integração de cada fluxo com a API.
+O contrato entre o navegador e o backend é HTTP sob `/api/`. A API de negócio expõe `GET /api/health` e o contrato completo em `/openapi.json`. O runner diagnóstico inicial da EVT-01, em `dev/ambiente.py`, continua disponível para conferir o PostgreSQL e servir o protótipo separadamente. As telas do protótipo usam dados de demonstração.
 
 ## 3. Vista de processos
 
-A aprovação ilustra a fronteira transacional prevista para as EVT-03 e EVT-06. O conflito precisa ser decidido pelo banco mesmo quando duas requisições passam simultaneamente pela verificação inicial.
+A aprovação ilustra a fronteira transacional implementada nas EVT-03 e EVT-06. O conflito é decidido pelo banco mesmo quando duas requisições passam simultaneamente pela verificação inicial.
 
 ```mermaid
 sequenceDiagram
@@ -78,15 +83,17 @@ sequenceDiagram
     end
 ```
 
-A rotina de expiração prevista no backlog reutiliza as mesmas regras de transição e histórico. O executor agendado e a requisição HTTP devem revalidar o estado dentro da transação para impedir que uma aprovação e uma expiração confirmem decisões incompatíveis. [Ciclo de vida da reserva](./docs/diagrams/estados-reserva.md)
+A EVT-06 implementa expiração agendada e lazy para reservas sem resposta após 48 horas. A rotina e as rotas de reserva revalidam e bloqueiam o estado dentro da transação para impedir que aprovação, cancelamento e expiração confirmem decisões incompatíveis. [Ciclo de vida da reserva](./docs/diagrams/estados-reserva.md)
 
 ## 4. Vista de implantação
 
 ```mermaid
 flowchart LR
-    subgraph Local["Desenvolvimento · EVT-01"]
-        Browser["Navegador"] -->|HTTP em 127.0.0.1:8000| App["Uvicorn + FastAPI e protótipo"]
+    subgraph Local["Desenvolvimento"]
+        Browser["Navegador"] -->|HTTP em 127.0.0.1:8000| App["Uvicorn + API FastAPI"]
         App -->|Psycopg em 127.0.0.1:5432| DevDB[("PostgreSQL 17")]
+        Browser -->|arquivos estáticos| Front["prototipo/"]
+        App --> Volume["LOCAL_DOS_ARQUIVOS"]
     end
     subgraph Alvo["Topologia prevista para implantação"]
         Cliente["Navegador"] -->|HTTPS| Web["Entrada web e arquivos estáticos"]
