@@ -188,6 +188,16 @@ Para restaurar os dados isolados da review parcial, execute `.\scripts\restore-d
 
 Consulte [Banco de dados local](./docs/DATABASE.md) para os pré-requisitos e detalhes do script.
 
+### Baselines da review parcial
+
+A tag `review-parcial-evt08` identifica a baseline demonstrada antes da integração da PR [#94](https://github.com/dudanegreiro/EventFy/pull/94): `dev/ambiente.py`, protótipo navegável e migrações V1/V2. Ela não deve ser usada para representar a API completa.
+
+Depois que a PR #94 for integrada à `main`, a baseline executável passa a incluir as migrações V1–V5, a API e os testes do backend. Nesse momento, crie uma nova tag, por exemplo `review-parcial-evt08-v2`, apontando para o commit efetivamente demonstrado. Esta documentação não cria nem move tags.
+
+Na baseline pós-PR #94, a restauração dos dados de demonstração deve usar exclusivamente `scripts/restore-demo-data.ps1`. O procedimento deve truncar as tabelas dependentes incluindo `public.sessao_autenticacao`, usar `CASCADE` de forma restrita ao banco de demonstração e reaplicar a composição de dados exigida pela V5. Não execute apenas `V2__seed_demo_data.sql` depois de V5: isso pode deixar a reserva demo `APROVADA` sem o vínculo `id_reserva` do bloqueio de agenda e fazer a confirmação falhar com `409 MISSING_SCHEDULE_BLOCK`.
+
+Enquanto a PR #94 não estiver na `main`, siga apenas o procedimento compatível com as migrações disponíveis neste checkout, descrito em [`docs/DATABASE.md`](./docs/DATABASE.md).
+
 Na raiz do projeto, prepare o ambiente conforme seu sistema.
 
 **Windows (PowerShell)**

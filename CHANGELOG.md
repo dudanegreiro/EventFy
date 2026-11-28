@@ -28,17 +28,20 @@ Baseline desta atualizacao: `5e15fa1`, merge da PR #94, com API FastAPI, autenti
 - Fluxo navegável do protótipo para solicitação, análise, aprovação, recusa, confirmação, histórico e cancelamento justificado.
 - `ITERACOES.md` com o replanejamento até 03/12, o plano da Iteração 2 e a retrospectiva da Iteração 1, com a fonte de cada dado (EVT-11, #31, parcial).
 
+### Review parcial e operação da baseline
+- `review-parcial-evt08` permanece identificada como a baseline anterior à PR [#94](https://github.com/dudanegreiro/EventFy/pull/94), baseada em `dev/ambiente.py`, no protótipo e nas migrações V1/V2.
+- A baseline pós-PR #94 deverá ser identificada por uma nova tag, como `review-parcial-evt08-v2`, somente depois do merge e da demonstração do commit correspondente.
+- Após a integração das migrações V3–V5, a restauração de dados demo deverá usar `scripts/restore-demo-data.ps1`, incluindo `public.sessao_autenticacao` no conjunto de tabelas dependentes e recompondo o vínculo `id_reserva` exigido pela V5. A execução isolada da V2 não é um procedimento válido para essa baseline.
+
 ### Alterado
 - EVT-12 (#32) - README, guia de entrega, changelog e conferencia cruzada atualizados com pre-requisitos, instalacao, migracao, testes, execucao, operacao, variaveis sem segredos e limites da baseline pos-PR94.
 - README e documentação do projeto para registrar a escolha do PostgreSQL no escopo da issue #22.
-- README, arquivo de ambiente e documentação para registrar a API FastAPI e seus comandos locais.
-- README, guia de entrega, changelog e conferência cruzada atualizados para documentar pré-requisitos, instalação, migração, testes, execução, operação e limites da baseline implementada.
-- EVT-22 (#42) — Registro da inspeção formal dos requisitos, com papéis, achados classificados, retrabalho, recheck e rastreabilidade.
+- README e changelog alinhados às duas baselines da review parcial e ao procedimento de restauração compatível com a pilha de migrações V1–V5 da PR #94.
 - Documentação institucional, tema e papéis da equipe; arquivos de ambiente e instruções de Git.
 - Guia de navegação do protótipo e documentação das limitações da demonstração estática.
 
 ### Preparação da versão
-- A próxima versão e a referência futura a `v0.1.0` devem ser confirmadas pela equipe antes da publicação: este changelog já registra `0.1.0` e `0.2.0`. A seção permanece `Unreleased` até essa decisão.
+- A próxima versão e a tag pós-PR #94 devem ser confirmadas pela equipe antes da publicação. A seção permanece `Unreleased` até essa decisão.
 
 ---
 
