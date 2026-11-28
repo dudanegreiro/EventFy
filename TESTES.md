@@ -143,3 +143,17 @@ Os casos abaixo não foram incluídos nesta versão por limite de escopo e prazo
 |---|---|---|---|---|
 | DA-01 | Quais reservas ocupam a agenda? | A RN06 restringe o conflito a reservas `CONFIRMADA`. O banco (`reserva_sem_sobreposicao_ativa`) e a RN08 consideram todas as reservas ativas. | TC-AGD-02 e TC-EST-06 usam a regra do banco. | Responsáveis pelo backend e pela arquitetura |
 | DA-02 | A fronteira do intervalo inclui o instante final? | O banco usa intervalo semiaberto `[)`. O diagrama `sequencia-reserva.md` descreve o intervalo como fechado. | TC-AGD-03 usa o comportamento do banco; com intervalo fechado, o resultado seria HTTP 409. | Responsáveis pelo backend e pela arquitetura |
+
+## 6. Cobertura de código e justificativa das áreas sem cobertura (EVT-27, #47)
+
+A cobertura de linhas e ramos é gerada automaticamente via `pytest --cov` (configurada em [`pyproject.toml`](./pyproject.toml) e no workflow [`.github/workflows/quality.yml`](./.github/workflows/quality.yml)), mas **não é usada como único critério de aprovação** (`fail_under = 0`). Uma cobertura alta não prova que as regras de negócio ou critérios de aceitação foram verificados; ela atua como indicador diagnóstico para localizar caminhos críticos ainda não exercitados pelos casos `TC-*`.
+
+### Áreas deliberadamente sem cobertura automatizada de código
+
+| Área / Artefato | Motivo de ficar fora da métrica de cobertura | Como é verificada |
+|---|---|---|
+| **`prototipo/` (HTML, CSS e JS estático)** | Protótipo demonstrativo sem bundler/runner JS configurado nesta fase. | Validação técnica em viewport `360 × 640` (`RNF-04`) e sessão com usuário externo (`EVT-24`, `#44`). |
+| **`scripts/db-setup.ps1` e `scripts/restore-demo-data.ps1`** | Scripts operacionais PowerShell voltados à preparação de banco local, fora do escopo do coletor Python (`coverage.py`). | Validação de sintaxe pelo parser PowerShell e execução idempotente contra banco local / `eventfy_demo`. |
+| **`dev/ambiente.py`** | Ponto de entrada diagnóstico mínimo criado na `EVT-01` para testar conexão com o PostgreSQL antes da API principal existir. | Verificação de fumaça (`GET /api/ambiente`) no pipeline de CI (`EVT-10`). |
+| **Caminhos defensivos de falha de infraestrutura** (ex.: disco cheio `OSError` no upload de anexo, queda física de rede durante transação) | Difíceis de simular sem acoplar testes a detalhes internos do sistema operacional ou gerar testes frágeis. | Inspeção de código nas 7 lentes (`CONTRIBUTING.md`) e testes operacionais na implantação (`EVT-35` / `EVT-37`). |
+| **Funcionalidades ainda não implementadas no `main`** | Itens pendentes de implementação ou integração (`EVT-07` frontend conectado à API, `EVT-18`, `EVT-20`). | Passam a ser cobertas automaticamente assim que integradas ao `main` e exercitadas na `EVT-09` (`#29`). |

@@ -1,0 +1,91 @@
+name: Quality (Lint, Format, Build & Coverage)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          # Credenciais efemeras usadas apenas no container isolado de teste do CI.
+          POSTGRES_USER: eventfy_ci
+          POSTGRES_PASSWORD: eventfy_ci_local_only
+          POSTGRES_DB: eventfy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U eventfy_ci -d eventfy_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      URL_DO_BANCO: postgresql://eventfy_ci:eventfy_ci_local_only@127.0.0.1:5432/eventfy_test
+      TEST_DATABASE_URL: postgresql://eventfy_ci:eventfy_ci_local_only@127.0.0.1:5432/eventfy_test
+      CHAVE_SECRETA_JWT: ci-ephemeral-jwt-secret-key-not-for-production-use-32chars
+
+    steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Instalar dependencias e ferramentas de qualidade
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-dev.txt ]; then
+            pip install -r requirements-dev.txt
+          else
+            pip install -r dev/requirements.txt
+            pip install "httpx>=0.28,<1" "pytest>=8.3,<9"
+          fi
+          pip install "ruff>=0.11,<1" "pytest-cov>=6,<7"
+
+      - name: Linter critico (Ruff check)
+        run: ruff check .
+
+      - name: Formatador (Ruff format --check)
+        run: ruff format --check --diff .
+
+      - name: Build reproduzivel (compilacao Python)
+        run: |
+          TARGETS="tests"
+          [ -d dev ] && TARGETS="$TARGETS dev"
+          [ -d scripts ] && TARGETS="$TARGETS scripts"
+          [ -d api ] && TARGETS="$TARGETS api"
+          python -m compileall -q $TARGETS
+
+      - name: Executar testes e gerar relatorio de cobertura (indicador diagnostico)
+        run: |
+          if [ -f api/eventfy_api/main.py ] && [ -f tests/test_api.py ]; then
+            PYTHONPATH=api pytest --cov=api/eventfy_api --cov-report=term-missing --cov-report=xml:coverage.xml
+          else
+            PYTHONPATH=dev pytest --cov=dev --cov-report=term-missing --cov-report=xml:coverage.xml
+          fi
+
+      - name: Publicar relatorio de cobertura (artefato)
+        if: always() && hashFiles('coverage.xml') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 14

@@ -13,6 +13,7 @@ Baseline desta atualizacao: `5e15fa1`, merge da PR #94, com API FastAPI, autenti
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 
 ### Adicionado
+- EVT-27 (#47) — Configuração de formatador, linter (`ruff`), build reproduzível e relatório de cobertura (`pytest-cov`) em `pyproject.toml`, `scripts/check.ps1` e `.github/workflows/quality.yml`, com justificativa de áreas sem cobertura em `TESTES.md` e comandos no `README.md`.
 - EVT-10 (#30) — Pipeline de integração contínua (`.github/workflows/ci.yml`) com PostgreSQL 17, runner multiplataforma de migrações (`scripts/db_setup.py`) e especificação do check obrigatório `ci` para proteção da branch `main` em `CONTRIBUTING.md`.
 - EVT-23 (#43) — `TESTES.md` com a estratégia de testes em quatro níveis, 31 casos nas seis áreas críticas (agenda, autenticação, autorização, estados, anexos e auditoria), omissões deliberadas e dúvidas em aberto.
 - EVT-24 (#44) — Roteiro de validação externa com tarefas neutras, registro de observações, rastreabilidade, retorno ao backlog e testes automatizados da estrutura documental.

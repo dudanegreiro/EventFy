@@ -3,11 +3,7 @@ import re
 import unittest
 
 
-DOCUMENT = (
-    Path(__file__).resolve().parents[1]
-    / "docs"
-    / "VALIDACAO-USUARIO-EVT-24.md"
-)
+DOCUMENT = Path(__file__).resolve().parents[1] / "docs" / "VALIDACAO-USUARIO-EVT-24.md"
 
 
 class ValidationProtocolTests(unittest.TestCase):

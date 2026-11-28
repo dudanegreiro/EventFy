@@ -1,0 +1,48 @@
+[project]
+name = "eventfy"
+version = "0.2.0"
+description = "Plataforma web para centralizacao de servicos e estruturas para gestao de eventos."
+requires-python = ">=3.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "prototipo",
+]
+
+[tool.ruff.lint]
+# Regras criticas que reprovam o build no CI e localmente:
+# E/W = pycodestyle, F = Pyflakes (erros de sintaxe/nomes/imports), B = flake8-bugbear.
+# B008 e ignorada pelo padrao FastAPI (Depends/Query/File como defaults); E501 e coberto pelo formatador.
+select = ["E", "F", "W", "B"]
+ignore = ["B008", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+pythonpath = ["api"]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.coverage.run]
+branch = true
+omit = [
+    "tests/*",
+    "scripts/db-setup.ps1",
+    "scripts/restore-demo-data.ps1",
+    "prototipo/*",
+]
+
+[tool.coverage.report]
+# Cobertura e produzida como indicador diagnostico, nunca como unico criterio de qualidade (EVT-27).
+fail_under = 0
+show_missing = true
+skip_empty = true

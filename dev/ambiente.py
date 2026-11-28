@@ -20,7 +20,9 @@ def verificar_ambiente() -> dict[str, str]:
         with psycopg.connect(url, connect_timeout=3) as banco:
             versao = banco.execute("SHOW server_version").fetchone()[0]
     except psycopg.Error:
-        raise HTTPException(503, "Verifique o serviço PostgreSQL e a URL_DO_BANCO.") from None
+        raise HTTPException(
+            503, "Verifique o serviço PostgreSQL e a URL_DO_BANCO."
+        ) from None
 
     return {"aplicacao": "EventFy", "postgresql": versao}
 
