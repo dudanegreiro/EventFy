@@ -116,14 +116,16 @@ class ReservationDecision(BaseModel):
 
 
 class ReservationCancellation(BaseModel):
-    motivo: str = Field(min_length=1, max_length=2000)
+    motivo: str = Field(min_length=10, max_length=2000)
 
     @field_validator("motivo")
     @classmethod
     def validate_reason(cls, value: str) -> str:
         normalized = value.strip()
-        if not normalized:
-            raise ValueError("A justificativa do cancelamento e obrigatoria.")
+        if len(normalized) < 10:
+            raise ValueError(
+                "A justificativa do cancelamento deve ter pelo menos 10 caracteres."
+            )
         return normalized
 
 

@@ -11,6 +11,16 @@
 
 </div>
 
+## Baseline e operacao pos-PR94
+
+A baseline documental desta entrega e o commit `5e15fa1`, merge da PR #94. Ela inclui a API FastAPI, autenticacao, migracoes V1 a V5, contrato em [`docs/API.md`](./docs/API.md), testes PostgreSQL e o prototipo estatico.
+
+Pre-requisitos: Git 2.x, Python 3.14, PostgreSQL 17.x, `psql` e `createdb` no `PATH`. Instale as dependencias com `python -m pip install -r requirements-dev.txt`, copie `.env.example` para `.env` e configure somente valores locais para `URL_DO_BANCO`, `CHAVE_SECRETA_JWT` e `LOCAL_DOS_ARQUIVOS`. O repositorio nao deve conter segredos ou dados pessoais reais.
+
+Aplique as migracoes com `scripts/db-setup.ps1 -Username eventfy_dev`; o script registra checksums e aplica V1 a V5 em ordem. Execute `pytest -q` duas vezes contra o banco de testes; a baseline espera `18 passed` em cada rodada. Inicie a API com `uvicorn eventfy_api.main:app --app-dir api --env-file .env --reload` e confira `/api/health` e `/docs`.
+
+A operacao, os limites e a conferencia cruzada estao em [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) e [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md).
+
 ---
 
 ## 📑 Sumário
@@ -126,6 +136,7 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 |---|---|---|
 | Backlog de execução | [`docs/BACKLOG.md`](./docs/BACKLOG.md) | Lacunas, responsáveis, dependências e issues prontas para o GitHub |
 | Validação com usuário externo | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro, registro de observações, rastreabilidade e retorno ao backlog |
+| Review parcial executável | [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md) | Baseline, roteiro por tela e critério, limitações e plano de falha |
 | Banco de dados local | [`docs/DATABASE.md`](./docs/DATABASE.md) | PostgreSQL, migrações versionadas e dados fictícios de demonstração |
 | API REST | [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato dos endpoints |
 | Requisitos | [`docs/REQUISITOS.md`](./docs/REQUISITOS.md) | Requisitos funcionais, não funcionais e regras de negócio |
@@ -137,6 +148,8 @@ Os principais artefatos produzidos durante o desenvolvimento do projeto estão o
 | Modelagem | [`docs/diagrams/`](./docs/diagrams) | Domínio, dados, estados da reserva e sequência UML |
 | Protótipo | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |
 | Conferência cruzada | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Registro da conferência entre os diferentes artefatos do projeto |
+| Entrega e operação | [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) | Baseline, reprodução local, operação e limites conhecidos |
+| Inspeção formal de requisitos | [`INSPECOES.md`](./INSPECOES.md) | Papéis, achados classificados, retrabalho, recheck e rastreabilidade da EVT-22 |
 | Contribuição | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Orientações de contribuição, revisão e critérios de qualidade |
 | Registro de Mudanças | [`CHANGELOG.md`](./CHANGELOG.md) | Histórico de versões e notas de lançamento (SemVer) |
 
@@ -170,6 +183,8 @@ No Windows, você também pode preparar o esquema e os dados de demonstração c
 ```powershell
 .\scripts\db-setup.ps1 -Username eventfy_dev
 ```
+
+Para restaurar os dados isolados da review parcial, execute `.\scripts\restore-demo-data.ps1 -Confirm`. O roteiro e o plano de falha estão em [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md).
 
 Consulte [Banco de dados local](./docs/DATABASE.md) para os pré-requisitos e detalhes do script.
 
@@ -231,6 +246,7 @@ A política de uso da cobertura e as áreas justificadamente sem cobertura const
 | Documento | Descrição |
 |---|---|
 | [`docs/VALIDACAO-USUARIO-EVT-24.md`](./docs/VALIDACAO-USUARIO-EVT-24.md) | Roteiro e relatório de validação do fluxo principal com usuário externo |
+| [`docs/REVIEW-PARCIAL-EVT-08.md`](./docs/REVIEW-PARCIAL-EVT-08.md) | Baseline e roteiro da demonstração parcial com plano de falha |
 | [`docs/DATABASE.md`](./docs/DATABASE.md) | Configuração do PostgreSQL, migrações e dados de demonstração |
 | [`docs/API.md`](./docs/API.md) | Execução local, autenticação e contrato da API REST |
 | [`docs/PROJETO.md`](./docs/PROJETO.md) | Organização, decisões, fichas CRC e critérios de isolamento |
@@ -241,6 +257,8 @@ A política de uso da cobertura e as áreas justificadamente sem cobertura const
 | [`docs/PROCESSOS-NEGOCIO.md`](./docs/PROCESSOS-NEGOCIO.md) | Processos de negócio e máquina de estados |
 | [`docs/diagrams/`](./docs/diagrams) | Diagramas conceituais, relacionais e comportamentais (.mmd) |
 | [`docs/CONFERENCIA_CRUZADA.md`](./docs/CONFERENCIA_CRUZADA.md) | Conferência cruzada formal entre artefatos |
+| [`docs/README_ENTREGA.md`](./docs/README_ENTREGA.md) | Baseline operacional, reprodução local e limites da entrega |
+| [`INSPECOES.md`](./INSPECOES.md) | Inspeção formal de requisitos da EVT-22 |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Processo de contribuição e diretrizes de revisão |
 | [`CHANGELOG.md`](./CHANGELOG.md) | Registro de mudanças e versionamento semântico |
 | [`prototipo/`](./prototipo) | Protótipo navegável da aplicação |

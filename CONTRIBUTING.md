@@ -163,9 +163,18 @@ A regra de proteção é uma configuração do GitHub e não pode ser garantida 
 - Exigir ao menos uma aprovação de integrante diferente do autor.
 - Descartar aprovações obsoletas após novos commits e exigir resolução das conversas de revisão.
 - Bloquear force push e exclusão da branch.
-- Exigir verificações de CI somente depois que os workflows correspondentes existirem e estiverem ativos.
+- Exigir que o status check **`ci`** (definido em [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)) passe antes do merge, com a opção *"Require branches to be up to date before merging"* ativada.
 
-Até a configuração ser conferida por um administrador, a proteção efetiva da branch deve ser tratada como **não verificada**. A regra deve ser revisada quando o fluxo de CI ou as permissões da equipe mudarem.
+#### Checklist de ativação no GitHub (administrador do repositório — `#30`)
+
+1. Acessar **Settings → Branches → Add branch protection rule** (ou **Rulesets**) para o padrão `main`.
+2. Marcar **Require a pull request before merging** e **Require approvals (1)** com **Dismiss stale pull request approvals when new commits are pushed**.
+3. Marcar **Require conversation resolution before merging**.
+4. Marcar **Require status checks to pass before merging** e adicionar o check obrigatório **`ci`**.
+5. Garantir que **Allow force pushes** e **Allow deletions** permaneçam desmarcados.
+6. Marcar **Do not allow bypassing the above settings** (quando aplicável ao fluxo da equipe).
+
+Até a configuração ser confirmada por um administrador no GitHub, registrar o status da regra diretamente na issue `#30` (`EVT-10`). A regra deve ser revisada sempre que novos workflows de qualidade forem adicionados.
 
 ### 7.2 Issues de backlog
 

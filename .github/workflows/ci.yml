@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          # Credenciais efemeras usadas apenas no container isolado de teste do CI.
+          POSTGRES_USER: eventfy_ci
+          POSTGRES_PASSWORD: eventfy_ci_local_only
+          POSTGRES_DB: eventfy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U eventfy_ci -d eventfy_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      URL_DO_BANCO: postgresql://eventfy_ci:eventfy_ci_local_only@127.0.0.1:5432/eventfy_test
+      TEST_DATABASE_URL: postgresql://eventfy_ci:eventfy_ci_local_only@127.0.0.1:5432/eventfy_test
+      CHAVE_SECRETA_JWT: ci-ephemeral-jwt-secret-key-not-for-production-use-32chars
+
+    steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-dev.txt ]; then
+            pip install -r requirements-dev.txt
+          else
+            pip install -r dev/requirements.txt
+            pip install "httpx>=0.28,<1" "pytest>=8.3,<9"
+          fi
+
+      - name: Verificar marcadores residuais de conflito
+        run: |
+          if git grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- ':!.github/workflows/*'; then
+            echo "Erro: marcadores de conflito encontrados no repositorio."
+            exit 1
+          fi
+
+      - name: Build - compilacao de bytecode Python
+        run: |
+          TARGETS="scripts tests"
+          [ -d dev ] && TARGETS="$TARGETS dev"
+          [ -d api ] && TARGETS="$TARGETS api"
+          python -m compileall -q $TARGETS
+
+      - name: Aplicar migracoes no PostgreSQL 17 (verificando idempotencia)
+        run: |
+          python scripts/db_setup.py
+          python scripts/db_setup.py
+
+      - name: Executar testes documentais (unittest)
+        run: python -m unittest discover -s tests -p "test_evt*.py" -v
+
+      - name: Verificar ambiente local EVT-01 (quando presente)
+        if: ${{ hashFiles('dev/ambiente.py') != '' }}
+        run: |
+          PYTHONPATH=dev python -c "
+          from fastapi.testclient import TestClient
+          from ambiente import app
+          with TestClient(app) as client:
+              response = client.get('/api/ambiente')
+              assert response.status_code == 200, response.text
+              data = response.json()
+              assert data['aplicacao'] == 'EventFy', data
+              assert data['postgresql'].startswith('17'), data
+              print('Ambiente EVT-01 verificado:', data)
+          "
+
+      - name: Executar suite pytest da API (duas vezes seguidas - isolamento #92)
+        if: ${{ hashFiles('api/eventfy_api/main.py') != '' && hashFiles('tests/test_api.py') != '' }}
+        run: |
+          PYTHONPATH=api pytest -q
+          PYTHONPATH=api pytest -q

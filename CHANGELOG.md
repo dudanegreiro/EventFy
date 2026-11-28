@@ -8,12 +8,16 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ## [Unreleased]
 
+Baseline desta atualizacao: `5e15fa1`, merge da PR #94, com API FastAPI, autenticacao, migracoes V1 a V5, contrato em `docs/API.md` e testes PostgreSQL.
+
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 
 ### Adicionado
 - EVT-27 (#47) — Configuração de formatador, linter (`ruff`), build reproduzível e relatório de cobertura (`pytest-cov`) em `pyproject.toml`, `scripts/check.ps1` e `.github/workflows/quality.yml`, com justificativa de áreas sem cobertura em `TESTES.md` e comandos no `README.md`.
+- EVT-10 (#30) — Pipeline de integração contínua (`.github/workflows/ci.yml`) com PostgreSQL 17, runner multiplataforma de migrações (`scripts/db_setup.py`) e especificação do check obrigatório `ci` para proteção da branch `main` em `CONTRIBUTING.md`.
 - EVT-23 (#43) — `TESTES.md` com a estratégia de testes em quatro níveis, 31 casos nas seis áreas críticas (agenda, autenticação, autorização, estados, anexos e auditoria), omissões deliberadas e dúvidas em aberto.
 - EVT-24 (#44) — Roteiro de validação externa com tarefas neutras, registro de observações, rastreabilidade, retorno ao backlog e testes automatizados da estrutura documental.
+- EVT-08 (#28) — Script para restaurar fixtures isoladas e roteiro rastreável da review parcial, com baseline anotada e plano de falha.
 - EVT-01 (#21) — Quatro vistas arquiteturais, decisões de banco, anexos e autenticação e ambiente local com verificação da conexão ao PostgreSQL.
 - Esquema PostgreSQL 17, migrações versionadas, dados fictícios e script PowerShell para preparar o banco local.
 - Documentação de configuração e acesso ao banco pelo pgAdmin em `docs/DATABASE.md`.
@@ -27,8 +31,11 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 - `ITERACOES.md` com o replanejamento até 03/12, o plano da Iteração 2 e a retrospectiva da Iteração 1, com a fonte de cada dado (EVT-11, #31, parcial).
 
 ### Alterado
+- EVT-12 (#32) - README, guia de entrega, changelog e conferencia cruzada atualizados com pre-requisitos, instalacao, migracao, testes, execucao, operacao, variaveis sem segredos e limites da baseline pos-PR94.
 - README e documentação do projeto para registrar a escolha do PostgreSQL no escopo da issue #22.
 - README, arquivo de ambiente e documentação para registrar a API FastAPI e seus comandos locais.
+- README, guia de entrega, changelog e conferência cruzada atualizados para documentar pré-requisitos, instalação, migração, testes, execução, operação e limites da baseline implementada.
+- EVT-22 (#42) — Registro da inspeção formal dos requisitos, com papéis, achados classificados, retrabalho, recheck e rastreabilidade.
 - Documentação institucional, tema e papéis da equipe; arquivos de ambiente e instruções de Git.
 - Guia de navegação do protótipo e documentação das limitações da demonstração estática.
 

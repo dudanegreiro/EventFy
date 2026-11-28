@@ -631,6 +631,12 @@ def test_organizer_cancels_approved_reservation_and_releases_schedule(
     assert created.status_code == 201, created.text
     reservation_id = created.json()["id_reserva"]
     provider_headers = {"Authorization": f"Bearer {provider_token}"}
+    requested_cancel = client.post(
+        f"/api/reservas/{reservation_id}/cancelamento",
+        headers=provider_headers,
+        json={"motivo": "Prestador sem permissao."},
+    )
+    assert requested_cancel.status_code == 409
     assert (
         client.post(
             f"/api/reservas/{reservation_id}/analise",
@@ -653,6 +659,18 @@ def test_organizer_cancels_approved_reservation_and_releases_schedule(
         json={"motivo": "Nao posso cancelar antes da confirmacao."},
     )
     assert forbidden_cancel.status_code == 409
+    missing_reason = client.post(
+        f"/api/reservas/{reservation_id}/cancelamento",
+        headers=headers,
+        json={},
+    )
+    assert missing_reason.status_code == 422
+    short_reason = client.post(
+        f"/api/reservas/{reservation_id}/cancelamento",
+        headers=headers,
+        json={"motivo": "Curto"},
+    )
+    assert short_reason.status_code == 422
     invalid_reason = client.post(
         f"/api/reservas/{reservation_id}/cancelamento",
         headers=headers,
@@ -699,6 +717,7 @@ def test_organizer_cancels_approved_reservation_and_releases_schedule(
 def test_confirmed_reservation_can_be_cancelled_by_provider(
     client: TestClient,
     service_availability: None,
+    test_settings: Settings,
 ) -> None:
     organizer_token = access_token(client, ORGANIZER_EMAIL)
     provider_token = access_token(client, PROVIDER_EMAIL)
@@ -748,6 +767,90 @@ def test_confirmed_reservation_can_be_cancelled_by_provider(
 
     assert cancelled.status_code == 200, cancelled.text
     assert cancelled.json()["status"] == "CANCELADA"
+    with psycopg.connect(
+        test_settings.url_do_banco, row_factory=dict_row
+    ) as connection:
+        schedule_block = connection.execute(
+            """
+            SELECT ativo
+            FROM public.disponibilidade_servico
+            WHERE id_reserva = %s
+            """,
+            (reservation_id,),
+        ).fetchone()
+        history = connection.execute(
+            """
+            SELECT h.status_anterior, h.status_novo, h.motivo, u.email
+            FROM public.historico_reserva AS h
+            JOIN public.usuario AS u ON u.id_usuario = h.id_usuario
+            WHERE h.id_reserva = %s
+            ORDER BY h.id_historico DESC
+            LIMIT 1
+            """,
+            (reservation_id,),
+        ).fetchone()
+
+    assert schedule_block == {"ativo": False}
+    assert history == {
+        "status_anterior": "CONFIRMADA",
+        "status_novo": "CANCELADA",
+        "motivo": "O prestador teve uma emergencia.",
+        "email": PROVIDER_EMAIL,
+    }
+
+
+def test_cancellation_after_event_start_is_rejected(
+    client: TestClient,
+    service_availability: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    organizer_token = access_token(client, ORGANIZER_EMAIL)
+    provider_token = access_token(client, PROVIDER_EMAIL)
+    organizer_headers = {"Authorization": f"Bearer {organizer_token}"}
+    provider_headers = {"Authorization": f"Bearer {provider_token}"}
+    event = create_event(client, organizer_token, "Cancelamento fora do prazo", day=15)
+    created = client.post(
+        "/api/reservas",
+        headers=organizer_headers,
+        json={
+            "id_evento": event["id_evento"],
+            "id_servico": 1001,
+            "data_inicio": "2030-06-15T18:00:00Z",
+            "data_fim": "2030-06-15T21:00:00Z",
+        },
+    )
+    assert created.status_code == 201, created.text
+    reservation_id = created.json()["id_reserva"]
+    assert client.post(
+        f"/api/reservas/{reservation_id}/analise",
+        headers=provider_headers,
+    ).status_code == 200
+    assert client.post(
+        f"/api/reservas/{reservation_id}/decisao",
+        headers=provider_headers,
+        json={"decisao": "APROVADA"},
+    ).status_code == 200
+    assert client.post(
+        f"/api/reservas/{reservation_id}/confirmacao",
+        headers=organizer_headers,
+    ).status_code == 200
+
+    real_datetime = datetime
+
+    class AfterEventDateTime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return real_datetime.now(tz) + timedelta(days=2000)
+
+    monkeypatch.setattr("eventfy_api.main.datetime", AfterEventDateTime)
+    cancelled = client.post(
+        f"/api/reservas/{reservation_id}/cancelamento",
+        headers=organizer_headers,
+        json={"motivo": "Cancelamento depois do inicio do evento."},
+    )
+
+    assert cancelled.status_code == 409
+    assert cancelled.json()["error"]["code"] == "CANCELLATION_WINDOW_CLOSED"
 
 
 def test_expiration_job_expires_each_unanswered_stage(
