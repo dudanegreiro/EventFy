@@ -82,9 +82,12 @@ Respostas principais:
 | `POST` | `/api/reservas/{id}/confirmacao` | Organizador titular | Confirma aprovacao em ate 48 horas, sob bloqueio transacional da reserva |
 | `POST` | `/api/reservas/{id}/cancelamento` | Organizador titular ou prestador titular | Cancela com justificativa de pelo menos 10 caracteres antes do inicio do evento; prestador somente cancela reservas confirmadas |
 | `POST` | `/api/jobs/reservas/expiracoes` | Administrador | Expira reservas sem resposta ha 48 horas; destinado a uma rotina agendada |
+| `CLI` | `python -m eventfy_api.scheduled_jobs --once` | Processo operacional | Expira SLAs e finaliza reservas confirmadas após `data_fim` |
 | `GET` | `/api/reservas/{id}/historico` | Participante | Consulta transicoes em ordem cronologica |
 
 O servidor valida papel, titularidade, periodo do evento, disponibilidade, estado atual, justificativa, prazo e conflitos. A expiracao tambem e verificada ao consultar ou tentar alterar uma reserva. As mutacoes e os respectivos registros de historico usam a mesma transacao PostgreSQL; o pre-bloqueio de agenda referencia diretamente a reserva e e liberado ao cancelar ou expirar. A restricao de exclusao de `reserva` e os bloqueios de linha protegem contra conflitos e requisicoes concorrentes.
+
+Em produção, configure `PYTHONPATH=api` e execute `python -m eventfy_api.scheduled_jobs --once` por um agendador de plataforma a cada minuto, ou mantenha `python -m eventfy_api.scheduled_jobs --interval-seconds 60` como processo dedicado. O job usa lock transacional compartilhado, grava transições no histórico e registra resultado/falhas no log do processo; configure o supervisor para reiniciar o processo após falha.
 
 Filtros de data devem ser enviados juntos e incluir fuso horario. Quando usados, o servico precisa ter um intervalo `DISPONIVEL` que cubra todo o periodo, sem bloqueio manual ou reserva ativa conflitante. A ordenacao por identificador e a paginacao limitada a 100 resultados permitem percorrer catalogos maiores.
 
