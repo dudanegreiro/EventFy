@@ -16,6 +16,7 @@ from psycopg.errors import ExclusionViolation, ForeignKeyViolation, UniqueViolat
 from eventfy_api.config import Settings, get_settings
 from eventfy_api.database import get_connection
 from eventfy_api.errors import ApiError, error_response
+from eventfy_api.expiration_policy import reservation_expiration_deadline
 from eventfy_api.schemas import (
     AvailabilityCreate,
     CancellationResponse,
@@ -941,7 +942,7 @@ def _transition_to_expired(
         None,
         previous_status,
         "EXPIRADA",
-        "Prazo de 48 horas sem resposta expirado.",
+        "Prazo de resposta expirado.",
     )
     reservation["status"] = "EXPIRADA"
 
@@ -952,7 +953,10 @@ def _expire_if_overdue(
 ) -> bool:
     if reservation["status"] not in {"SOLICITADA", "EM_ANALISE", "APROVADA"}:
         return False
-    deadline = _expiration_started_at(connection, reservation) + timedelta(hours=48)
+    deadline = reservation_expiration_deadline(
+        _expiration_started_at(connection, reservation),
+        get_settings().prazo_expiracao_reserva_horas,
+    )
     if datetime.now(timezone.utc) < deadline:
         return False
     _transition_to_expired(connection, reservation)
@@ -999,12 +1003,12 @@ def _expire_overdue_reservations(
         ) AS sla
         WHERE r.ativo
           AND r.status IN ('SOLICITADA', 'EM_ANALISE', 'APROVADA')
-          AND sla.estado_desde <= %s - interval '48 hours'
+          AND sla.estado_desde <= %s - (%s * interval '1 hour')
           {extra_filter}
         ORDER BY sla.estado_desde, r.id_reserva
         {lock_clause}
         """,
-        (now, *scope_params),
+        (now, get_settings().prazo_expiracao_reserva_horas, *scope_params),
     ).fetchall()
     for reservation in expired:
         _transition_to_expired(connection, reservation)
@@ -1016,7 +1020,7 @@ def _raise_if_expired(reservation: dict[str, Any]) -> None:
         raise ApiError(
             409,
             "RESERVATION_EXPIRED",
-            "O prazo de 48 horas para responder a reserva expirou.",
+            "O prazo para responder a reserva expirou.",
         )
 
 

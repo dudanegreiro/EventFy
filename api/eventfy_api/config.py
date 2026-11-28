@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     url_do_banco: str
     chave_secreta_jwt: SecretStr
     duracao_token_minutos: int = 30
+    prazo_expiracao_reserva_horas: int = 48
     local_dos_arquivos: Path = Path("./uploads")
 
     model_config = SettingsConfigDict(
@@ -28,6 +29,12 @@ class Settings(BaseSettings):
             )
         return value
 
+    @field_validator("prazo_expiracao_reserva_horas")
+    @classmethod
+    def validate_reservation_expiration_hours(cls, value: int) -> int:
+        if value < 1 or value > 720:
+            raise ValueError("PRAZO_EXPIRACAO_RESERVA_HORAS deve estar entre 1 e 720")
+        return value
 
 @lru_cache
 def get_settings() -> Settings:
