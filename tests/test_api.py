@@ -319,6 +319,36 @@ def test_login_rejects_invalid_credentials(client: TestClient) -> None:
     assert response.json()["error"]["code"] == "INVALID_CREDENTIALS"
 
 
+def test_registration_rejects_duplicate_email_ignoring_case_and_whitespace(
+    client: TestClient,
+) -> None:
+    first = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Conta Original",
+            "email": "x@ex.test",
+            "senha": "SenhaSegura123!",
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert first.status_code == 201
+
+    duplicate = client.post(
+        "/api/auth/register",
+        json={
+            "nome": "Conta Duplicada",
+            "email": "  X@EX.TEST ",
+            "senha": "SenhaSegura123!",
+            "tipo_usuario": "ORGANIZADOR",
+        },
+    )
+    assert duplicate.status_code == 409
+    assert duplicate.json()["error"] == {
+        "code": "EMAIL_ALREADY_REGISTERED",
+        "message": "Este e-mail já está cadastrado.",
+    }
+
+
 def test_registration_hashes_password_limits_public_roles_and_logout_revokes_token(
     client: TestClient,
     test_settings: Settings,

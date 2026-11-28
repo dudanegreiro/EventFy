@@ -1463,7 +1463,15 @@ def reservation_history(
 
 
 @app.exception_handler(UniqueViolation)
-async def handle_unique_violation(_: Request, __: UniqueViolation) -> JSONResponse:
+async def handle_unique_violation(_: Request, exception: UniqueViolation) -> JSONResponse:
+    if getattr(exception.diag, "constraint_name", None) == "usuario_email_lower_uk":
+        return JSONResponse(
+            status_code=409,
+            content=error_response(
+                "EMAIL_ALREADY_REGISTERED",
+                "Este e-mail já está cadastrado.",
+            ),
+        )
     return JSONResponse(
         status_code=409,
         content=error_response(
