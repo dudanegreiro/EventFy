@@ -20,6 +20,14 @@ from conftest import (
 from eventfy_api.config import Settings
 
 
+@pytest.fixture(autouse=True)
+def isolate_integration_case(test_settings: Settings) -> None:
+    """Rebuild the disposable database before each API contract case."""
+    from conftest import reset_test_database
+
+    reset_test_database(test_settings.url_do_banco)
+
+
 def test_health_and_public_catalog(client: TestClient) -> None:
     assert client.get("/api/health").json() == {"status": "ok"}
 
