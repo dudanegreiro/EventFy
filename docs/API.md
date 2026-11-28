@@ -86,6 +86,8 @@ Respostas principais:
 
 O servidor valida papel, titularidade, periodo do evento, disponibilidade, estado atual, justificativa, prazo e conflitos. A expiracao tambem e verificada ao consultar ou tentar alterar uma reserva. As mutacoes e os respectivos registros de historico usam a mesma transacao PostgreSQL; o pre-bloqueio de agenda referencia diretamente a reserva e e liberado ao cancelar ou expirar. A restricao de exclusao de `reserva` e os bloqueios de linha protegem contra conflitos e requisicoes concorrentes.
 
+Consultas SQL usam parâmetros Psycopg para valores externos; trechos SQL dinâmicos são restritos a predicados internos definidos pelo servidor. Limites de tamanho e formato são aplicados no schema da API e novamente pelo banco quando há restrições. A resposta `422` expõe somente campo, tipo e mensagem da validação, sem repetir o valor recebido ou detalhes internos do banco.
+
 Filtros de data devem ser enviados juntos e incluir fuso horario. Quando usados, o servico precisa ter um intervalo `DISPONIVEL` que cubra todo o periodo, sem bloqueio manual ou reserva ativa conflitante. A ordenacao por identificador e a paginacao limitada a 100 resultados permitem percorrer catalogos maiores.
 
 Uploads verificam limite de bytes, extensao, assinatura do conteudo e MIME declarado. Em desenvolvimento, os binarios ficam em `LOCAL_DOS_ARQUIVOS` (padrao `./uploads`) e o banco armazena somente os metadados e URL. A rota de download consulta novamente o estado logico do anexo e do servico antes de entregar o arquivo.

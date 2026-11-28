@@ -84,7 +84,7 @@ class PeriodModel(BaseModel):
 
 class EventCreate(PeriodModel):
     nome: str = Field(min_length=1, max_length=160)
-    descricao: str | None = None
+    descricao: str | None = Field(default=None, max_length=4000)
     local: str = Field(min_length=1, max_length=200)
 
     @field_validator("nome", "local")
@@ -99,7 +99,7 @@ class EventCreate(PeriodModel):
 class ReservationCreate(PeriodModel):
     id_evento: int = Field(gt=0)
     id_servico: int = Field(gt=0)
-    observacao: str | None = None
+    observacao: str | None = Field(default=None, max_length=2000)
 
 
 class ReservationDecision(BaseModel):
@@ -145,7 +145,7 @@ class PublicService(BaseModel):
 class ServiceCreate(BaseModel):
     nome: str = Field(min_length=1, max_length=160)
     categoria: str = Field(min_length=1, max_length=80)
-    descricao: str | None = None
+    descricao: str | None = Field(default=None, max_length=4000)
     preco: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
     localizacao: str = Field(min_length=1, max_length=200)
 
@@ -161,7 +161,7 @@ class ServiceCreate(BaseModel):
 class ServiceUpdate(BaseModel):
     nome: str | None = Field(default=None, min_length=1, max_length=160)
     categoria: str | None = Field(default=None, min_length=1, max_length=80)
-    descricao: str | None = None
+    descricao: str | None = Field(default=None, max_length=4000)
     preco: Decimal | None = Field(
         default=None,
         ge=0,
