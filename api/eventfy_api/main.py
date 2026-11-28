@@ -16,7 +16,7 @@ from psycopg.errors import ExclusionViolation, ForeignKeyViolation, UniqueViolat
 from eventfy_api.config import Settings, get_settings
 from eventfy_api.database import get_connection
 from eventfy_api.errors import ApiError, error_response
-from eventfy_api.expiration_policy import reservation_expiration_deadline
+from eventfy_api.expiration_policy import reservation_is_expired
 from eventfy_api.schemas import (
     AvailabilityCreate,
     CancellationResponse,
@@ -953,11 +953,13 @@ def _expire_if_overdue(
 ) -> bool:
     if reservation["status"] not in {"SOLICITADA", "EM_ANALISE", "APROVADA"}:
         return False
-    deadline = reservation_expiration_deadline(
+    if not reservation_is_expired(
+        datetime.now(timezone.utc),
         _expiration_started_at(connection, reservation),
         get_settings().prazo_expiracao_reserva_horas,
-    )
-    if datetime.now(timezone.utc) < deadline:
+        contract_created_at=reservation["criado_em"],
+        effective_at=get_settings().prazo_expiracao_apos,
+    ):
         return False
     _transition_to_expired(connection, reservation)
     return True
@@ -1003,12 +1005,21 @@ def _expire_overdue_reservations(
         ) AS sla
         WHERE r.ativo
           AND r.status IN ('SOLICITADA', 'EM_ANALISE', 'APROVADA')
-          AND sla.estado_desde <= %s - (%s * interval '1 hour')
+          AND sla.estado_desde <= %s - (
+              CASE WHEN %s::timestamptz IS NULL OR r.criado_em < %s
+                   THEN 48 ELSE %s END * interval '1 hour'
+          )
           {extra_filter}
         ORDER BY sla.estado_desde, r.id_reserva
         {lock_clause}
         """,
-        (now, get_settings().prazo_expiracao_reserva_horas, *scope_params),
+        (
+            now,
+            get_settings().prazo_expiracao_apos,
+            get_settings().prazo_expiracao_apos,
+            get_settings().prazo_expiracao_reserva_horas,
+            *scope_params,
+        ),
     ).fetchall()
     for reservation in expired:
         _transition_to_expired(connection, reservation)

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from datetime import datetime
 from pathlib import Path
 
 from pydantic import SecretStr, field_validator
@@ -10,6 +11,7 @@ class Settings(BaseSettings):
     chave_secreta_jwt: SecretStr
     duracao_token_minutos: int = 30
     prazo_expiracao_reserva_horas: int = 48
+    prazo_expiracao_apos: datetime | None = None
     local_dos_arquivos: Path = Path("./uploads")
 
     model_config = SettingsConfigDict(
@@ -34,6 +36,15 @@ class Settings(BaseSettings):
     def validate_reservation_expiration_hours(cls, value: int) -> int:
         if value < 1 or value > 720:
             raise ValueError("PRAZO_EXPIRACAO_RESERVA_HORAS deve estar entre 1 e 720")
+        return value
+
+    @field_validator("prazo_expiracao_apos")
+    @classmethod
+    def validate_reservation_expiration_cutover(
+        cls, value: datetime | None
+    ) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+            raise ValueError("PRAZO_EXPIRACAO_APOS deve incluir fuso horario")
         return value
 
 @lru_cache
