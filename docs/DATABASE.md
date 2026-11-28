@@ -53,9 +53,7 @@ psql -d eventfy_demo -c "SELECT status, count(*) FROM public.reserva GROUP BY st
 
 O resultado esperado é uma reserva em cada estado `APROVADA`, `FINALIZADA` e `SOLICITADA`. O roteiro completo da apresentação está em [`REVIEW-PARCIAL-EVT-08.md`](./REVIEW-PARCIAL-EVT-08.md).
 
-## Acessar pelo pgAdmin
-
-### Backup e rollback operacional
+## Backup e rollback operacional
 
 As migrations são incrementais e não devem ser revertidas editando ou removendo versões já aplicadas. Antes de implantar uma versão que altera o esquema, gere e valide um backup customizado:
 

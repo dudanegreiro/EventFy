@@ -15,7 +15,7 @@ $pgDump = Get-Command pg_dump -ErrorAction Stop
 $destination = [System.IO.Path]::GetFullPath($OutputFile)
 $parent = Split-Path -Parent $destination
 if (-not (Test-Path -LiteralPath $parent -PathType Container)) {
-    throw "Diretorio de backup inexistente: $parent"
+    New-Item -ItemType Directory -Path $parent -Force | Out-Null
 }
 if (Test-Path -LiteralPath $destination) {
     throw "O arquivo de backup ja existe: $destination"
