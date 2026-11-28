@@ -1,4 +1,5 @@
 import io
+from math import ceil
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -59,6 +60,9 @@ app.add_middleware(
 )
 
 MAX_ATTACHMENT_BYTES = 10_000_000
+LOGIN_MAX_FAILED_ATTEMPTS = 5
+LOGIN_FAILURE_WINDOW = timedelta(minutes=15)
+LOGIN_LOCKOUT_DURATION = timedelta(minutes=15)
 ATTACHMENT_TYPES = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
@@ -114,6 +118,30 @@ def login(
     settings: Settings = Depends(get_settings),
     connection: psycopg.Connection = Depends(get_connection),
 ) -> TokenResponse:
+    email = request.email.strip().lower()
+    now = datetime.now(timezone.utc)
+    connection.execute(
+        "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+        (email,),
+    )
+    attempt = connection.execute(
+        """
+        SELECT falhas, janela_inicio, bloqueado_ate
+        FROM public.tentativa_login
+        WHERE email_digest = digest(%s, 'sha256')
+        FOR UPDATE
+        """,
+        (email,),
+    ).fetchone()
+    if attempt and attempt["bloqueado_ate"] and attempt["bloqueado_ate"] > now:
+        retry_after = max(1, ceil((attempt["bloqueado_ate"] - now).total_seconds()))
+        raise ApiError(
+            429,
+            "LOGIN_RATE_LIMITED",
+            "Muitas tentativas de login. Tente novamente mais tarde.",
+            {"Retry-After": str(retry_after)},
+        )
+
     user = connection.execute(
         """
         SELECT id_usuario, tipo_usuario
@@ -122,16 +150,53 @@ def login(
           AND ativo
           AND senha_hash = crypt(%s, senha_hash)
         """,
-        (request.email, request.senha),
+        (email, request.senha),
     ).fetchone()
     if user is None:
+        if attempt and attempt["janela_inicio"] > now - LOGIN_FAILURE_WINDOW:
+            failures = attempt["falhas"] + 1
+            window_started = attempt["janela_inicio"]
+        else:
+            failures = 1
+            window_started = now
+        locked_until = (
+            now + LOGIN_LOCKOUT_DURATION
+            if failures >= LOGIN_MAX_FAILED_ATTEMPTS
+            else None
+        )
+        connection.execute(
+            """
+            INSERT INTO public.tentativa_login (
+                email_digest, falhas, janela_inicio, bloqueado_ate, atualizado_em
+            )
+            VALUES (digest(%s, 'sha256'), %s, %s, %s, %s)
+            ON CONFLICT (email_digest) DO UPDATE SET
+                falhas = EXCLUDED.falhas,
+                janela_inicio = EXCLUDED.janela_inicio,
+                bloqueado_ate = EXCLUDED.bloqueado_ate,
+                atualizado_em = EXCLUDED.atualizado_em
+            """,
+            (email, failures, window_started, locked_until, now),
+        )
+        # Failed-attempt counters must persist despite the API error response.
+        connection.commit()
+        if locked_until is not None:
+            raise ApiError(
+                429,
+                "LOGIN_RATE_LIMITED",
+                "Muitas tentativas de login. Tente novamente mais tarde.",
+                {"Retry-After": str(ceil(LOGIN_LOCKOUT_DURATION.total_seconds()))},
+            )
         raise ApiError(
             401,
             "INVALID_CREDENTIALS",
             "E-mail ou senha invalidos.",
             {"WWW-Authenticate": "Bearer"},
         )
-    now = datetime.now(timezone.utc)
+    connection.execute(
+        "DELETE FROM public.tentativa_login WHERE email_digest = digest(%s, 'sha256')",
+        (email,),
+    )
     expires_at = now + timedelta(minutes=settings.duracao_token_minutos)
     token_id = uuid4()
     connection.execute(

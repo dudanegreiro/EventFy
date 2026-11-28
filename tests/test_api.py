@@ -12,6 +12,7 @@ from psycopg.rows import dict_row
 
 from conftest import (
     ADMIN_EMAIL,
+    DEMO_PASSWORD,
     ORGANIZER_EMAIL,
     PROVIDER_EMAIL,
     access_token,
@@ -317,6 +318,61 @@ def test_login_rejects_invalid_credentials(client: TestClient) -> None:
 
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "INVALID_CREDENTIALS"
+
+
+def test_login_blocks_email_after_five_consecutive_failures(
+    client: TestClient,
+    test_settings: Settings,
+) -> None:
+    email = ORGANIZER_EMAIL
+    for attempt_number in range(5):
+        response = client.post(
+            "/api/auth/login",
+            json={"email": email, "senha": f"senha-errada-{attempt_number}"},
+        )
+        if attempt_number < 4:
+            assert response.status_code == 401
+            assert response.json()["error"]["code"] == "INVALID_CREDENTIALS"
+        else:
+            assert response.status_code == 429
+            assert response.json()["error"]["code"] == "LOGIN_RATE_LIMITED"
+            assert 1 <= int(response.headers["Retry-After"]) <= 900
+
+    correct_password_is_blocked = client.post(
+        "/api/auth/login",
+        json={"email": email, "senha": DEMO_PASSWORD},
+    )
+    assert correct_password_is_blocked.status_code == 429
+
+    with psycopg.connect(
+        test_settings.url_do_banco,
+        row_factory=dict_row,
+    ) as connection:
+        attempt = connection.execute(
+            """
+            SELECT falhas, bloqueado_ate > now() AS bloqueado
+            FROM public.tentativa_login
+            WHERE email_digest = digest(%s, 'sha256')
+            """,
+            (email.lower(),),
+        ).fetchone()
+    assert attempt == {"falhas": 5, "bloqueado": True}
+
+    with psycopg.connect(test_settings.url_do_banco) as connection:
+        connection.execute(
+            """
+            UPDATE public.tentativa_login
+            SET bloqueado_ate = now() - interval '1 second',
+                janela_inicio = now() - interval '16 minutes'
+            WHERE email_digest = digest(%s, 'sha256')
+            """,
+            (email.lower(),),
+        )
+    recovered = client.post(
+        "/api/auth/login",
+        json={"email": email, "senha": DEMO_PASSWORD},
+    )
+    assert recovered.status_code == 200
 
 
 def test_registration_hashes_password_limits_public_roles_and_logout_revokes_token(

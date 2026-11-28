@@ -13,6 +13,7 @@ Baseline desta atualizacao: `5e15fa1`, merge da PR #94, com API FastAPI, autenti
 > Rascunho de release; nenhuma tag é criada por esta alteração.
 
 ### Adicionado
+- #89 — Bloqueio temporário persistente após cinco falhas consecutivas de login por e-mail, com resposta `429`, `Retry-After` e limpeza do contador após autenticação bem-sucedida.
 - EVT-23 (#43) — `TESTES.md` com a estratégia de testes em quatro níveis, 31 casos nas seis áreas críticas (agenda, autenticação, autorização, estados, anexos e auditoria), omissões deliberadas e dúvidas em aberto.
 - EVT-24 (#44) — Roteiro de validação externa com tarefas neutras, registro de observações, rastreabilidade, retorno ao backlog e testes automatizados da estrutura documental.
 - EVT-08 (#28) — Script para restaurar fixtures isoladas e roteiro rastreável da review parcial, com baseline anotada e plano de falha.

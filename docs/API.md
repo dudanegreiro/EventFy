@@ -51,6 +51,11 @@ Respostas principais:
 | `413` | Arquivo acima de 10.000.000 bytes |
 | `415` | Conteudo ou MIME de anexo nao permitido |
 | `422` | Corpo invalido ou regra de periodo/justificativa nao atendida |
+| `429` | Login temporariamente bloqueado após tentativas inválidas consecutivas |
+
+### Limite de tentativas de login
+
+Após **5 falhas consecutivas para o mesmo e-mail normalizado** dentro de uma janela de 15 minutos, novas tentativas são recusadas por 15 minutos, inclusive com a senha correta. A API responde `429 LOGIN_RATE_LIMITED` e envia `Retry-After` em segundos. Uma autenticação bem-sucedida limpa o contador; e-mails desconhecidos e senhas incorretas seguem a mesma regra para evitar enumeração. Os contadores persistem no PostgreSQL como SHA-256 do e-mail, sem armazenar o endereço em texto puro.
 
 ## Operacoes implementadas
 
