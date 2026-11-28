@@ -55,6 +55,26 @@ O resultado esperado é uma reserva em cada estado `APROVADA`, `FINALIZADA` e `S
 
 ## Acessar pelo pgAdmin
 
+### Backup e rollback operacional
+
+As migrations são incrementais e não devem ser revertidas editando ou removendo versões já aplicadas. Antes de implantar uma versão que altera o esquema, gere e valide um backup customizado:
+
+```powershell
+.\scripts\backup-db.ps1 -Database eventfy -OutputFile .\backups\eventfy-predeploy.dump
+pg_restore --list .\backups\eventfy-predeploy.dump
+```
+
+Para retornar à versão anterior da aplicação, primeiro faça o rollback do código e depois restaure o banco compatível com ela. A restauração substitui objetos do banco indicado; confira o destino e use `-WhatIf` para revisar a ação antes de executá-la:
+
+```powershell
+.\scripts\restore-db.ps1 -Database eventfy -BackupFile .\backups\eventfy-predeploy.dump -WhatIf
+.\scripts\restore-db.ps1 -Database eventfy -BackupFile .\backups\eventfy-predeploy.dump -Confirm
+```
+
+Mantenha o backup fora do repositório, restrinja seu acesso e valide a restauração em um banco isolado antes de depender dela. Os scripts não alegam que um restore foi executado neste ambiente.
+
+## Acessar pelo pgAdmin
+
 No pgAdmin, registre um servidor com:
 
 | Campo | Valor local padrao |
