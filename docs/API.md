@@ -2,6 +2,8 @@
 
 A API do fluxo principal usa FastAPI, Psycopg 3 e PostgreSQL 17. O contrato OpenAPI e a interface Swagger ficam em `/openapi.json` e `/docs` quando o servidor esta em execucao.
 
+O prazo novo é configurado por `PRAZO_EXPIRACAO_RESERVA_HORAS` e só passa a valer para contratos criados a partir de `PRAZO_EXPIRACAO_APOS` (instante ISO 8601 com fuso). Sem instante de corte, todos os contratos mantêm a regra legada de 48 horas. A regra fica isolada no backend e não depende das telas.
+
 ## Executar localmente
 
 1. Prepare o PostgreSQL e aplique as migracoes conforme [`DATABASE.md`](./DATABASE.md).
