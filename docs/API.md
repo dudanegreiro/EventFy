@@ -52,6 +52,22 @@ Respostas principais:
 | `415` | Conteudo ou MIME de anexo nao permitido |
 | `422` | Corpo invalido ou regra de periodo/justificativa nao atendida |
 
+## Autorização e dados sensíveis
+
+O backend é a autoridade para cada operação; ocultar um botão na interface não concede nem revoga acesso. A rota autentica o token e consulta o papel atual da conta no banco. Token ausente, inválido, expirado ou revogado resulta em `401`. Papel incorreto ou recurso pertencente a outra conta resulta em `403`; estados de negócio incompatíveis permanecem `409`.
+
+| Recurso/ação | Regra no backend |
+|---|---|
+| Eventos | Somente organizador; leitura e alteração limitadas ao titular |
+| Serviços e anexos de gestão | Somente prestador; alteração limitada ao titular |
+| Solicitação de reserva | Organizador autenticado e titular do evento |
+| Análise e decisão de reserva | Prestador autenticado e titular do serviço relacionado |
+| Confirmação de reserva | Organizador solicitante da reserva |
+| Cancelamento e histórico | Participante da reserva (organizador ou prestador relacionado) |
+| Jobs administrativos | Somente administrador |
+
+Não registre senha, token Bearer, cookie de sessão, chave JWT, corpo de autenticação nem dados pessoais em logs. Registre somente identificadores técnicos mínimos, resultado e correlation ID quando necessário. Respostas de erro não incluem SQL, stack trace, credenciais ou conteúdo do token.
+
 ## Operacoes implementadas
 
 | Metodo | Rota | Papel | Descricao |

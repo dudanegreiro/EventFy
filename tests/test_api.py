@@ -431,6 +431,7 @@ def test_inactive_user_cannot_login_or_use_an_existing_token(
 def test_authorization_enforces_roles_and_ignores_role_claim(
     client: TestClient,
     test_settings: Settings,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     organizer_token = access_token(client, ORGANIZER_EMAIL)
     provider_token = access_token(client, PROVIDER_EMAIL)
@@ -443,11 +444,13 @@ def test_authorization_enforces_roles_and_ignores_role_claim(
     }
 
     assert client.post("/api/eventos", json=event_payload).status_code == 401
-    assert client.post(
+    denied_response = client.post(
         "/api/eventos",
         headers={"Authorization": f"Bearer {provider_token}"},
         json=event_payload,
-    ).status_code == 403
+    )
+    assert denied_response.status_code == 403
+    assert provider_token not in denied_response.text
     assert client.post(
         "/api/eventos",
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -510,6 +513,7 @@ def test_authorization_enforces_roles_and_ignores_role_claim(
         headers={"Authorization": f"Bearer {forged_role_token}"},
         json=event_payload,
     ).status_code == 403
+    assert provider_token not in caplog.text
 
 
 def test_organizer_provider_flow_records_immutable_history(
